@@ -1,6 +1,6 @@
 // Service worker de la Salle des machines : garde les pages et les ressources pour jouer hors ligne.
 // Pense à changer VERSION à chaque ajout de machine pour que les téléphones récupèrent la nouvelle liste.
-const VERSION = 'promenade-1790632929';
+const VERSION = 'promenade-1790633665';
 const FICHIERS = [
   "./",
   "index.html",
@@ -19,9 +19,10 @@ const FICHIERS = [
 ];
 self.addEventListener('install', e => e.waitUntil(caches.open(VERSION).then(c => c.addAll(FICHIERS)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())));
-// réseau d'abord pour les pages (nouvelles versions), cache d'abord pour le reste (Three.js, polices, images)
+// réseau d'abord pour les pages (nouvelles versions), cache d'abord pour le reste du site (images, icônes)
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
+  if (new URL(req.url).origin !== location.origin) return; // Three.js, polices : le navigateur s'en charge (un module mis en cache « opaque » casserait la 3D)
   const page = req.mode === 'navigate' || req.destination === 'iframe' || req.url.endsWith('.html');
   e.respondWith(page
     ? fetch(req).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy)); return r; }).catch(() => caches.match(req, { ignoreSearch: true }))

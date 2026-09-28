@@ -292,8 +292,16 @@ $('chestBtn').onclick = showChest;
 
 // ---------- jouer ----------
 let W = null; // le monde 3D, s'il a pu s'allumer
+// si la 3D de la machine échoue dans la salle, on le dit (avec la raison) au lieu de rester en 2D sans explication
+function watch3d(g) {
+  let n = 0; const id = setInterval(() => {
+    let st = null, err = ''; try { const w = $('frame').contentWindow; st = w.ART3D_STATE; err = w.ART3D_ERROR || ''; } catch (e) {}
+    if (st === 'erreur') { clearInterval(id); toast(`<span>${g.nom} reste en 2D : la 3D n'a pas pu se charger<br><small>${String(err).split('\n')[0].slice(0, 140).replace(/</g, '&lt;')}</small></span>`); console.warn('3D de', g.id, err); }
+    if (st === 'ok' || ++n > 60 || !$('viewer').classList.contains('show')) clearInterval(id);
+  }, 2000);
+}
 function play(g, lite = false, plunge = true) {
-  const go = () => { $('frame').src = lite ? g.lite : g.page; $('viewer').classList.add('show'); history.pushState({ jeu: g.id }, ''); set('derniere', g.id); setTimeout(() => $('frame').focus(), 60); if (W) W.pause(true); };
+  const go = () => { $('frame').src = lite ? g.lite : g.page; if (!lite) watch3d(g); $('viewer').classList.add('show'); history.pushState({ jeu: g.id }, ''); set('derniere', g.id); setTimeout(() => $('frame').focus(), 60); if (W) W.pause(true); };
   if (W && plunge && !reduce) W.plunge(GAMES.indexOf(g), go); else go();
 }
 function leave() {
@@ -477,7 +485,8 @@ async function world() {
   }
   const api = {
     focus: i => { camT = i * SP; },
-    pause: v => { paused = v; },
+    // pendant qu'on joue, la salle rend sa carte graphique (ses trois mondes pèsent lourd) : la machine a toute la place pour sa 3D
+    pause: v => { if (v === paused) return; paused = v; try { v ? r.forceContextLoss() : r.forceContextRestore(); } catch (e) {} },
     plunge: (i, cb) => { plungeTo = 1; plungeCb = cb; camT = i * SP; document.body.classList.add('diving'); },
     pullBack: () => { plungeTo = 0; document.body.classList.remove('diving'); },
     pullLever,
