@@ -2,7 +2,8 @@
 """Construit la Promenade (index.html à la racine du dépôt) à partir de :
   - app/salle-modele.html   : la page (scène 3D, panneaux, logique) ;
   - app/catalogue.json      : la liste des machines, dans l'ordre du boulevard ;
-  - le kit 3D et les modèles 3D de chaque machine (décor au pied des bornes).
+  - le kit 3D, les modèles 3D de chaque machine (au pied des bornes) et son décor 3D
+    (le monde affiché derrière la borne quand on la regarde).
 Met aussi à jour la liste des fichiers de sw.js et change sa VERSION (les téléphones récupèrent la nouvelle salle).
 
     python3 .claude/skills/machine-a-sous/scripts/construire-salle.py
@@ -27,10 +28,22 @@ for g in games:
         raise SystemExit(f"{f} : « const ART3D_MODELS = K => » introuvable")
     modeles.append(src2)
 
-public = [{k: v for k, v in g.items() if k != 'modeles'} for g in games]
+# le monde de chaque machine, affiché derrière sa borne quand on la regarde
+decors = []
+for g in games:
+    f = g.get('decor')
+    if not f or not (root / f).exists():
+        continue
+    src = (root / f).read_text()
+    src2 = src.replace('const DECOR3D = (K, M) =>', f"DECORS[{json.dumps(g['id'])}] = (K, M) =>", 1)
+    if src2 == src:
+        raise SystemExit(f"{f} : « const DECOR3D = (K, M) => » introuvable")
+    decors.append(src2)
+
+public = [{k: v for k, v in g.items() if k not in ('modeles', 'decor')} for g in games]
 out = page.replace('/*@@CATALOGUE@@*/[]', json.dumps(public, ensure_ascii=False, indent=1))
-out = out.replace('/*@@KIT3D@@*/', kit).replace('/*@@MODELES@@*/', '\n'.join(modeles))
-for mark in ('@@CATALOGUE@@', '@@KIT3D@@', '@@MODELES@@'):
+out = out.replace('/*@@KIT3D@@*/', kit).replace('/*@@MODELES@@*/', '\n'.join(modeles)).replace('/*@@DECORS@@*/', '\n'.join(decors))
+for mark in ('@@CATALOGUE@@', '@@KIT3D@@', '@@MODELES@@', '@@DECORS@@'):
     if mark in out:
         raise SystemExit(f'marqueur {mark} resté dans la page')
 (root / 'index.html').write_text(out)
@@ -44,4 +57,4 @@ sw = (root / 'sw.js').read_text()
 sw = re.sub(r"const VERSION = '[^']*';", f"const VERSION = 'promenade-{int(time.time())}';", sw)
 sw = re.sub(r"const FICHIERS = \[[^\]]*\];", 'const FICHIERS = [\n  ' + ',\n  '.join(json.dumps(x) for x in files) + ',\n];', sw, flags=re.S)
 (root / 'sw.js').write_text(sw)
-print(f"index.html : {len(games)} machines sur le boulevard ({len(modeles)} avec leur décor 3D) ; sw.js : {len(files)} fichiers")
+print(f"index.html : {len(games)} machines sur le boulevard ({len(modeles)} avec leurs modèles 3D, {len(decors)} avec leur monde) ; sw.js : {len(files)} fichiers")

@@ -1386,6 +1386,10 @@ const DECOR3D = (K, M) => ({
     const moonG = new THREE.Group(); moonG.add(halo(0xFFF1C0, 42, 0.45));
     if (M) { const mo = M.SYMS[0](); mo.scale.setScalar(4.2); moonG.add(mo); }
     moonG.position.set(19, 25, -62); scene.add(moonG);
+    // le soleil, au loin sur l'horizon : un disque doré et sa couronne
+    const sunG = new THREE.Group(); sunG.add(halo(0xFFB45A, 70, 0.5), halo(0xFFE27A, 30, 0.8));
+    sunG.add(new THREE.Mesh(new THREE.SphereGeometry(5.5, 32, 20), new THREE.MeshBasicMaterial({ color: 0xFFE9A8, fog: false })));
+    sunG.position.set(-36, 15, -64); scene.add(sunG);
     const planet = M ? M.SYMS[3]() : new THREE.Group(); planet.scale.setScalar(4.2); planet.position.set(-24, 24, -58); scene.add(planet);
     // astres lointains : ni brouillard ni ombre trop dure, ils luisent doucement
     const skyLit = o => o.traverse(m => { if (m.isMesh && m.material && m.material.side !== THREE.BackSide) { m.material = m.material.clone(); m.material.fog = false; if (m.material.emissive && !m.material.isMeshBasicMaterial && m.material.color) { m.material.emissive = m.material.color.clone(); m.material.emissiveIntensity = 0.35; } } });
@@ -1469,6 +1473,7 @@ const DECOR3D = (K, M) => ({
         aurU.uTime.value = t; aurU.uStr.value = 0.3 + b * 0.75;
         stars.userData.u.uTime.value = t; stars.userData.u.uOpacity.value = 0.85 + b * 0.15; milky.userData.u.uTime.value = t;
         hemi.color = lerp(0x9FB0FF, 0x9FF0E0, b * 0.5);
+        sunG.children[0].material.opacity = 0.45 + Math.sin(t * 0.6) * 0.06; sunG.children[1].scale.setScalar(30 + Math.sin(t * 1.1) * 1.5);
         moonG.position.y = 25 + Math.sin(t * 0.2) * 0.8; moonG.rotation.z = Math.sin(t * 0.15) * 0.08;
         planet.rotation.y = t * 0.15; planet.position.y = 24 + Math.sin(t * 0.25 + 1) * 0.6;
         blades.rotation.z = -t * 0.8; dome.rotation.y = Math.sin(t * 0.1) * 0.6; scope.rotation.x = -0.8 + Math.sin(t * 0.3) * 0.1;

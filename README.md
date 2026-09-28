@@ -2,7 +2,7 @@
 
 ## La Promenade (le lobby)
 
-`index.html` est **la Promenade** : un boulevard de nuit en 3D sous la pluie, où chaque machine est une borne d'arcade avec son enseigne néon et son décor. Tu glisses pour te promener, et quand tu touches une borne, la caméra plonge dans son écran et la machine s'ouvre. Au bout du boulevard, **le Grand Levier** choisit une machine au hasard.
+`index.html` est **la Promenade** : une allée de bornes d'arcade en 3D, chacune avec son enseigne néon et ses personnages. Derrière la borne que tu regardes s'ouvre le monde de sa machine : la ville détruite en feu et ses zombies pour Dead City, la forêt d'automne et ses animaux pour Champi Pop, l'espace avec le soleil, la lune et les étoiles pour Constella. Tu glisses pour te promener, et quand tu touches une borne, la caméra plonge dans son écran et la machine s'ouvre. Au bout du boulevard, **le Grand Levier** choisit une machine au hasard.
 
 - **Lucioles** : la monnaie fictive de la Promenade, partagée entre toutes les machines (5 000 au départ).
 - **Coffre du jour** : des lucioles chaque jour, avec un bonus quand tu reviens plusieurs jours de suite (7 jours affichés).

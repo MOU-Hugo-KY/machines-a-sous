@@ -12,14 +12,29 @@
       "couleur": "#FF5A3A",
       "badge": "Nouveau",
       "desc": "La ville est tombée. Cascades de zombies, jauge d'invasion, horde et patient zéro.",
-      "tags": ["3D", "Zombies", "Cascades"],
+      "tags": [
+        "3D",
+        "Zombies",
+        "Cascades"
+      ],
       "bonus": "1 / 280",
       "grille": "5×5 grappes",
       "max": "50 000×",
       "trophees": [
-        { "id": "ville", "flag": "ville", "nom": "La ville est tombée", "desc": "Remplir la jauge d'invasion jusqu'à 100 %." },
-        { "id": "extraction", "flag": "extraction", "nom": "Hélico en vue", "desc": "Réussir une extraction jusqu'au toit." }
-      ]
+        {
+          "id": "ville",
+          "flag": "ville",
+          "nom": "La ville est tombée",
+          "desc": "Remplir la jauge d'invasion jusqu'à 100 %."
+        },
+        {
+          "id": "extraction",
+          "flag": "extraction",
+          "nom": "Hélico en vue",
+          "desc": "Réussir une extraction jusqu'au toit."
+        }
+      ],
+      "decor": ".claude/skills/machine-a-sous/kit/decor-dead-city.js"
     },
     {
       "id": "champi-pop",
@@ -31,13 +46,23 @@
       "modeles": ".claude/skills/machine-a-sous/kit/exemple-champi.js",
       "couleur": "#FFB23D",
       "desc": "Champignons qui poussent dans une forêt d'automne. La grille grandit pendant le bonus.",
-      "tags": ["3D", "Forêt", "Chemins"],
+      "tags": [
+        "3D",
+        "Forêt",
+        "Chemins"
+      ],
       "bonus": "1 / 325",
       "grille": "6×6 chemins",
       "max": "50 000×",
       "trophees": [
-        { "id": "amanites", "flag": "amanites", "nom": "Reine des amanites", "desc": "Faire évoluer les champignons jusqu'à l'amanite pendant un bonus." }
-      ]
+        {
+          "id": "amanites",
+          "flag": "amanites",
+          "nom": "Reine des amanites",
+          "desc": "Faire évoluer les champignons jusqu'à l'amanite pendant un bonus."
+        }
+      ],
+      "decor": ".claude/skills/machine-a-sous/kit/decor-champi.js"
     },
     {
       "id": "constella",
@@ -49,13 +74,24 @@
       "modeles": ".claude/skills/machine-a-sous/kit/exemple-constella.js",
       "couleur": "#8FA8FF",
       "desc": "Observatoire sous les aurores. Les étoiles restent au ciel et dessinent des constellations.",
-      "tags": ["3D", "Étoiles", "Chemins"],
+      "tags": [
+        "3D",
+        "Étoiles",
+        "Chemins"
+      ],
       "bonus": "1 / 325",
       "grille": "6×6 chemins",
       "max": "50 000×",
       "trophees": [
-        { "id": "ciel", "compte": "constellations", "seuil": 10, "nom": "Carte du ciel", "desc": "Dessiner 10 constellations." }
-      ]
+        {
+          "id": "ciel",
+          "compte": "constellations",
+          "seuil": 10,
+          "nom": "Carte du ciel",
+          "desc": "Dessiner 10 constellations."
+        }
+      ],
+      "decor": ".claude/skills/machine-a-sous/kit/decor-constella.js"
     }
   ]
 }
