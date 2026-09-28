@@ -1614,7 +1614,7 @@ addEventListener('keydown', e => {
 
 // ---------- le boulevard en 3D ----------
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
-const SP = 4.4; // écart entre deux bornes
+let SP = 4.4; // écart entre deux bornes : recalculé selon l'écran pour que la borne regardée soit seule devant son monde
 async function world() {
   const THREE = await import(THREE_URL);
   await (document.fonts ? document.fonts.ready.catch(() => {}) : Promise.resolve());
@@ -1730,7 +1730,11 @@ async function world() {
   // ---------- caméra, navigation, plongée ----------
   let camX = focus * SP, camT = camX, drag = null, paused = false, plungeK = 0, plungeTo = 0, plungeCb = null, t = 0, last = performance.now();
   const narrow = () => innerWidth / innerHeight < .8;
-  function size() { const w = innerWidth, h = innerHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); for (const x of [...worlds, lvWorld]) if (x) { x.dc.aspect = w / h; x.dc.updateProjectionMatrix(); } }
+  // l'écart : la demi-largeur vue par la caméra, plus la demi-largeur d'une borne et de ses personnages → les voisines restent hors champ
+  function spacing(a) { const D = a < .8 ? 12.5 : 11; return Math.max(5.5, D * Math.tan(24 * Math.PI / 180) * a + 2.7); }
+  function size() { const w = innerWidth, h = innerHeight; r.setSize(w, h, false);
+    const old = SP; SP = spacing(w / h); camX *= SP / old; camT *= SP / old;
+    cabs.forEach((c, i) => { c.grp.position.x = i * SP; }); lv.position.x = N * SP + .4; cam.aspect = w / h; cam.updateProjectionMatrix(); for (const x of [...worlds, lvWorld]) if (x) { x.dc.aspect = w / h; x.dc.updateProjectionMatrix(); } }
   addEventListener('resize', size); size();
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, cam: camT, moved: false }; cv.setPointerCapture(e.pointerId); $('hint').classList.add('gone'); });
