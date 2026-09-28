@@ -9,7 +9,7 @@ Toutes les machines du dépôt partagent le même squelette : une grille 6×6 qu
 
 - `jeux/constella.html` : observatoire de nuit. Bonus à **étoiles collantes** : les étoiles restent au ciel, et une forme de constellation qui se dessine paie et déclenche son pouvoir. Le fichier le plus court (~1 300 lignes), le meilleur point de départ par défaut.
 - `jeux/champi-pop.html` : forêt d'automne. Bonus en **grille qui grandit** : des champignons paient en chemins, avec des pouvoirs (nouvelle ligne, évolution du symbole, +1 spin, rond de sorcière…).
-- `jeux/constella-3d.html` : Constella, mais **en 3D**. Les symboles sont des personnages Three.js cuits en animations fluides, et une ronde 3D en direct accompagne l'entrée du bonus et les gros gains. C'est le point de départ d'une machine en 3D.
+- `jeux/constella-3d.html` et `jeux/champi-pop-3d.html` : les deux mêmes, **en 3D**. Les symboles sont des personnages Three.js cuits en animations fluides, un **décor 3D vivant entoure la machine** (colline étoilée avec aurores, forêt d'automne qui passe à la nuit), et une ronde 3D en direct accompagne l'entrée du bonus et les gros gains. C'est le point de départ d'une machine en 3D.
 
 Avant d'écrire du code, lis `references/architecture.md` : il décrit les modules, les identifiants du DOM à garder, le contrat du moteur et les maths du RTP. Pour une machine en 3D, lis aussi `references/3d.md` (kit 3D, écriture des modèles, branchement).
 
@@ -24,7 +24,7 @@ Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va ju
 - **Le monde autour** : ce qui trône au-dessus de la machine (toit, dôme, figure de proue…), le paysage au fond, et 3 à 6 habitants animés au sol (animaux, personnages) qui font chacun leur petite vie.
 - **Musique** : une ambiance pour le jeu de base et une autre pour le bonus (tonalité, instruments synthétisés, tempo), plus les bruits d'ambiance (vent, vagues, grillons…).
 - **Les 4 paliers de gros gain** : le dernier porte un nom au thème (« Supernova ! », « Champi-tastique ! »).
-- **Rendu** : **2D** (SVG dessinés à la main) ou **3D** (personnages modélisés, ombrage dessin animé, animations de repos et de victoire, ronde 3D sur les grands moments). Choisis la 3D si on la demande ou si on parle de modèles, de rendu « clean » ou « pro ». Sinon, garde la 2D et propose la 3D en une ligne.
+- **Rendu** : **2D** (SVG dessinés à la main) ou **3D** (personnages modélisés, ombrage dessin animé, animations de repos et de victoire, décor 3D vivant autour de la machine, ronde 3D sur les grands moments). En 3D, décris aussi le décor : ses 4 plans, ce qui bouge et ce que change le bonus. Choisis la 3D si on la demande ou si on parle de modèles, de rendu « clean » ou « pro ». Sinon, garde la 2D et propose la 3D en une ligne.
 
 ## 2. Construire
 
@@ -36,7 +36,7 @@ Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va ju
    4. **Topper et enseigne** : le logo en lettres de couleurs qui ondulent, et les boutons musique/son/infos.
    5. **`Snd`** : réécris la musique (accords, mélodie, instruments) des deux ambiances, l'ambiance sonore et les bruitages du thème. Garde toutes les fonctions `fx` qu'appelle l'interface commune (liste dans l'architecture).
    6. **`ENGINE`** : garde le jeu de base à l'identique. Adapte `TIER`, et le bonus si la mécanique change.
-   7. **`ART`** : 8 symboles + scatter + éléments du bonus, en SVG `viewBox="0 0 64 64"` dessinés à la main (contour sombre ~2,2 px, dégradés, reflet blanc, visage et joues roses). Aucune image externe, aucun emoji. **En 3D**, écris aussi `ART3D_MODELS` (mêmes symboles, dans le même ordre) en suivant `references/3d.md`. Les SVG restent l'affichage de secours pendant le chargement et hors ligne.
+   7. **`ART`** : 8 symboles + scatter + éléments du bonus, en SVG `viewBox="0 0 64 64"` dessinés à la main (contour sombre ~2,2 px, dégradés, reflet blanc, visage et joues roses). Aucune image externe, aucun emoji. **En 3D**, écris aussi `ART3D_MODELS` (mêmes symboles, dans le même ordre) et `DECOR3D` en suivant `references/3d.md`, puis assemble le tout avec `scripts/passer-en-3d.py`. Les SVG restent l'affichage de secours pendant le chargement et hors ligne.
    8. **`FX`** : particules au thème (feuilles, bulles, flocons, étincelles…) sur le même canevas, avec les mêmes fonctions (`burst`, `rain`, `firework`…).
    9. **`WORLD`** : les habitants du sol et leurs animations CSS (marche, clignement, queue…).
    10. **Interface** : textes et messages (`msg`, `toast`, entrée du bonus, fin du bonus, règles, offres d'achat, `WIN_TIERS`), le HUD du bonus et l'affichage de la mécanique.
@@ -82,5 +82,5 @@ Compare-toi à Champi Pop et Constella. Une machine est terminée quand :
 - la mécanique du bonus se comprend en regardant : animations pour chaque pouvoir, HUD clair, texte d'entrée qui l'explique en deux phrases ;
 - la musique et les bruitages sont faits avec Web Audio, sans fichier son, et coupables séparément ;
 - `prefers-reduced-motion` coupe les animations, les boutons ont un `aria-label` et un focus visible, et tout tient à 390 px de large ;
-- en 3D : chaque personnage se lit bien en 50 px, les contours sont nets, aucun ne sort de sa case pendant le saut de victoire, et chacun a sa propre petite animation ;
+- en 3D : le décor a de la profondeur, au moins 8 animations et une vraie bascule d'ambiance au bonus, et il reste beau sur téléphone comme sur ordinateur (regarde les deux captures d'accueil) ; chaque personnage se lit bien en 50 px, les contours sont nets, aucun ne sort de sa case pendant le saut de victoire, et chacun a sa propre petite animation ;
 - `rtp.js` et `check.js` passent.

@@ -50,7 +50,7 @@ const KIT3D = THREE => {
     extrude: (shape, depth = 0.3, bevel = 0.08) => { const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 6, curveSegments: 32 }); g.center(); g.computeVertexNormals(); return g; },
     star: (R = 1, r = 0.45, n = 5) => { const s = new THREE.Shape(); for (let i = 0; i < n * 2; i++) { const a = Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r : R; i ? s.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : s.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } return s; },
     // bosselle une sphère (rochers, nuages, buissons) ; graine fixe pour garder la même forme
-    lumpy: (r = 1, amp = 0.12, seed = 1) => { const g = new THREE.IcosahedronGeometry(r, 5), p = g.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = Math.sin(v.x * 3.1 + seed) * Math.sin(v.y * 2.7 + seed * 2) * Math.sin(v.z * 3.3 + seed * 3); v.multiplyScalar(1 + n * amp); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals(); return g; },
+    lumpy: (r = 1, amp = 0.12, seed = 1, detail = 5) => { const g = new THREE.IcosahedronGeometry(r, detail), p = g.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = Math.sin(v.x * 3.1 + seed) * Math.sin(v.y * 2.7 + seed * 2) * Math.sin(v.z * 3.3 + seed * 3); v.multiplyScalar(1 + n * amp); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals(); return g; },
   };
   function roundedBox(w, h, d, r) {
     const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r;
@@ -174,7 +174,32 @@ const KIT3D = THREE => {
       stop() { cancelAnimationFrame(raf); fn = null; canvas.style.display = 'none'; root.clear(); },
     };
   }
-  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, html, live, INK };
+  // ---------- décor : ciel en dégradé, nuées de points lumineux ----------
+  // ciel : grande sphère vue de l'intérieur, trois couleurs (haut, horizon, bas) qu'on peut changer à chaque image
+  function sky(top, mid, bottom, r = 90) {
+    const u = { top: { value: new THREE.Color(top) }, mid: { value: new THREE.Color(mid) }, bottom: { value: new THREE.Color(bottom) } };
+    const m = new THREE.ShaderMaterial({ uniforms: u, side: THREE.BackSide, depthWrite: false, fog: false,
+      vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 top, mid, bottom; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(mid, top, pow(clamp(h * 1.6, 0.0, 1.0), 0.8)) : mix(mid, bottom, clamp(-h * 3.0, 0.0, 1.0)); gl_FragColor = vec4(c, 1.0);\n#include <colorspace_fragment>\n}' });
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), m); mesh.renderOrder = -10; mesh.userData.u = u;
+    return mesh;
+  }
+  // points doux qui scintillent (étoiles, lucioles, spores, poussière) ; pos(i) -> [x, y, z], col(i) -> couleur
+  // opts : { size, additive, twinkle (vitesse), opacity } ; la nuée expose .userData.u (uTime, uOpacity, uSize)
+  function dots(n, pos, col, o = {}) {
+    const P = new Float32Array(n * 3), C = new Float32Array(n * 3), F = new Float32Array(n), c = new THREE.Color();
+    for (let i = 0; i < n; i++) { const p = pos(i); P.set(p, i * 3); c.set(col(i)); C.set([c.r, c.g, c.b], i * 3); F[i] = Math.random() * 6.28; }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3)); g.setAttribute('aPh', new THREE.BufferAttribute(F, 1));
+    const u = { uTime: { value: 0 }, uOpacity: { value: o.opacity ?? 1 }, uSize: { value: o.size ?? 6 }, uTw: { value: o.twinkle ?? 1 }, uPx: { value: Math.min(1.5, devicePixelRatio || 1) } };
+    const m = new THREE.ShaderMaterial({ uniforms: u, transparent: true, depthWrite: false, blending: o.additive === false ? THREE.NormalBlending : THREE.AdditiveBlending, vertexColors: true,
+      vertexShader: 'attribute float aPh; uniform float uTime, uSize, uTw, uPx; varying vec3 vC; varying float vA; void main(){ vC = color; vA = 0.55 + 0.45 * sin(uTime * uTw + aPh); vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = uSize * uPx * (0.7 + 0.3 * vA) * (30.0 / -mv.z); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform float uOpacity; varying vec3 vC; varying float vA; void main(){ vec2 d = gl_PointCoord - 0.5; float r = length(d); if (r > 0.5) discard; float a = smoothstep(0.5, 0.0, r); a = a * a; gl_FragColor = vec4(vC, a * vA * uOpacity);\n#include <colorspace_fragment>\n}' });
+    const pts = new THREE.Points(g, m); pts.userData.u = u; pts.frustumCulled = false;
+    return pts;
+  }
+  const lerpColor = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, html, live, INK, sky, dots, lerpColor };
 };
 
 // ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
@@ -183,10 +208,12 @@ const KIT3D = THREE => {
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
 const STAGE3D = { intro() {}, big() {}, stop() {} }; // sans 3D, ces appels ne font rien
 window.ART3D_STATE = 'chargement';
-async function CHARGE3D(ART, MODELS) {
+// DECOR (facultatif) : décor 3D en fond d'écran, voir setupDecor
+async function CHARGE3D(ART, MODELS, DECOR) {
   try {
     const THREE = await import(THREE_URL);
     const K = KIT3D(THREE), M = MODELS(K), frame = () => new Promise(r => requestAnimationFrame(r));
+    if (DECOR) { try { setupDecor(K, DECOR, M); } catch (e) { console.warn('décor 3D indisponible :', e); } await frame(); }
     const syms = [];
     for (const f of M.SYMS) { syms.push(K.html(await K.bake(f()))); await frame(); }
     const scat = K.html(await K.bake(M.SCAT()));
@@ -231,4 +258,46 @@ function setupStage(K, M) {
   STAGE3D.intro = n => ring(Array.from({ length: Math.min(n, 6) }, () => M.SCAT()), false);
   STAGE3D.big = tier => ring(M.SYMS.slice(tier >= 4 ? 0 : 4).map(f => f()), true);
   STAGE3D.stop = () => st.stop();
+}
+
+// ---------- décor 3D en fond d'écran ----------
+// DECOR(K, M) renvoie { build(scene, cam) -> { update(t, dt, s) } } ; M = les modèles de la machine (pour réutiliser ses personnages). build place la caméra (cam.position) et sa cible
+// (cam.userData.target, un Vector3) ; camFor(aspect) (facultatif) renvoie { pos, target } pour recadrer sur téléphone ; update anime la scène à chaque image, avec s = { bonus: 0 → 1 (transition douce),
+// px, py : position du doigt ou de la souris (-1 → 1), scroll : 0 → 1 }. Le kit ajoute une légère parallaxe à la caméra.
+// Une fois la première image affichée, <body> reçoit la classe decor3d : c'est au CSS de la page de masquer alors le décor 2D.
+function setupDecor(K, DECOR, M) {
+  const { THREE } = K, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cv = document.createElement('canvas'); cv.id = 'decor3d'; cv.setAttribute('aria-hidden', 'true');
+  document.body.prepend(cv);
+  const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+  r.setPixelRatio(Math.min(1.5, devicePixelRatio || 1)); r.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+  cam.userData.target = new THREE.Vector3(0, 2, 0);
+  const d = DECOR(K, M).build(scene, cam);
+  const base = cam.position.clone(), tgt = cam.userData.target.clone();
+  const size = () => {
+    const w = innerWidth, h = innerHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+    const c = d.camFor?.(cam.aspect); if (c) { base.copy(c.pos); tgt.copy(c.target); } // cadrage selon la forme de l'écran
+  };
+  addEventListener('resize', size); size();
+  const s = { bonus: 0, px: 0, py: 0, scroll: 0 }; let tx = 0, ty = 0, last = performance.now(), t = 0, shown = false;
+  addEventListener('pointermove', e => { tx = e.clientX / innerWidth * 2 - 1; ty = e.clientY / innerHeight * 2 - 1; }, { passive: true });
+  addEventListener('deviceorientation', e => { if (e.gamma != null) { tx = Math.max(-1, Math.min(1, e.gamma / 30)); ty = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); } }, { passive: true });
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!document.hidden) {
+      t += dt;
+      const target = document.body.classList.contains('bonus') ? 1 : 0;
+      s.bonus += (target - s.bonus) * (reduce ? 1 : Math.min(1, dt * 1.2));
+      s.px += (tx - s.px) * Math.min(1, dt * 2); s.py += (ty - s.py) * Math.min(1, dt * 2);
+      const sh = document.documentElement.scrollHeight - innerHeight; s.scroll = sh > 0 ? scrollY / sh : 0;
+      cam.position.set(base.x + s.px * 0.8, base.y - s.py * 0.35 - s.scroll * 1.2, base.z);
+      cam.lookAt(tgt.x + s.px * 0.3, tgt.y - s.scroll * 1.6, tgt.z);
+      d.update(reduce ? 4 : t, reduce ? 0 : dt, s);
+      r.render(scene, cam);
+      if (!shown) { shown = true; document.body.classList.add('decor3d'); }
+    }
+    reduce ? setTimeout(() => requestAnimationFrame(frame), 400) : requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
