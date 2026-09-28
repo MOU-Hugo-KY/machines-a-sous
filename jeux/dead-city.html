@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dead City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A0F14; --paper:#FFF1DC; --night:#140A12; --night2:#2A1220; --blood:#E0331E; --ember:#FF7A1F; --sun:#FFB23D; --hazard:#FFC21A;
+  --toxic:#7CFF4F; --toxic2:#3FBF2A; --cop:#3AA0FF; --steel:#4A3F4E; --steel2:#2E2632; --rust:#9A4A22; --hi:#FFE27A;
+  --cell:#2A2030; --cellb:#4E3C52;
+  --display:"Bangers","Baloo 2","Impact",system-ui,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+body.bonus{ --cell:#1E2A1C; --cellb:#3E5A34; }
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%}
+body{margin:0; min-height:100%; color:var(--paper); background:var(--night); font-family:"Baloo 2","Trebuchet MS",system-ui,sans-serif; font-weight:500; overflow-x:hidden}
+button{font:inherit; color:inherit}
+/* ---------- la ville en fond (version 2D) ---------- */
+.scene{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+.scene svg{position:absolute; inset:0; width:100%; height:100%}
+.beam{transform-box:fill-box; transform-origin:50% 100%; animation:beam 7s ease-in-out infinite alternate}
+.beam.b2{animation-duration:9s; animation-delay:-3s}
+@keyframes beam{from{transform:rotate(-28deg)}to{transform:rotate(26deg)}}
+.smoke{animation:smk 14s linear infinite} .smoke.s2{animation-duration:19s; animation-delay:-7s}
+@keyframes smk{from{transform:translate(-80px,0)}to{transform:translate(120px,-60px)}}
+.winflick{animation:wf 3s steps(2) infinite} .winflick.w2{animation-duration:4.4s} .winflick.w3{animation-duration:2.2s}
+@keyframes wf{50%{opacity:.25}}
+.fire{animation:firef .25s steps(2) infinite alternate; transform-box:fill-box; transform-origin:50% 100%}
+@keyframes firef{to{transform:scaleY(1.15) scaleX(.92)}}
+/* ---------- la machine ---------- */
+main{position:relative; z-index:1; max-width:480px; margin:0 auto; padding:6px 10px 20px}
+main.shake{animation:shake .5s}
+main.quake{animation:quake 1.1s}
+@keyframes shake{20%{transform:translate(-6px,2px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,3px)}80%{transform:translate(3px,-1px)}}
+@keyframes quake{10%,30%,50%,70%,90%{transform:translate(-7px,3px) rotate(-.4deg)}20%,40%,60%,80%{transform:translate(7px,-3px) rotate(.4deg)}}
+.topper{position:relative; height:132px; margin:0 -2px -18px; z-index:2}
+.topper svg.sign{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+.lamp{animation:lamp .9s steps(2) infinite} .lamp.l2{animation-delay:.45s}
+@keyframes lamp{50%{opacity:.15}}
+.neon{animation:neon 5s infinite}
+@keyframes neon{0%,18%,22%,62%,64%,100%{opacity:1} 20%,63%{opacity:.35}}
+.logo{position:absolute; left:0; right:0; top:26px; text-align:center; margin:0; pointer-events:none}
+.logo b{display:block; font-family:var(--display); font-weight:400; font-size:clamp(2.6rem, 13vw, 3.6rem); line-height:.9; letter-spacing:.04em; color:#FFE9D6;
+  text-shadow:0 0 6px #FF5A1F, 0 0 18px #FF3A1F, 3px 3px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink); transform:rotate(-3deg)}
+.logo b span{display:inline-block; animation:neon 5s infinite}
+.logo b span:nth-child(3){animation-delay:-2.1s} .logo b span:nth-child(7){animation-delay:-3.7s}
+.logo i{display:inline-block; margin-top:4px; font-family:var(--display); font-style:normal; font-size:clamp(1rem, 5vw, 1.3rem); letter-spacing:.2em; color:var(--ink);
+  background:repeating-linear-gradient(-45deg, var(--hazard) 0 12px, #1A0F14 12px 22px); padding:1px 12px; border:2px solid var(--ink); transform:rotate(2deg); position:relative; left:-48px}
+.logo i em{font-style:normal; background:var(--hazard); padding:0 6px}
+.hbtns{position:absolute; right:0; bottom:22px; display:flex; gap:5px; z-index:3}
+.ico{width:31px; height:31px; border-radius:50%; border:2.5px solid var(--ink); background:radial-gradient(circle at 35% 30%, #FFF6E6, #D8C7B4); display:grid; place-items:center; cursor:pointer; padding:0; box-shadow:0 3px 0 var(--ink)}
+.ico svg{width:17px; height:17px}
+.ico[aria-pressed="false"]{opacity:.45}
+.ico:focus-visible,.btn:focus-visible,.spin:focus-visible,.pm:focus-visible,.door:focus-visible{outline:3px dashed var(--hi); outline-offset:3px}
+.cabinet{position:relative; border-radius:22px; padding:12px 10px 14px; border:4px solid var(--ink);
+  background:radial-gradient(circle at 12% 18%, rgba(154,74,34,.55) 0 18px, transparent 40px), radial-gradient(circle at 88% 72%, rgba(154,74,34,.45) 0 14px, transparent 34px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 2px, transparent 2px 7px), linear-gradient(180deg, var(--steel), var(--steel2));
+  box-shadow:inset 0 0 0 3px #6A5A6E, inset 0 0 0 6px var(--ink), 0 10px 0 var(--ink), 0 26px 60px rgba(0,0,0,.7), 0 0 50px rgba(255,90,31,.25)}
+.tape{position:absolute; left:-8px; right:-8px; height:16px; background:repeating-linear-gradient(-45deg, var(--hazard) 0 14px, var(--ink) 14px 26px); border:2px solid var(--ink); transform:rotate(-1.2deg); z-index:3}
+.tape.t1{top:-10px} .tape.t2{bottom:-8px; transform:rotate(1deg)}
+.bolt{position:absolute; width:11px; height:11px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #D8C7B4, #5A4A5E 70%); border:2px solid var(--ink)}
+/* jauge d'invasion */
+.gauge{display:flex; align-items:center; gap:8px; margin:4px 2px 8px}
+.gauge svg{width:26px; height:26px; flex:none}
+.gbar{position:relative; flex:1; height:20px; border-radius:10px; background:#1A1016; border:2.5px solid var(--ink); overflow:hidden; box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+.gfill{position:absolute; inset:0 auto 0 0; width:0%; background:repeating-linear-gradient(-45deg, rgba(0,0,0,.18) 0 8px, transparent 8px 16px), linear-gradient(90deg, #3FBF2A, #7CFF4F 60%, #D8FF4F); transition:width .8s cubic-bezier(.3,1.3,.5,1)}
+.gauge.hot .gfill{animation:hot .6s ease-in-out infinite alternate}
+@keyframes hot{to{filter:brightness(1.5) drop-shadow(0 0 6px #7CFF4F)}}
+.gtxt{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:.95rem; letter-spacing:.08em; color:#fff; text-shadow:0 1px 0 #000, 0 0 4px #000}
+.gauge.inv .gbar{border-color:var(--blood)} .gauge.inv .gfill{background:repeating-linear-gradient(-45deg, rgba(0,0,0,.25) 0 8px, transparent 8px 16px), linear-gradient(90deg, #8A1010, #E0331E)}
+.screen{position:relative; border-radius:16px; padding:7px; border:4px solid var(--ink); background:radial-gradient(ellipse at 50% 20%, #3A2A38, #1A1018); box-shadow:inset 0 0 0 2px var(--rust), inset 0 8px 20px rgba(0,0,0,.55)}
+body.inv .screen{box-shadow:inset 0 0 0 2px var(--blood), inset 0 0 30px rgba(224,51,30,.6)}
+.hud{display:none; align-items:center; justify-content:space-between; gap:6px; padding:2px 2px 7px; flex-wrap:wrap}
+body.bonus .hud{display:flex}
+.hud .tier{font-family:var(--display); font-size:1.22rem; letter-spacing:.05em; width:100%; display:flex; justify-content:space-between; gap:8px; white-space:nowrap; color:var(--toxic); text-shadow:2px 2px 0 #000}
+.chip{background:rgba(255,241,220,.07); border:2px solid rgba(255,194,26,.6); border-radius:999px; padding:1px 10px; font-size:.82rem; display:flex; align-items:center; gap:5px}
+.chip b{font-family:var(--display); font-weight:400; font-size:1.15rem; letter-spacing:.04em; color:var(--paper)}
+.chip.flash{animation:flash .7s ease-out}
+@keyframes flash{0%{background:var(--hazard); transform:scale(1.2)}100%{transform:none}}
+.floors{display:none; width:100%; align-items:center; gap:4px}
+body.ext .floors{display:flex}
+.floors .fl{flex:1; height:14px; border-radius:4px; background:#2A2030; border:2px solid var(--ink)}
+.floors .fl.on{background:linear-gradient(#FFD66B,#FF7A1F); box-shadow:0 0 8px #FFB23D}
+.floors svg{width:34px; height:24px; flex:none}
+.floors .heli.go{animation:heli .35s linear infinite}
+@keyframes heli{50%{transform:translateY(-2px)}}
+.gridwrap{border-radius:10px; position:relative}
+.grid{display:grid; grid-template-columns:repeat(5,1fr); gap:5px}
+.cell{aspect-ratio:1; background:radial-gradient(circle at 50% 40%, #3E3044, var(--cell)); border:2px solid var(--cellb); border-radius:11px; position:relative; display:grid; place-items:center; transition:opacity .3s}
+.cell svg{width:92%; height:92%; display:block; overflow:visible}
+.cell.pending svg{visibility:hidden}
+.cell.drop svg{animation:drop .42s cubic-bezier(.3,1.55,.55,1) both}
+.cell.popin svg{animation:pop .4s cubic-bezier(.3,1.6,.5,1) both}
+.grid.dimmed .cell:not(.win):not(.scatwin){opacity:.35}
+.cell.win{border-color:var(--toxic); box-shadow:0 0 0 2px var(--toxic), 0 0 14px rgba(124,255,79,.8); z-index:1}
+.cell.win svg{animation:squish .5s ease-in-out infinite alternate}
+.cell.boom svg{animation:boom .35s ease-in forwards}
+@keyframes boom{40%{transform:scale(1.25) rotate(8deg)}100%{transform:scale(0) rotate(-20deg); opacity:0}}
+.cell.antic{animation:antic .4s ease-in-out infinite alternate}
+@keyframes antic{from{box-shadow:0 0 0 2px var(--blood)}to{box-shadow:0 0 0 3px #FF6A4F, 0 0 18px var(--blood)}}
+.cell.scat::after{content:""; position:absolute; inset:-4px; border-radius:50%; border:3px solid var(--blood); animation:ring .7s ease-out forwards; pointer-events:none}
+@keyframes ring{from{transform:scale(.4); opacity:1}to{transform:scale(1.5); opacity:0}}
+.cell.scatwin{z-index:2; box-shadow:0 0 0 3px var(--blood), 0 0 24px 6px rgba(224,51,30,.9)}
+.cell.scatwin svg{animation:scatpulse .5s ease-in-out infinite alternate}
+@keyframes scatpulse{from{transform:scale(1)}to{transform:scale(1.18) rotate(-5deg)}}
+.cell.sticky{border-color:var(--toxic2); background:radial-gradient(circle at 50% 40%, #2E5A24, #16301A)}
+.cell.infected::before{content:""; position:absolute; inset:0; border-radius:9px; background:radial-gradient(circle at 30% 30%, rgba(124,255,79,.55), rgba(63,191,42,.25)); box-shadow:inset 0 0 0 2px var(--toxic); z-index:1; pointer-events:none; animation:inf .8s ease-in-out infinite alternate}
+@keyframes inf{to{opacity:.5}}
+.cell.zero{box-shadow:0 0 0 3px #B6FF3A, 0 0 26px 6px rgba(124,255,79,.9); z-index:2}
+.cell.bite svg{animation:bite .5s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes bite{0%{transform:scale(.2) rotate(-40deg)}60%{transform:scale(1.3) rotate(10deg)}100%{transform:none}}
+.cell.powhit{box-shadow:0 0 0 3px var(--hazard), 0 0 22px var(--hazard); z-index:2}
+.cell.powhit svg{animation:pulse .45s ease-in-out 3}
+@keyframes drop{from{transform:translateY(-90%) scale(.9); opacity:0}to{transform:none; opacity:1}}
+@keyframes squish{0%{transform:scale(1,1)}40%{transform:scale(1.08,.92) translateY(2px)}100%{transform:scale(.95,1.07) translateY(-3px)}}
+@keyframes pulse{50%{transform:scale(1.22)}}
+@keyframes pop{from{transform:scale(.3)}to{transform:none}}
+.pow{position:absolute; left:50%; top:45%; transform:translate(-50%,-50%) rotate(-8deg); z-index:6; pointer-events:none; font-family:var(--display); font-size:2.6rem; letter-spacing:.05em; color:var(--ink);
+  background:var(--hazard); padding:4px 16px; clip-path:polygon(0 20%,10% 0,22% 18%,38% 2%,50% 16%,64% 0,76% 16%,90% 2%,100% 22%,92% 44%,100% 64%,90% 82%,100% 100%,74% 88%,58% 100%,44% 86%,28% 100%,16% 84%,0 96%,8% 62%,0 42%); animation:powin 1.1s ease-out forwards}
+@keyframes powin{0%{transform:translate(-50%,-50%) scale(.2) rotate(-30deg)}15%{transform:translate(-50%,-50%) scale(1.2) rotate(-8deg)}75%{opacity:1}100%{transform:translate(-50%,-50%) scale(1) rotate(-8deg); opacity:0}}
+.float{position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); font-family:var(--display); font-size:2.1rem; letter-spacing:.04em; color:var(--toxic); pointer-events:none; z-index:5; white-space:nowrap;
+  text-shadow:3px 3px 0 var(--ink), -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink); animation:rise 1.2s ease-out forwards}
+@keyframes rise{from{opacity:0; transform:translate(-50%,-20%) scale(.6)}20%{opacity:1; transform:translate(-50%,-50%) scale(1.15)}to{opacity:0; transform:translate(-50%,-130%)}}
+.horde{position:absolute; inset:0; z-index:6; pointer-events:none; overflow:hidden}
+.horde span{position:absolute; width:26%; animation:run 1.6s linear forwards}
+.horde span svg{width:100%; display:block; animation:lurch .3s ease-in-out infinite alternate}
+@keyframes run{from{transform:translateX(-140%)}to{transform:translateX(520%)}}
+@keyframes lurch{from{transform:rotate(-8deg) translateY(0)}to{transform:rotate(6deg) translateY(-6px)}}
+/* Last Stand */
+.stand{display:none; flex-direction:column; align-items:center; gap:10px; padding:6px 2px 4px}
+body.st .stand{display:flex} body.st .gridwrap{display:none}
+.pot{font-family:var(--display); font-size:2.4rem; letter-spacing:.05em; color:var(--hazard); text-shadow:3px 3px 0 var(--ink); line-height:1}
+.pot small{display:block; font-family:"Baloo 2"; font-size:.8rem; color:var(--paper); text-shadow:none; letter-spacing:0; text-align:center}
+.doors{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:100%}
+.door{position:relative; aspect-ratio:.62; border:3px solid var(--ink); border-radius:10px 10px 4px 4px; cursor:pointer; padding:0; overflow:hidden; background:#1A0F14; box-shadow:0 5px 0 var(--ink)}
+.door .leaf{position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 3px, transparent 3px 16px), linear-gradient(90deg,#8A5A34,#6A4020); transform-origin:0 50%; transition:transform .55s cubic-bezier(.5,-0.2,.4,1.2); display:grid; place-items:center; z-index:2}
+.door .leaf::after{content:""; position:absolute; right:12%; top:52%; width:12%; aspect-ratio:1; border-radius:50%; background:var(--hazard); border:2px solid var(--ink)}
+.door .plank{position:absolute; left:-10%; right:-10%; height:12%; background:#B07A48; border:2px solid var(--ink); z-index:3; transition:opacity .3s}
+.door .plank.p1{top:24%; transform:rotate(-12deg)} .door .plank.p2{top:62%; transform:rotate(9deg)}
+.door .lbl{position:absolute; bottom:4%; left:0; right:0; text-align:center; font-family:var(--display); letter-spacing:.06em; font-size:1rem; z-index:4; color:var(--paper); text-shadow:2px 2px 0 var(--ink)}
+.door .behind{position:absolute; inset:8%; display:grid; place-items:center; z-index:1}
+.door .behind svg{width:100%}
+.door.open .leaf{transform:perspective(400px) rotateY(-105deg)} .door.open .plank{opacity:0}
+.door.dim{opacity:.55} .door:disabled{cursor:default}
+.door.picked{box-shadow:0 0 0 3px var(--hazard), 0 5px 0 var(--ink)}
+.standlog{min-height:1.4em; text-align:center; font-weight:800}
+.btn.flee{background:linear-gradient(#FFE27A,#FFB23D); height:44px; padding:0 18px; font-size:.85rem}
+/* ---------- tableau de commande ---------- */
+.msg{min-height:1.5em; text-align:center; font-weight:800; margin:9px 0 2px; color:var(--paper); text-shadow:0 2px 0 var(--ink)}
+.deck{margin-top:6px; display:flex; flex-direction:column; gap:9px}
+.meters{display:grid; grid-template-columns:1fr auto 1fr; gap:6px}
+.meter{border-radius:12px; padding:3px 10px; display:flex; flex-direction:column; justify-content:center; min-width:0; background:linear-gradient(#1A1016,#0E080C); border:2.5px solid var(--ink); box-shadow:inset 0 0 0 1.5px rgba(255,122,31,.5)}
+.meter small{font-size:.68rem; color:#D8B8A8}
+.meter b{font-family:var(--display); font-weight:400; font-size:clamp(.92rem, 4.1vw, 1.25rem); letter-spacing:.02em; color:var(--ember); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 0 8px rgba(255,122,31,.5); font-variant-numeric:tabular-nums}
+.meter.r{text-align:right}
+.bet{display:flex; align-items:center; gap:4px; border-radius:12px; padding:3px; background:linear-gradient(#1A1016,#0E080C); border:2.5px solid var(--ink); box-shadow:inset 0 0 0 1.5px rgba(255,122,31,.5)}
+.bet .mid{display:flex; flex-direction:column; align-items:center; min-width:50px}
+.bet small{font-size:.66rem; color:#D8B8A8}
+.bet b{font-family:var(--display); font-weight:400; font-size:1.2rem; letter-spacing:.05em; color:var(--paper)}
+.pm{width:30px; height:30px; border-radius:50%; border:2px solid var(--ink); background:linear-gradient(#FFE27A,#FFB23D); font-weight:800; cursor:pointer; padding:0; line-height:1; color:var(--ink)}
+.row{display:flex; align-items:center; justify-content:space-between; gap:6px}
+.btn{height:50px; min-width:52px; border-radius:12px; border:3px solid var(--ink); background:linear-gradient(#F4E6D6,#C8B4A2); color:var(--ink); font-weight:800; font-size:.68rem; cursor:pointer; padding:0 6px;
+  box-shadow:0 4px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,.6); display:grid; place-items:center; line-height:1.05; text-align:center}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink)}
+.btn:disabled{opacity:.45; cursor:default}
+.btn.on{background:linear-gradient(#B6FF7A,#5FD83A)}
+.btn svg{width:22px; height:22px}
+.btn.buy{background:linear-gradient(#FF6A4F,#B3261E); color:var(--paper); text-shadow:0 1px 0 var(--ink)}
+.spin{width:90px; height:90px; flex:none; border-radius:50%; border:4px solid var(--ink); cursor:pointer; display:grid; place-items:center; padding:0; position:relative;
+  background:radial-gradient(circle at 35% 28%, #FF9A7A, #E0331E 50%, #7A1010 92%); box-shadow:0 6px 0 var(--ink), inset 0 -6px 12px rgba(0,0,0,.35), 0 0 0 5px rgba(255,194,26,.5), 0 0 26px rgba(224,51,30,.6)}
+.spin svg{width:50px; height:50px; transition:transform .5s}
+.spin.go svg{transform:rotate(360deg)}
+.spin:active{transform:translateY(4px); box-shadow:0 2px 0 var(--ink)}
+.spin:disabled{opacity:.6; cursor:default}
+.spin.stop{background:radial-gradient(circle at 35% 28%, #FFF6C2, #FFC21A 50%, #B98612 90%)}
+body.bonus .deck .row button, body.bonus .bet .pm{visibility:hidden}
+/* ---------- fenêtres ---------- */
+.overlay{position:fixed; inset:0; display:none; place-items:center; background:rgba(10,4,8,.72); padding:18px; z-index:20}
+.overlay.show{display:grid}
+.card{background:linear-gradient(180deg,#3A2A38,#1E141C); color:var(--paper); border:4px solid var(--ink); border-radius:18px; padding:20px; max-width:400px; width:100%; text-align:center;
+  box-shadow:inset 0 0 0 2px var(--rust), 0 8px 0 var(--ink), 0 0 40px rgba(224,51,30,.35); max-height:88vh; overflow-y:auto}
+.card h2{font-family:var(--display); font-weight:400; letter-spacing:.05em; margin:0 0 6px; font-size:2.2rem; color:var(--hazard); text-shadow:3px 3px 0 var(--ink)}
+.card p{margin:6px 0 14px; line-height:1.5}
+.card .btn{margin:4px auto 0; padding:0 22px}
+.choices{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:10px 0 14px}
+.offers{display:grid; gap:10px; margin:10px 0 14px}
+.offer{display:flex; align-items:center; gap:12px; text-align:left; background:linear-gradient(#3A2A38,#241A22); border:3px solid var(--ink); border-radius:14px; padding:10px 12px; cursor:pointer; box-shadow:0 4px 0 var(--ink), inset 0 0 0 1.5px var(--rust); color:var(--paper)}
+.offer:disabled{opacity:.45; cursor:default}
+.offer svg{width:54px; height:54px; flex:none; overflow:visible}
+.offer span{display:flex; flex-direction:column; gap:1px; font-size:.84rem}
+.offer strong{font-family:var(--display); font-weight:400; letter-spacing:.05em; font-size:1.35rem; color:var(--hazard)}
+.offer .price{font-weight:800; color:var(--toxic)}
+.rules{text-align:left}
+.rules h2{text-align:center}
+.rules h3{font-family:var(--display); font-weight:400; letter-spacing:.05em; font-size:1.3rem; margin:14px 0 4px; color:var(--toxic)}
+.rules table{width:100%; border-collapse:collapse; font-size:.8rem; margin:6px 0 8px; font-variant-numeric:tabular-nums}
+.rules td,.rules th{padding:3px 3px; text-align:center; border-bottom:1px solid rgba(216,184,168,.2)}
+.rules td svg{width:34px; height:34px; vertical-align:middle}
+.rules p,.rules li{font-size:.9rem; line-height:1.5}
+.rules ul{padding-left:18px; margin:4px 0 8px}
+.rules .tw{overflow-x:auto}
+.intro{position:fixed; inset:0; z-index:18; display:none; overflow:hidden; background:radial-gradient(circle, rgba(90,14,10,.94), rgba(8,2,6,.98))}
+.intro.show{display:grid}
+.intro.fall{background:#000; animation:fall 1.2s ease-out}
+@keyframes fall{0%{background:#fff}10%{background:#000}20%{background:#8A1010}35%{background:#000}}
+.layer{position:fixed; inset:0; z-index:20; display:none; place-items:center; pointer-events:none; padding:16px}
+.layer.show{display:grid}
+.layer.click{pointer-events:auto; cursor:pointer}
+.layer .btn{pointer-events:auto}
+.bigrays{position:absolute; left:50%; top:50%; width:220vmax; height:220vmax; margin:-110vmax 0 0 -110vmax; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg, rgba(255,90,31,.2) 0deg 7deg, transparent 7deg 18deg); animation:spin 26s linear infinite;
+  -webkit-mask:radial-gradient(circle, #000 0, transparent 55%); mask:radial-gradient(circle, #000 0, transparent 55%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.introbox{position:relative; text-align:center; padding:20px; max-width:430px}
+.medals{display:flex; justify-content:center; gap:4px; margin-bottom:10px; flex-wrap:wrap}
+.medals svg{width:74px; height:74px; overflow:visible; animation:medal .6s cubic-bezier(.3,1.6,.5,1) both}
+.introbox.many .medals svg{width:58px; height:58px}
+@keyframes medal{from{transform:translateY(-60vh) rotate(-200deg) scale(.4); opacity:0}to{transform:none; opacity:1}}
+.ititle{font-family:var(--display); font-size:3.4rem; line-height:1; letter-spacing:.05em; color:var(--hazard); text-shadow:4px 4px 0 var(--blood), 8px 8px 0 var(--ink), 0 0 30px rgba(255,90,31,.8); animation:stamp .55s cubic-bezier(.3,1.7,.5,1) both}
+@keyframes stamp{from{transform:scale(2.6) rotate(-8deg); opacity:0}to{transform:rotate(-3deg); opacity:1}}
+.isub{color:var(--paper); font-weight:700; margin:14px 0 18px; line-height:1.45; animation:fadein .5s both}
+@keyframes fadein{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+.introbox .btn{margin:0 auto; padding:0 26px; font-size:1rem; animation:fadein .5s both}
+.bigwin{position:fixed; inset:0; z-index:16; display:none; overflow:hidden; background:radial-gradient(circle, rgba(120,30,10,.72), rgba(10,4,8,.93))}
+.bigwin.show{display:grid}
+.bigwin .bigrays{display:none}
+.bigwin[data-tier="2"] .bigrays,.bigwin[data-tier="3"] .bigrays,.bigwin[data-tier="4"] .bigrays{display:block}
+.bigwin[data-tier="4"] .bigrays{background:repeating-conic-gradient(from 0deg, rgba(124,255,79,.22) 0deg 6deg, rgba(255,194,26,.25) 6deg 12deg, rgba(224,51,30,.25) 12deg 18deg, transparent 18deg 30deg)}
+.bw{position:relative; text-align:center; animation:pop .55s cubic-bezier(.3,1.6,.5,1)}
+.bw .t{font-family:var(--display); font-size:3.4rem; letter-spacing:.05em; line-height:1; color:var(--hazard); text-shadow:4px 4px 0 var(--blood), 8px 8px 0 var(--ink); animation:wobble 1s ease-in-out infinite alternate}
+.bwLayer3 .bw .t{color:var(--ember)}
+.bwLayer4 .bw .t{color:var(--toxic); text-shadow:4px 4px 0 #1E5A12, 8px 8px 0 var(--ink), 0 0 30px rgba(124,255,79,.7)}
+.bw .v{font-family:var(--display); font-size:3rem; letter-spacing:.05em; color:var(--paper); margin-top:10px; text-shadow:3px 3px 0 var(--ink)}
+.bw .x{color:#D8B8A8; margin-top:4px; font-weight:800}
+.dance{display:flex; justify-content:center; gap:2px; margin-top:14px}
+.dance svg{width:40px; height:40px; animation:hop .5s ease-in-out infinite alternate}
+@keyframes hop{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
+@keyframes wobble{from{transform:rotate(-3deg) scale(1)}to{transform:rotate(3deg) scale(1.06)}}
+.fly{position:fixed; z-index:17; pointer-events:none; transition:transform .65s cubic-bezier(.5,-0.3,.4,1.2), opacity .65s}
+.fly svg{width:100%; height:100%}
+#fx{position:fixed; inset:0; z-index:19; pointer-events:none}
+.toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top,0px) + 16px); transform:translateX(-50%); background:linear-gradient(#FFE27A,#FFB23D); color:var(--ink); border:3px solid var(--ink);
+  border-radius:999px; padding:7px 18px; font-weight:800; z-index:21; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 0 var(--ink); max-width:94vw; overflow:hidden; text-overflow:ellipsis}
+.toast.show{opacity:1}
+/* ---------- la rue ---------- */
+.floor{position:relative; z-index:1; height:220px; margin-top:-30px; overflow:hidden; --k:1}
+.floor .ground{position:absolute; inset:0; width:100%; height:100%}
+.floor .deco,.floor .animal{position:absolute}
+.floor .deco svg,.floor .animal svg{width:100%; display:block; overflow:visible}
+#fCar{left:2%; bottom:40px; width:calc(150px * var(--k))}
+#fBarrel{left:70%; bottom:52px; width:calc(40px * var(--k))}
+#fSign{left:84%; bottom:60px; width:calc(46px * var(--k))}
+.animal.z{bottom:18px; width:calc(54px * var(--k)); animation:zwalk var(--d) linear infinite; animation-delay:var(--del)}
+.animal.z svg{animation:lurch .45s ease-in-out infinite alternate}
+@keyframes zwalk{from{left:-15%}to{left:110%}}
+.siren .cop1{animation:lamp .5s steps(2) infinite} .siren .cop2{animation:lamp .5s steps(2) infinite; animation-delay:.25s}
+.credit{position:absolute; left:0; right:0; bottom:6px; margin:0; text-align:center; font-size:.72rem; color:#D8B8A8; opacity:.9}
+@media (min-width:900px){ .floor{height:280px; --k:1.4} }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} .horde{display:none} }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="dSkin" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#FFE0C2"/><stop offset=".65" stop-color="#F2B98E"/><stop offset="1" stop-color="#C98A62"/></radialGradient>
+    <radialGradient id="dZomb" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#C9FF8A"/><stop offset=".6" stop-color="#7CD84A"/><stop offset="1" stop-color="#3F8A2A"/></radialGradient>
+    <radialGradient id="dRed" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#FF9A7A"/><stop offset=".55" stop-color="#E0331E"/><stop offset="1" stop-color="#8A1010"/></radialGradient>
+    <radialGradient id="dCan" cx=".3" cy=".3" r=".9"><stop offset="0" stop-color="#F4F0EA"/><stop offset=".6" stop-color="#B8B0B8"/><stop offset="1" stop-color="#6E6670"/></radialGradient>
+    <linearGradient id="dWood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8B070"/><stop offset="1" stop-color="#9A5A26"/></linearGradient>
+    <linearGradient id="dGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF3B8"/><stop offset=".5" stop-color="#FFC21A"/><stop offset="1" stop-color="#B97A12"/></linearGradient>
+    <radialGradient id="dHalo"><stop offset="0" stop-color="#FF7A5A" stop-opacity=".9"/><stop offset=".6" stop-color="#E0331E" stop-opacity=".3"/><stop offset="1" stop-color="#E0331E" stop-opacity="0"/></radialGradient>
+    <radialGradient id="dToxHalo"><stop offset="0" stop-color="#B6FF7A" stop-opacity=".9"/><stop offset=".6" stop-color="#7CFF4F" stop-opacity=".25"/><stop offset="1" stop-color="#7CFF4F" stop-opacity="0"/></radialGradient>
+  </defs>
+</svg>
+<div class="scene" aria-hidden="true">
+  <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="dSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A0810"/><stop offset=".55" stop-color="#6A1414"/><stop offset=".85" stop-color="#E0501E"/><stop offset="1" stop-color="#FF8A2A"/></linearGradient>
+      <linearGradient id="dBeam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFE9B0" stop-opacity=".45"/><stop offset="1" stop-color="#FFE9B0" stop-opacity="0"/></linearGradient>
+    </defs>
+    <rect width="1600" height="1000" fill="url(#dSky)"/>
+    <circle cx="1180" cy="300" r="120" fill="#FF6A3A" opacity=".85"/><circle cx="1180" cy="300" r="220" fill="url(#dHalo)"/>
+    <path class="beam" d="M380 820 L330 200 L430 200 Z" fill="url(#dBeam)"/><path class="beam b2" d="M1320 830 L1270 180 L1370 180 Z" fill="url(#dBeam)"/>
+    <g class="smoke" fill="#3A1A20" opacity=".55"><circle cx="520" cy="520" r="90"/><circle cx="600" cy="480" r="110"/><circle cx="700" cy="520" r="80"/></g>
+    <g class="smoke s2" fill="#2A1218" opacity=".5"><circle cx="1000" cy="460" r="100"/><circle cx="1090" cy="420" r="120"/></g>
+    <g fill="#2A0E14"><path d="M0 700 V520 H70 V470 H130 V540 H200 V420 H250 V380 H300 V420 H340 V560 H420 V480 H500 V600 H560 V440 H620 V400 H660 V440 H700 V620 H780 V500 H860 V560 H920 V430 H990 V360 H1040 V430 H1080 V580 H1160 V470 H1240 V530 H1300 V410 H1360 V470 H1420 V600 H1500 V500 H1600 V700 Z"/></g>
+    <g fill="#FFB23D"><rect class="winflick" x="210" y="440" width="10" height="12"/><rect class="winflick w2" x="232" y="470" width="10" height="12"/><rect class="winflick w3" x="570" y="470" width="10" height="12"/><rect class="winflick" x="1000" y="390" width="10" height="12"/><rect class="winflick w2" x="1310" y="440" width="10" height="12"/><rect class="winflick w3" x="930" y="460" width="10" height="12"/></g>
+    <path d="M0 760 V640 H90 V590 H180 V660 H260 V610 H360 V680 H460 V620 H540 V700 H640 V640 H760 V690 H880 V630 H980 V700 H1080 V620 H1200 V680 H1320 V610 H1420 V670 H1520 V630 H1600 V760 Z" fill="#170810"/>
+    <rect y="760" width="1600" height="240" fill="#120810"/>
+    <g transform="translate(1250 700)"><path class="fire" d="M0 0 C-20 -30 -5 -60 8 -90 C12 -60 30 -50 26 -20 C24 -8 14 0 0 0 Z" fill="#FF7A1F"/><path class="fire" d="M4 0 C-6 -20 2 -40 10 -56 C14 -36 22 -28 18 -12 Z" fill="#FFE27A"/></g>
+  </svg>
+</div>
+<main id="main">
+  <div class="topper">
+    <svg class="sign" viewBox="0 0 480 132" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <path d="M40 118 L60 12 L420 12 L440 118 Z" fill="#241820" stroke="#1A0F14" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M52 110 L68 20 L412 20 L428 110 Z" fill="none" stroke="#FF5A1F" stroke-width="3" class="neon" opacity=".9"/>
+      <g class="lamp"><circle cx="30" cy="30" r="13" fill="#E0331E" stroke="#1A0F14" stroke-width="3"/><circle cx="30" cy="30" r="26" fill="url(#dHalo)"/></g>
+      <g class="lamp l2"><circle cx="450" cy="30" r="13" fill="#3AA0FF" stroke="#1A0F14" stroke-width="3"/><circle cx="450" cy="30" r="26" fill="#3AA0FF" opacity=".25"/></g>
+      <path d="M72 118 L96 132 M408 118 L384 132" stroke="#1A0F14" stroke-width="5"/>
+    </svg>
+    <h1 class="logo" aria-label="Dead City, last spin"><b><span>D</span><span>E</span><span>A</span><span>D</span> <span>C</span><span>I</span><span>T</span><span>Y</span></b><i><em>LAST SPIN</em></i></h1>
+    <div class="hbtns">
+      <button class="ico" id="musicBtn" aria-label="Couper la musique" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="#1A0F14" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="3" fill="#1A0F14"/><circle cx="17.5" cy="16" r="3" fill="#1A0F14"/></svg></button>
+      <button class="ico" id="sfxBtn" aria-label="Couper les effets sonores" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#1A0F14"/><path d="M16 9c1.3 1.6 1.3 4.4 0 6M18.5 6.5c2.8 3 2.8 8 0 11" fill="none" stroke="#1A0F14" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <button class="ico" id="infoBtn" aria-label="Règles et gains"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#1A0F14" stroke-width="2.4"/><path d="M12 11v6" stroke="#1A0F14" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.6" fill="#1A0F14"/></svg></button>
+    </div>
+  </div>
+  <div class="cabinet">
+    <div class="tape t1" aria-hidden="true"></div>
+    <span class="bolt" style="left:8px; top:12px"></span><span class="bolt" style="right:8px; top:12px"></span><span class="bolt" style="left:8px; bottom:12px"></span><span class="bolt" style="right:8px; bottom:12px"></span>
+    <div class="gauge" id="gauge" role="meter" aria-label="Jauge d'invasion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#FFC21A" stroke="#1A0F14" stroke-width="2"/><g fill="#1A0F14"><circle cx="16" cy="16" r="3"/><path d="M16 4 a6 6 0 0 1 5.2 9 l-2.6-1.5 a3 3 0 0 0 -5.2 0 l-2.6 1.5 A6 6 0 0 1 16 4 Z"/><path d="M5.6 22 a6 6 0 0 1 5.2 -9 l0 3 a3 3 0 0 0 2.6 4.5 l-2.6 1.5 A6 6 0 0 1 5.6 22 Z"/><path d="M26.4 22 a6 6 0 0 1 -10.4 0 l2.6 -1.5 a3 3 0 0 0 2.6 -4.5 l0 -3 a6 6 0 0 1 5.2 9 Z"/></g></svg>
+      <div class="gbar"><div class="gfill" id="gfill"></div><div class="gtxt" id="gtxt">INVASION 0 %</div></div>
+    </div>
+    <div class="screen">
+      <div class="hud" id="hud">
+        <div class="tier"><span id="tierName">Bonus</span><span id="tierInfo"></span></div>
+        <div class="chip" id="chipSpins">Spins <b id="spinsLeft">8</b></div>
+        <div class="chip" id="chipMult"><span id="multLbl">Zombies</span> <b id="multN">0</b></div>
+        <div class="chip" id="chipTotal">Total <b id="bonusTotal">0,00</b></div>
+        <div class="floors" id="floors"></div>
+      </div>
+      <div class="gridwrap" id="gridwrap"><div class="grid" id="grid"></div></div>
+      <div class="stand" id="stand">
+        <div class="pot" id="pot">0,00<small>butin à emporter</small></div>
+        <div class="doors" id="doors"></div>
+        <div class="standlog" id="standlog" aria-live="polite"></div>
+        <button class="btn flee" id="fleeBtn">S'enfuir avec le butin</button>
+      </div>
+    </div>
+    <div class="msg" id="msg" aria-live="polite">Trois sirènes déclenchent l'épidémie.</div>
+    <div class="deck">
+      <div class="meters">
+        <div class="meter"><small>Crédits</small><b id="balance">1 000,00</b></div>
+        <div class="bet"><button class="pm" id="betDown" aria-label="Baisser la mise">−</button><div class="mid"><small>Mise</small><b id="bet">1,00</b></div><button class="pm" id="betUp" aria-label="Augmenter la mise">+</button></div>
+        <div class="meter r"><small>Gain</small><b id="lastWin">0,00</b></div>
+      </div>
+      <div class="row">
+        <button class="btn buy" id="buyBtn">Acheter<br>bonus</button>
+        <button class="btn" id="anteBtn" aria-pressed="false">Chance<br>bonus</button>
+        <button class="spin" id="spin" aria-label="Lancer"><svg viewBox="0 0 48 48"><path d="M24 7a17 17 0 1 1-15.5 10" fill="none" stroke="#FFF1DC" stroke-width="5" stroke-linecap="round"/><path d="M5 7v11h11" fill="none" stroke="#FFF1DC" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="24" r="6" fill="#7CFF4F" stroke="#1A0F14" stroke-width="2"/></svg></button>
+        <button class="btn" id="autoBtn">Auto</button>
+        <button class="btn" id="turboBtn" aria-pressed="false" aria-label="Mode turbo"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="#E0331E" stroke="#1A0F14" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+    <div class="tape t2" aria-hidden="true"></div>
+  </div>
+</main>
+<section class="floor" aria-hidden="true">
+  <svg class="ground" viewBox="0 0 1200 220" preserveAspectRatio="none"><rect y="40" width="1200" height="180" fill="#1E1418"/><path d="M0 120 H1200" stroke="#FFC21A" stroke-width="6" stroke-dasharray="60 40" opacity=".6"/><rect y="36" width="1200" height="10" fill="#3A2A30"/></svg>
+  <div class="deco" id="fCar"></div>
+  <div class="deco" id="fBarrel"></div>
+  <div class="deco" id="fSign"></div>
+  <div id="walkers"></div>
+  <p class="credit">Crédits fictifs, aucun argent réel. RTP 98,5 %.</p>
+</section>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="intro" id="intro"><div class="bigrays"></div></div>
+<div class="layer" id="introLayer"><div class="introbox" id="introbox"></div></div>
+<div class="bigwin" id="bigwin"><div class="bigrays"></div></div>
+<div class="layer click" id="bwLayer"><div class="bw" id="bw"></div></div>
+<div class="overlay" id="overlay"><div class="card" id="card"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+// ---------- son : ville en alerte, sirènes, grognements et course-poursuite, tout généré en direct ----------
+const Snd = (() => {
+  let ctx = null, master, musicBus, sfxBus, ambBus, noise, timer = null, ambTimer = null, windNodes = null;
+  let step = 0, next = 0, musicOn = true, sfxOn = true, bonus = false, ratchet = null;
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const pluckCache = new Map();
+  function init() {
+    if (ctx) return true;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+      master = ctx.createGain(); master.gain.value = 0.9; master.connect(comp).connect(ctx.destination);
+      musicBus = ctx.createGain(); musicBus.gain.value = 0.34; musicBus.connect(master);
+      sfxBus = ctx.createGain(); sfxBus.gain.value = 0.5; sfxBus.connect(master);
+      ambBus = ctx.createGain(); ambBus.gain.value = 0.16; ambBus.connect(master);
+      noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      return true;
+    } catch (e) { return false; }
+  }
+  const now = () => ctx.currentTime;
+  function env(g, t, a, peak, dur) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
+  function tone(bus, freq, t, dur, type, vol, slideTo, attack = 0.008, pan = 0) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur * .9);
+    env(g, t, attack, vol, dur);
+    let out = g;
+    if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+    o.connect(g); out.connect(bus); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noiseHit(bus, t, dur, type, freq, q, vol, attack = 0.004) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; s.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    env(g, t, attack, vol, dur);
+    s.connect(f).connect(g).connect(bus); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
+    return f;
+  }
+  // corde pincée (Karplus-Strong)
+  function pluckBuf(m) {
+    if (pluckCache.has(m)) return pluckCache.get(m);
+    const sr = ctx.sampleRate, N = Math.round(sr / mtof(m)), len = Math.floor(sr * 1.8);
+    const buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+    for (let i = 0; i < N; i++) d[i] = (Math.random() * 2 - 1) * 0.8;
+    for (let i = 1; i < N; i++) d[i] = (d[i] + d[i - 1]) * 0.5;
+    const decay = m < 50 ? 0.9975 : 0.996;
+    for (let i = N; i < len; i++) d[i] = decay * 0.5 * (d[i - N] + d[i - N - 1 < 0 ? 0 : i - N - 1]);
+    pluckCache.set(m, buf); return buf;
+  }
+  function pluck(m, t, vol, bus = musicBus) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    s.buffer = pluckBuf(m); f.type = 'lowpass'; f.frequency.value = 3200; g.gain.value = vol;
+    s.connect(f).connect(g).connect(bus); s.start(t);
+  }
+  function flute(m, t, dur, vol) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    const f = mtof(m); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f * 2;
+    lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.008, t + 0.25);
+    lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+    const g2 = ctx.createGain(); g2.gain.value = 0.12; o2.connect(g2).connect(g); o.connect(g);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.07); g.gain.setValueAtTime(vol, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(musicBus); o.start(t); o2.start(t); lfo.start(t); o.stop(t + dur + .05); o2.stop(t + dur + .05); lfo.stop(t + dur + .05);
+    noiseHit(musicBus, t, Math.min(0.25, dur), 'bandpass', f * 2, 3, vol * 0.25, 0.03);
+  }
+  function bell(m, t, vol, dur = 1.4, bus = sfxBus, pan = 0) {
+    const f = mtof(m);
+    [[1, 1], [2.0, .35], [2.76, .25], [5.4, .12], [8.93, .06]].forEach(([k, a]) => tone(bus, f * k, t, dur / (1 + k * 0.3), 'sine', vol * a, null, 0.003, pan));
+  }
+  function woodblock(t, vol, f = 900) { tone(musicBus, f, t, 0.07, 'sine', vol, f * .7, 0.002); noiseHit(musicBus, t, 0.03, 'bandpass', 2400, 4, vol * .5, 0.001); }
+  function shaker(t, vol) { noiseHit(musicBus, t, 0.06, 'highpass', 6000, .7, vol, 0.02); }
+
+
+  // ---------- musique du jeu : ostinato tendu en ré mineur, basse qui pulse, cloche lointaine ----------
+  function saw(m, t, dur, vol, cut = 900, bus = musicBus) {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'sawtooth'; o.frequency.value = mtof(m); f.type = 'lowpass'; f.frequency.setValueAtTime(cut * 2.2, t); f.frequency.exponentialRampToValueAtTime(cut * .5, t + dur); f.Q.value = 6;
+    env(g, t, .005, vol, dur); o.connect(f).connect(g).connect(bus); o.start(t); o.stop(t + dur + .05);
+  }
+  function kick(t, v = .7) { tone(musicBus, 120, t, .22, 'sine', v, 42, .002); }
+  function snare(t, v = .22) { noiseHit(musicBus, t, .14, 'bandpass', 1800, .8, v, .002); tone(musicBus, 220, t, .08, 'triangle', v * .5, 150, .002); }
+  function hat(t, v = .05) { noiseHit(musicBus, t, .04, 'highpass', 7000, .7, v, .002); }
+  const CH = [[38, [62, 65, 69]], [34, [62, 65, 70]], [36, [60, 64, 67]], [33, [61, 64, 69]]];
+  const OST = [0, 12, 7, 12, 3, 12, 7, 10];
+  const MEL = [[0, 74, 6], [8, 72, 2], [10, 70, 2], [12, 69, 4], [16, 77, 6], [24, 76, 4], [28, 73, 4], [32, 74, 8], [44, 72, 2], [46, 69, 2], [48, 70, 6], [56, 69, 8]];
+  const melAt = new Map(MEL.map(x => [x[0], x]));
+  function playStep(s, t, sd) {
+    const bar = Math.floor(s / 16) % 4, i = s % 16, [bass, chord] = CH[bar];
+    saw(bass + OST[i % 8], t, sd * .9, i % 4 === 0 ? .11 : .07, 700);
+    if (i === 0) for (const n of chord) tone(musicBus, mtof(n), t, sd * 16, 'triangle', .018, null, .8);
+    if (i % 8 === 0) kick(t, .5);
+    if (i % 8 === 4) snare(t, .12);
+    if (i % 2 === 1) hat(t, .03);
+    const m = melAt.get(s % 64);
+    if (m) bell(m[1], t, .07, 1.2 + m[2] * .2, musicBus);
+  }
+  // musique du bonus : course poursuite, batterie rapide, riff à la scie
+  const BCH = [[38, [62, 65, 69]], [41, [65, 69, 72]], [36, [60, 64, 67]], [37, [61, 65, 68]]];
+  const RIFF = [0, 0, 12, 0, 10, 0, 7, 8];
+  function playBonusStep(s, t, sd) {
+    const bar = Math.floor(s / 16) % 4, i = s % 16, [bass, chord] = BCH[bar];
+    saw(bass + RIFF[i % 8], t, sd * .8, .12, 1100);
+    if (i % 4 === 0) kick(t, .65);
+    if (i % 8 === 4) snare(t, .26);
+    hat(t, i % 2 ? .035 : .06);
+    if (i === 0 || i === 8) for (const n of chord) saw(n + 12, t, sd * 7, .025, 2400);
+    if (i === 14) snare(t, .12);
+  }
+  function tick() {
+    const sd = 60 / (bonus ? 150 : 104) / 4;
+    while (next < ctx.currentTime + 0.15) {
+      if (bonus) { playBonusStep(step % 64, next, sd); step = (step + 1) % 64; }
+      else { playStep(step % 64, next, sd); step = (step + 1) % 64; }
+      next += sd;
+    }
+  }
+  // ---------- ambiance : vent, sirène au loin, grognements ----------
+  function startWind() {
+    if (windNodes) return;
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    s.buffer = noise; s.loop = true; f.type = 'bandpass'; f.frequency.value = 300; f.Q.value = .6; g.gain.value = .14;
+    lfo.frequency.value = .05; lg.gain.value = 160; lfo.connect(lg).connect(f.frequency);
+    s.connect(f).connect(g).connect(ambBus); s.start(); lfo.start();
+    windNodes = { s, g, lfo };
+  }
+  function farSiren(t) {
+    const o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter(); o.type = 'triangle'; f.type = 'lowpass'; f.frequency.value = 1400;
+    o.frequency.setValueAtTime(560, t); for (let k = 0; k < 4; k++) { o.frequency.linearRampToValueAtTime(820, t + k * 1.2 + .6); o.frequency.linearRampToValueAtTime(560, t + k * 1.2 + 1.2); }
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.05, t + .8); g.gain.setValueAtTime(.05, t + 4); g.gain.exponentialRampToValueAtTime(0.0001, t + 4.8);
+    o.connect(f).connect(g).connect(ambBus); o.start(t); o.stop(t + 5);
+  }
+  function groan(t, v = .12, bus = ambBus) { // grognement : scie grave filtrée par une voyelle qui glisse
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), p = 70 + Math.random() * 30;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(p, t); o.frequency.linearRampToValueAtTime(p * .8, t + 1.1);
+    f.type = 'bandpass'; f.Q.value = 5; f.frequency.setValueAtTime(420, t); f.frequency.linearRampToValueAtTime(700, t + .5); f.frequency.linearRampToValueAtTime(380, t + 1.1);
+    env(g, t, .15, v, 1.2); o.connect(f).connect(g).connect(bus); o.start(t); o.stop(t + 1.3);
+  }
+  function ambience() {
+    if (!ctx || !musicOn) return;
+    const t = now() + .05;
+    if (Math.random() < .07) farSiren(t);
+    if (Math.random() < (bonus ? .35 : .18)) groan(t, .1);
+  }
+  function startMusic() {
+    if (!musicOn || !init()) return; ctx.resume();
+    if (!timer) { next = ctx.currentTime + 0.05; timer = setInterval(tick, 25); }
+    startWind(); if (!ambTimer) ambTimer = setInterval(ambience, 1100);
+  }
+  function stopMusic() { if (timer) { clearInterval(timer); timer = null; } if (ambTimer) { clearInterval(ambTimer); ambTimer = null; } if (windNodes) { windNodes.s.stop(); windNodes.lfo.stop(); windNodes = null; } }
+
+  // ---------- bruitages ----------
+  function coin(t, vol = .2, pan = 0) {
+    const f = 2000 + Math.random() * 800;
+    [[1, 1], [2.76, .5], [5.4, .3]].forEach(([k, a]) => tone(sfxBus, f * k * .5, t, .25 / Math.sqrt(k), 'sine', vol * a, null, .001, pan));
+  }
+  function wail(t, dur, vol, lo = 600, hi = 1300) {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square';
+    o.frequency.setValueAtTime(lo, t); o.frequency.linearRampToValueAtTime(hi, t + dur * .5); o.frequency.linearRampToValueAtTime(lo, t + dur);
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2400;
+    env(g, t, .02, vol, dur); o.connect(f).connect(g).connect(sfxBus); o.start(t); o.stop(t + dur + .05);
+  }
+  const S = {
+    click() { const t = now(); tone(sfxBus, 1200, t, .05, 'square', .06, 800, .002); },
+    reelStart() { if (ratchet) return; ratchet = setInterval(() => { const t = now(); noiseHit(sfxBus, t, .02, 'bandpass', 2400, 5, .18, .001); }, 60); },
+    reelStop() { clearInterval(ratchet); ratchet = null; },
+    stop(c) { const t = now(); tone(sfxBus, 140 - c * 8, t, .16, 'sine', .6, 60, .002); noiseHit(sfxBus, t, .07, 'lowpass', 600, 1, .3, .001); },
+    scatter(n) { const t = now(); wail(t, .7, .09 + n * .02, 650 + n * 60, 1250 + n * 80); },
+    antic() { const t = now(); for (let k = 0; k < 14; k++) tone(sfxBus, 50 + k * 4, t + k * .06, .05, 'sine', .25 + k * .02, null, .002); groan(t + .2, .18, sfxBus); },
+    win(level) { const t = now(), n = level > 1 ? 10 : 4; for (let k = 0; k < n; k++) coin(t + k * (.05 + Math.random() * .04), .18, Math.random() - .5); },
+    splat(k = 0) { const t = now(); noiseHit(sfxBus, t, .18, 'lowpass', 900 - k * 40, 2, .45, .002); tone(sfxBus, 180, t, .12, 'sine', .35, 70, .002); },
+    tick(p) { const t = now(); noiseHit(sfxBus, t, .02, 'bandpass', 2400 + p * 1500, 8, .16, .001); if (Math.random() < .35) coin(t, .07, Math.random() - .5); },
+    fanfare() { const t = now(); [62, 65, 69, 74, 77, 81].forEach((m, i) => saw(m, t + i * .05, .4, .08, 2600, sfxBus)); for (let k = 0; k < 14; k++) coin(t + .25 + k * .06, .15, Math.random() * 1.6 - .8); },
+    bonus() { const t = now(); wail(t, 1.6, .12); wail(t + .1, 1.6, .06, 500, 1000); groan(t + .4, .25, sfxBus); },
+    thunk() { const t = now(); tone(sfxBus, 150, t, .3, 'sine', .8, 50, .002); noiseHit(sfxBus, t, .12, 'lowpass', 400, 1, .45, .001); },
+    whoosh() { const t = now(); const f = noiseHit(sfxBus, t, .6, 'bandpass', 300, 1.2, .35, .25); f.frequency.exponentialRampToValueAtTime(2400, t + .55); },
+    horde() { const t = now(); for (let k = 0; k < 6; k++) groan(t + k * .12, .16, sfxBus); for (let k = 0; k < 10; k++) tone(sfxBus, 60, t + k * .14, .12, 'sine', .5, 35, .002); },
+    infect() { const t = now(); noiseHit(sfxBus, t, .3, 'bandpass', 500, 3, .35, .02); tone(sfxBus, 300, t, .3, 'sawtooth', .05, 90, .01); },
+    zero() { const t = now(); groan(t, .3, sfxBus); tone(sfxBus, 55, t, 1.2, 'sawtooth', .12, 40, .1); },
+    bite() { const t = now(); noiseHit(sfxBus, t, .08, 'highpass', 2000, 1, .3, .001); tone(sfxBus, 400, t, .1, 'square', .08, 120, .002); },
+    door() { const t = now(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.linearRampToValueAtTime(120, t + .5); o.frequency.linearRampToValueAtTime(220, t + .8); env(g, t, .05, .06, .9); o.connect(g).connect(sfxBus); o.start(t); o.stop(t + 1); },
+    guns() { const t = now(); noiseHit(sfxBus, t, .05, 'bandpass', 3000, 3, .4, .001); noiseHit(sfxBus, t + .12, .06, 'bandpass', 1800, 3, .4, .001); [74, 78, 81].forEach((m, i) => bell(m, t + .25 + i * .06, .12, .7)); },
+    shots() { const t = now(); for (let k = 0; k < 6; k++) { noiseHit(sfxBus, t + k * .09, .08, 'lowpass', 1400, 1, .5, .001); tone(sfxBus, 90, t + k * .09, .08, 'sine', .4, 40, .001); } },
+    heli() { const t = now(); for (let k = 0; k < 16; k++) noiseHit(sfxBus, t + k * .085, .06, 'lowpass', 500, 1, .35 * (1 - k / 20), .002); },
+    climb(f = 0) { const t = now(); [62, 65, 69, 74, 77, 81][f % 6] && bell([62, 65, 69, 74, 77, 81][f % 6] + 12, t, .14, .6); tone(sfxBus, 200, t, .08, 'square', .05, 300, .002); },
+    crate() { const t = now(); tone(sfxBus, 200, t, .2, 'sine', .5, 80, .002); noiseHit(sfxBus, t, .1, 'lowpass', 700, 1, .3, .001); [79, 83, 86].forEach((m, i) => bell(m, t + .1 + i * .05, .1, .6)); },
+    fall() { const t = now(); tone(sfxBus, 40, t, 2.5, 'sawtooth', .2, 30, .05); wail(t + .3, 2.2, .12, 500, 1100); groan(t + .5, .3, sfxBus); groan(t + 1, .3, sfxBus); },
+  };
+  return {
+    start() { if (!init()) return; ctx.resume(); startMusic(); },
+    toggleMusic() { musicOn = !musicOn; musicOn ? startMusic() : stopMusic(); return musicOn; },
+    toggleSfx() { sfxOn = !sfxOn; if (!sfxOn) S.reelStop(); return sfxOn; },
+    setBonus(v) { bonus = v; step = 0; if (ctx) next = Math.max(next, ctx.currentTime + 0.1); },
+    fx(name, ...a) { if (!sfxOn || !init() || ctx.state !== 'running') return; try { S[name](...a); } catch (e) {} },
+  };
+})();
+
+const ENGINE = (() => {
+  const COLS = 5, ROWS = 5, WILD = 8, SCAT = -1;
+  // 4 objets (petits), 4 survivants (gros) ; une grappe de 5 symboles identiques ou plus qui se touchent paie pay × SIZE_F[taille]
+  const SYMS = [
+    { id: 'l1', w: 210, pay: 0.10 },
+    { id: 'l2', w: 175, pay: 0.12 },
+    { id: 'l3', w: 140, pay: 0.15 },
+    { id: 'l4', w: 115, pay: 0.2 },
+    { id: 'h1', w: 80, pay: 0.3 },
+    { id: 'h2', w: 64, pay: 0.4 },
+    { id: 'h3', w: 50, pay: 0.6 },
+    { id: 'h4', w: 38, pay: 1.0 },
+  ];
+  const MIN = 5, SIZE_F = [0, 0, 0, 0, 0, 1, 1.5, 2, 3, 4, 6, 8, 10, 14, 18, 25]; // au-delà de 15 cases : 25
+  const SYM_W = SYMS.reduce((a, s) => a + s.w, 0), WILD_W = 8;
+  let SCAT_W = { normal: 11.044623416835572, ante: 12.658349999999999 }; // poids de la sirène (calibrés par rtp.js)
+  let BASE_SCALE = { normal: 1.4981933188477496, ante: 1.4981933188477496 }; // échelle des gains du jeu de base (calibrée par rtp.js --calibre-base)
+  let BONUS_K = { 3: 0.13856523284726557, 4: 394, 5: 318.027023948856 };
+  const TIER = {
+    3: { name: 'THE OUTBREAK', spins: 8, cap: 10000, maxZ: 11 },
+    4: { name: 'LAST STAND', rounds: 8, cap: 25000 },
+    5: { name: 'EXTRACTION', spins: 5, floors: 5, cap: 50000 },
+  };
+  const BUY = { 3: 100, 4: 400 };
+  const EXACT_K = { 4: 0.985 * 400 }; // Last Stand est un pari équitable : gain brut moyen = mise de départ moyenne = 1, donc K exact (rtp.js le respecte)
+  const ANTE = 1.25;
+  const FEAT = { horde: 1 / 45, zero: 1 / 110 }; // chances par spin de base
+  const GAUGE = { cascade: 0.5, scatter: 0.6, horde: 5, zero: 6, invasion: 3 }; // la jauge monte jusqu'à 100
+  // Last Stand : derrière une porte, quelques zombies (×1,3), une caisse d'armes (×1,6) ou la horde (garde 15 % et fin) — jeu équitable
+  const DOORS = [{ k: 'zombies', p: 0.55, f: 1.3 }, { k: 'armes', p: 0.15, f: 1.6 }, { k: 'horde', p: 0.30, f: 0.15 }];
+  let rand = Math.random;
+
+  const isHigh = s => s >= 4 && s <= 7;
+  const neigh = (c, r) => [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].filter(([a, b]) => a >= 0 && a < COLS && b >= 0 && b < ROWS);
+  function draw(mode, scat, inv, wildBoost = 0) {
+    const ww = WILD_W + wildBoost, tot = SYM_W + ww + (scat ? SCAT_W[mode] : 0);
+    let x = rand() * tot;
+    for (let i = 0; i < SYMS.length; i++) { if ((x -= SYMS[i].w) < 0) return inv && isHigh(i) ? WILD : i; }
+    if ((x -= ww) < 0) return WILD;
+    return SCAT;
+  }
+  function spinBase(mode = 'normal', inv = false) {
+    const g = [];
+    for (let c = 0; c < COLS; c++) { g.push([]); for (let r = 0; r < ROWS; r++) g[c].push(draw(mode, true, inv)); }
+    return g;
+  }
+  const copy = g => g.map(c => c.slice());
+  // grappes : cases voisines (haut, bas, gauche, droite) du même symbole ; le zombie rejoint toutes les grappes ;
+  // il faut au moins 5 cases dont un vrai symbole
+  const sizeF = n => SIZE_F[Math.min(n, SIZE_F.length - 1)];
+  function evalWays(g, mult = 1) {
+    const wins = []; let total = 0;
+    for (let s = 0; s < SYMS.length; s++) {
+      const seen = new Set();
+      for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+        const k0 = c * ROWS + r; if (seen.has(k0) || g[c][r] !== s) continue;
+        const cells = [], stack = [[c, r]], mine = new Set([k0]); let real = 0;
+        while (stack.length) { const [a, b] = stack.pop(); cells.push([a, b]); if (g[a][b] === s) { real++; seen.add(a * ROWS + b); }
+          for (const [x, y] of neigh(a, b)) { const kk = x * ROWS + y; if (!mine.has(kk) && (g[x][y] === s || g[x][y] === WILD)) { mine.add(kk); stack.push([x, y]); } } }
+        if (cells.length >= MIN && real) { const amt = SYMS[s].pay * sizeF(cells.length) * mult; total += amt; wins.push({ s, size: cells.length, cells, amt }); }
+      }
+    }
+    return { wins, total };
+  }
+  function winCells(g, wins) {
+    const set = new Set(); for (const w of wins) for (const [c, r] of w.cells) set.add(c * ROWS + r);
+    return [...set].map(k => [Math.floor(k / ROWS), k % ROWS]);
+  }
+  // une suite de cascades : les cases gagnantes explosent et sont remplacées ; sticky = zombies qui restent
+  // hook(step) est appelé après chaque cascade (infection du patient zéro, étages de l'extraction…)
+  function cascades(g, o) {
+    const steps = []; let raw = 0;
+    for (let k = 0; k < 40; k++) {
+      const { wins, total } = evalWays(g, o.mult ? o.mult() : 1);
+      if (!wins.length) break;
+      const cells = winCells(g, wins).filter(([c, r]) => !(o.sticky && o.sticky.has(c * ROWS + r)));
+      raw += total;
+      for (const [c, r] of cells) g[c][r] = draw(o.mode || 'normal', false, o.inv, o.wildBoost || 0);
+      const step = { t: 'win', wins, amt: total, cells, g: null };
+      if (o.hook) o.hook(step, g);
+      step.g = copy(g); steps.push(step);
+    }
+    return { steps, raw };
+  }
+
+  // ---------- jeu de base : un spin complet avec sa jauge d'invasion (st garde la jauge d'un spin à l'autre) ----------
+  const newState = () => ({ gauge: 0, invasion: 0 });
+  function playBase(st, mode = 'normal') {
+    const inv = st.invasion > 0, g = spinBase(mode, inv), steps = [{ t: 'drop', g: copy(g) }];
+    let scats = 0; for (const col of g) for (const x of col) if (x === SCAT) scats++;
+    let gain = scats * GAUGE.scatter;
+    const x = rand(), feature = inv ? null : x < FEAT.horde ? 'horde' : x < FEAT.horde + FEAT.zero ? 'zero' : null;
+    const sticky = new Set(), infect = new Map();
+    if (feature === 'horde') { // la horde détruit des petits symboles, remplacés aussitôt
+      const low = []; for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (g[c][r] >= 0 && g[c][r] <= 3) low.push([c, r]);
+      for (let i = low.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [low[i], low[j]] = [low[j], low[i]]; }
+      const destroyed = low.slice(0, Math.min(low.length, 6 + Math.floor(rand() * 7)));
+      for (const [c, r] of destroyed) g[c][r] = draw(mode, false, inv, 10);
+      steps.push({ t: 'horde', cells: destroyed, g: copy(g) }); gain += GAUGE.horde;
+    }
+    const spread = step => { // l'infection gagne les cases voisines : humain -> infecté -> zombie
+      const inf = [], zom = [];
+      for (const k of [...sticky]) { const c = Math.floor(k / ROWS), r = k % ROWS;
+        for (const [a, b] of neigh(c, r)) { const kk = a * ROWS + b; if (sticky.has(kk) || g[a][b] === SCAT) continue; const lv = (infect.get(kk) || 0) + 1; infect.set(kk, lv); if (lv >= 2) zom.push([a, b]); else inf.push([a, b]); } }
+      for (const [a, b] of zom) { g[a][b] = WILD; sticky.add(a * ROWS + b); infect.delete(a * ROWS + b); }
+      step.infected = inf; step.zombified = zom;
+    };
+    if (feature === 'zero') {
+      g[2][2] = WILD; sticky.add(12); const st0 = { t: 'zero', cell: [2, 2] }; spread(st0); st0.g = copy(g); steps.push(st0); gain += GAUGE.zero;
+    }
+    const cas = cascades(g, { mode, sticky, hook: feature === 'zero' ? spread : null });
+    steps.push(...cas.steps);
+    gain += cas.steps.length * GAUGE.cascade;
+    let invasionStart = false;
+    if (inv) st.invasion--;
+    else { st.gauge = Math.min(100, st.gauge + gain); if (st.gauge >= 100) { st.gauge = 0; st.invasion = GAUGE.invasion; invasionStart = true; } }
+    return { steps, raw: cas.raw, win: cas.raw * BASE_SCALE[mode], scats, feature, inv, invasionStart, gauge: st.gauge, invasionLeft: st.invasion };
+  }
+  // espérance du jeu de base (fonctions, jauge et invasion comprises) par simulation à graine fixe, mise en cache
+  const memo = new Map();
+  function analyticBase(mode = 'normal', scale = 1) {
+    const key = mode + ':' + SCAT_W[mode].toFixed(4);
+    if (!memo.has(key)) {
+      const save = rand; let s = 12345; rand = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      const st = newState(), N = 200000; let tot = 0; for (let i = 0; i < N; i++) tot += playBase(st, mode).raw;
+      rand = save; memo.set(key, tot / N);
+    }
+    return memo.get(key) * scale;
+  }
+  // probabilité de 3, 4, 5+ sirènes sur la grille de départ (25 cases ; les cascades n'en font pas tomber)
+  function scatProbs(mode = 'normal', w) {
+    const sw = w ?? SCAT_W[mode], n = COLS * ROWS, p = sw / (SYM_W + WILD_W + sw);
+    const C = (n, k) => { let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return r; };
+    const pk = []; for (let k = 0; k <= n; k++) pk.push(C(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k));
+    let p5 = 0; for (let k = 5; k <= n; k++) p5 += pk[k];
+    return { 3: pk[3], 4: pk[4], 5: p5 };
+  }
+  // compatibilité avec rtp.js : un spin de base complet avec un état persistant
+  const st0 = newState();
+  const fullBase = mode => { const r = playBase(st0, mode); return { total: r.win, scats: r.scats }; };
+  const evalBase = (g, mode = 'normal') => { const r = cascades(copy(g), { mode }); let scats = 0; for (const c of g) for (const x of c) if (x === SCAT) scats++; return { wins: [], total: r.raw * BASE_SCALE[mode], scats }; };
+
+  // ---------- bonus ----------
+  function newBonus(tier) {
+    const T = TIER[tier];
+    if (tier === 3) return { tier, spinsLeft: T.spins, sticky: new Set(), raw: 0, total: 0, spinNo: 0, done: false, capped: false };
+    if (tier === 4) return { tier, round: 0, pot: 0.6 + rand() * 0.8, raw: 0, total: 0, done: false, capped: false, history: [] };
+    return { tier, spinsLeft: T.spins, floor: 0, mult: 1, raw: 0, total: 0, spinNo: 0, done: false, capped: false, roof: false };
+  }
+  function finish(b) {
+    const T = TIER[b.tier], before = b.total;
+    b.total = Math.min(T.cap, b.raw * BONUS_K[b.tier]);
+    if (b.total >= T.cap) { b.capped = true; b.done = true; }
+    return b.total - before;
+  }
+  // THE OUTBREAK : chaque spin, des zombies apparaissent et restent ; cascades autour d'eux
+  function outbreakSpin(b) {
+    const T = TIER[3]; b.spinsLeft--; b.spinNo++;
+    const g = []; for (let c = 0; c < COLS; c++) { g.push([]); for (let r = 0; r < ROWS; r++) g[c].push(b.sticky.has(c * ROWS + r) ? WILD : draw('normal', false, false)); }
+    const born = [], nz = rand() < 0.4 ? 2 : 1; // au moins un zombie par spin
+    for (let i = 0; i < nz && b.sticky.size < T.maxZ; i++) {
+      const free = []; for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (!b.sticky.has(c * ROWS + r)) free.push([c, r]);
+      const [c, r] = free[Math.floor(rand() * free.length)]; b.sticky.add(c * ROWS + r); g[c][r] = WILD; born.push([c, r]);
+    }
+    const drop = copy(g);
+    const cas = cascades(g, { sticky: b.sticky });
+    b.raw += cas.raw; const win = finish(b);
+    if (b.spinsLeft <= 0) b.done = true;
+    return { drop, born, steps: cas.steps, win, zombies: b.sticky.size };
+  }
+  // LAST STAND : une manche ; choice = 'fuir' pour partir avec le gain
+  function standRound(b, choice) {
+    if (choice === 'fuir') { b.raw = b.pot; finish(b); b.done = true; return { fled: true, win: b.total }; }
+    b.round++;
+    let x = rand(), out = DOORS[0];
+    for (const d of DOORS) { if ((x -= d.p) < 0) { out = d; break; } }
+    b.pot *= out.f;
+    const others = [0, 1].map(() => { let y = rand(); for (const d of DOORS) if ((y -= d.p) < 0) return d.k; return 'zombies'; });
+    b.history.push(out.k);
+    if (out.k === 'horde' || b.round >= TIER[4].rounds) b.done = true;
+    b.raw = b.pot; const win = finish(b);
+    return { out: out.k, others, pot: b.pot, win, survived: out.k !== 'horde' && b.done };
+  }
+  // EXTRACTION : chaque gain fait monter d'un étage ; caisses de munitions (+1 tour) et de multiplicateur ; le toit rapporte gros
+  function extractSpin(b) {
+    const T = TIER[5]; b.spinsLeft--; b.spinNo++;
+    const g = []; for (let c = 0; c < COLS; c++) { g.push([]); for (let r = 0; r < ROWS; r++) g[c].push(draw('normal', false, false, 12)); }
+    const crates = [];
+    if (rand() < 0.3) { crates.push('ammo'); b.spinsLeft++; }
+    if (rand() < 0.3) { crates.push('mult'); b.mult++; }
+    const drop = copy(g), floors = [];
+    const cas = cascades(g, { wildBoost: 12, mult: () => b.mult, hook: step => { if (b.floor < T.floors) { b.floor++; floors.push(b.floor); } step.floor = b.floor; } });
+    b.raw += cas.raw;
+    if (b.floor >= T.floors && !b.roof) { b.roof = true; b.raw += 12 * b.mult; b.done = true; }
+    if (b.spinsLeft <= 0 && !b.roof) { b.done = true; b.raw += 0.4 * (1 + b.floor); } // prime de survie : tu sauves ta peau, et chaque étage gagné compte
+    const win = finish(b);
+    return { drop, crates, steps: cas.steps, win, floor: b.floor, mult: b.mult, roof: b.roof };
+  }
+  function bonusSpin(b, choice) { return b.tier === 3 ? outbreakSpin(b) : b.tier === 4 ? standRound(b, choice) : extractSpin(b); }
+
+  return {
+    COLS, ROWS, WILD, SCAT, SYMS, SIZE_F, MIN, TIER, BUY, EXACT_K, ANTE, FEAT, GAUGE, DOORS,
+    spinBase, evalWays, playBase, newState, analyticBase, scatProbs, fullBase, evalBase, newBonus, bonusSpin,
+    get SCAT_W() { return SCAT_W; }, set SCAT_W(v) { SCAT_W = v; },
+    get BASE_SCALE() { return BASE_SCALE; }, set BASE_SCALE(v) { BASE_SCALE = v; },
+    get BONUS_K() { return BONUS_K; }, set BONUS_K(v) { BONUS_K = v; },
+  };
+})();
+if (typeof module !== 'undefined') module.exports = ENGINE;
+
+// ---------- illustrations de Dead City (style comic) ----------
+const ART = (() => {
+  const K = '#1A0F14';
+  const svg = inner => `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="60.5" rx="17" ry="2.4" fill="#000" opacity=".3"/>${inner}</svg>`;
+  function face(cx, cy, kind = 'smile', s = 1, blush = true) {
+    let e = `<circle cx="${cx - 5 * s}" cy="${cy}" r="${1.9 * s}" fill="${K}"/><circle cx="${cx + 5 * s}" cy="${cy}" r="${1.9 * s}" fill="${K}"/><circle cx="${cx - 4.4 * s}" cy="${cy - .7}" r=".6" fill="#fff"/><circle cx="${cx + 5.6 * s}" cy="${cy - .7}" r=".6" fill="#fff"/>`;
+    if (kind === 'brave') e += `<path d="M${cx - 8 * s} ${cy - 4 * s} L${cx - 3 * s} ${cy - 2.6 * s} M${cx + 8 * s} ${cy - 4 * s} L${cx + 3 * s} ${cy - 2.6 * s}" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`;
+    const m = kind === 'o' ? `<ellipse cx="${cx}" cy="${cy + 4.5 * s}" rx="1.8" ry="2.3" fill="${K}"/>`
+      : kind === 'brave' ? `<path d="M${cx - 3} ${cy + 4 * s} H${cx + 3}" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`
+      : `<path d="M${cx - 2.4} ${cy + 3.4 * s} Q${cx} ${cy + 5.6 * s} ${cx + 2.4} ${cy + 3.4 * s}" stroke="${K}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+    const b = blush ? `<ellipse cx="${cx - 8.5 * s}" cy="${cy + 2.8}" rx="2.4" ry="1.4" fill="#FF8A7A" opacity=".7"/><ellipse cx="${cx + 8.5 * s}" cy="${cy + 2.8}" rx="2.4" ry="1.4" fill="#FF8A7A" opacity=".7"/>` : '';
+    return e + m + b;
+  }
+  const shine = d => `<path d="${d}" stroke="#fff" stroke-width="2.2" opacity=".55" fill="none" stroke-linecap="round"/>`;
+  // les objets
+  const can = svg(`<path d="M16 16 H48 V52 C48 56 16 56 16 52 Z" fill="url(#dCan)" stroke="${K}" stroke-width="2.2"/><ellipse cx="32" cy="16" rx="16" ry="4.5" fill="#D8D2DA" stroke="${K}" stroke-width="2.2"/>
+    <path d="M16 26 H48 V42 H16 Z" fill="#E0331E" stroke="${K}" stroke-width="1.8"/><path d="M22 34 H42" stroke="#FFC21A" stroke-width="3"/>${face(32, 33, 'smile', .8)}${shine('M20 46 V50')}`);
+  const bat = svg(`<g transform="rotate(35 32 32)"><path d="M28 58 L29 30 C27 16 29 6 32 4 C35 6 37 16 35 30 L36 58 Z" fill="url(#dWood)" stroke="${K}" stroke-width="2.2"/><rect x="27" y="48" width="10" height="10" rx="2" fill="#2A2A2A" stroke="${K}" stroke-width="1.6"/>
+    <path d="M29 12 L25 11 M35 18 L39 17 M29 22 L25 22" stroke="#9A9AA2" stroke-width="2" stroke-linecap="round"/>${face(32, 24, 'brave', .62, false)}</g>`);
+  const radio = svg(`<path d="M42 6 V18" stroke="${K}" stroke-width="3" stroke-linecap="round"/><circle cx="42" cy="6" r="2.6" fill="#E0331E" stroke="${K}" stroke-width="1.4"/>
+    <rect x="18" y="16" width="28" height="42" rx="6" fill="#3A3F4A" stroke="${K}" stroke-width="2.2"/><rect x="22" y="21" width="20" height="14" rx="3" fill="#9FE8A0" stroke="${K}" stroke-width="1.6"/>
+    ${face(32, 27, 'o', .62, false)}<g fill="${K}"><circle cx="26" cy="42" r="1.6"/><circle cx="32" cy="42" r="1.6"/><circle cx="38" cy="42" r="1.6"/><circle cx="26" cy="48" r="1.6"/><circle cx="32" cy="48" r="1.6"/><circle cx="38" cy="48" r="1.6"/></g>${shine('M22 54 V56')}`);
+  const medkit = svg(`<path d="M24 14 C24 9 40 9 40 14" fill="none" stroke="${K}" stroke-width="3.2"/><rect x="10" y="16" width="44" height="36" rx="7" fill="#FFF6E6" stroke="${K}" stroke-width="2.2"/>
+    <path d="M28 22 H36 V30 H44 V38 H36 V46 H28 V38 H20 V30 H28 Z" fill="#E0331E" stroke="${K}" stroke-width="1.6"/>${face(32, 34, 'smile', .55, false)}${shine('M14 22 V30')}`);
+  // les survivants
+  const person = (hair, skin, shirt, extra, kind = 'brave', front = '') => svg(`<path d="M12 60 C12 46 20 40 32 40 C44 40 52 46 52 60 Z" fill="${shirt}" stroke="${K}" stroke-width="2.2"/>${front}
+    <circle cx="32" cy="26" r="14" fill="${skin}" stroke="${K}" stroke-width="2.2"/>${hair}${face(32, 27, kind, .8)}${extra}`);
+  const skater = person(`<path d="M18 22 C18 12 46 12 46 22 L50 22 C50 26 14 26 18 22 Z" fill="#3AA0FF" stroke="${K}" stroke-width="2"/><path d="M18 24 C14 30 16 36 18 38 M46 24 C50 30 48 36 46 38" stroke="#E07A2A" stroke-width="4" stroke-linecap="round"/>`,
+    'url(#dSkin)', '#FFC21A', `<rect x="36" y="46" width="22" height="6" rx="3" fill="#E0331E" stroke="${K}" stroke-width="1.6" transform="rotate(-20 47 49)"/>`, 'smile');
+  const mechanic = person(`<path d="M19 20 C22 12 42 12 45 20 C40 16 24 16 19 20 Z" fill="#5A3A22" stroke="${K}" stroke-width="2"/><path d="M22 32 C24 40 40 40 42 32 C40 36 24 36 22 32 Z" fill="#6B4226"/>`,
+    'url(#dSkin)', '#3A6A9A', `<path d="M48 36 L56 28 M53 25 C56 22 60 26 57 29" stroke="#9A9AA2" stroke-width="3.4" stroke-linecap="round" fill="none"/>`, 'brave', `<path d="M24 46 H40 V60 H24 Z" fill="#2A4A6A" stroke="${K}" stroke-width="1.6"/>`);
+  const nurse = person(`<path d="M18 26 C16 12 48 12 46 26 C44 18 20 18 18 26 Z" fill="#2A1A14" stroke="${K}" stroke-width="2"/><path d="M22 14 L42 14 L40 8 L24 8 Z" fill="#FFF6E6" stroke="${K}" stroke-width="1.8"/><path d="M30 9 H34 M32 7 V11" stroke="#E0331E" stroke-width="1.6"/>`,
+    '#E0A07A', '#9FE8D8', `<path d="M28 48 H36 M32 44 V52" stroke="#E0331E" stroke-width="3"/>`, 'smile');
+  const sheriff = person(`<path d="M10 20 C18 18 46 18 54 20 C52 24 12 24 10 20 Z" fill="#A86A2A" stroke="${K}" stroke-width="2"/><path d="M20 20 C20 8 44 8 44 20 Z" fill="#C8843A" stroke="${K}" stroke-width="2"/><path d="M24 34 C28 32 36 32 40 34" stroke="#6B4226" stroke-width="3" stroke-linecap="round"/>`,
+    'url(#dSkin)', '#8A6A3A', `<path d="M24 46 l2 3.5 4 .5 -3 2.8 .8 4 -3.8 -2 -3.8 2 .8 -4 -3 -2.8 4 -.5 Z" fill="url(#dGold)" stroke="${K}" stroke-width="1.2"/>`, 'brave');
+  // le zombie joker et le patient zéro
+  const zombie = (zero = false) => svg(`${zero ? '<circle cx="32" cy="30" r="30" fill="url(#dToxHalo)"/>' : ''}<path d="M12 60 C12 46 20 42 32 42 C44 42 52 46 52 60 Z" fill="${zero ? '#E6E0D8' : '#6A5A8A'}" stroke="${K}" stroke-width="2.2"/>
+    <path d="M18 28 C16 12 48 12 46 28 C46 40 40 44 32 44 C24 44 18 40 18 28 Z" fill="url(#dZomb)" stroke="${K}" stroke-width="2.2"/>
+    <path d="M22 16 L26 22 L28 14 L32 20 L36 13 L38 21 L42 16" fill="none" stroke="#3F2A1A" stroke-width="2.6" stroke-linejoin="round"/>
+    <circle cx="26" cy="28" r="4.6" fill="#FFF6C8" stroke="${K}" stroke-width="1.6"/><circle cx="39" cy="29" r="3.4" fill="#FFF6C8" stroke="${K}" stroke-width="1.6"/><circle cx="27" cy="29" r="1.6" fill="${K}"/><circle cx="38" cy="30" r="1.3" fill="${K}"/>
+    <path d="M24 37 C28 40 36 40 40 36 L38 40 C34 42 28 42 25 40 Z" fill="${K}"/><path d="M28 38 V40 M33 39 V41" stroke="#FFF6E6" stroke-width="1.6"/><path d="M35 40 C36 44 38 44 38 41" fill="#E0507A" stroke="${K}" stroke-width="1.2"/>
+    <path d="M44 22 L48 24 M45 26 L49 27" stroke="${K}" stroke-width="1.4"/>
+    ${zero ? `<text x="32" y="58" text-anchor="middle" font-family="Bangers, sans-serif" font-size="9" fill="#E0331E" letter-spacing=".5">ZÉRO</text>` : `<path d="M8 50 L56 50 L53 56 L56 62 L8 62 L11 56 Z" fill="#7CFF4F" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/><text x="32" y="59.5" text-anchor="middle" font-family="Bangers, sans-serif" font-size="9.5" letter-spacing="1" fill="${K}">WILD</text>`}`);
+  // la sirène qui lance les bonus
+  function rays(n, r, col, op) { let s = ''; for (let i = 0; i < n; i++) { const a = i * 2 * Math.PI / n, w = Math.PI / n * .45; s += `<path d="M32 30 L${(32 + r * Math.cos(a - w)).toFixed(1)} ${(30 + r * Math.sin(a - w)).toFixed(1)} L${(32 + r * Math.cos(a + w)).toFixed(1)} ${(30 + r * Math.sin(a + w)).toFixed(1)} Z"/>`; } return `<g fill="${col}" opacity="${op}">${s}</g>`; }
+  const siren = `<svg viewBox="0 0 64 64" aria-hidden="true">${rays(10, 34, '#FF6A4F', .45)}<circle cx="32" cy="30" r="26" fill="url(#dHalo)"/>
+    <path d="M14 50 H50 L48 58 H16 Z" fill="#3A3F4A" stroke="${K}" stroke-width="2.2"/><path d="M18 50 C18 30 22 16 32 16 C42 16 46 30 46 50 Z" fill="url(#dRed)" stroke="${K}" stroke-width="2.2"/>
+    <path d="M24 22 C22 30 22 40 22 48" stroke="#fff" stroke-width="2.6" opacity=".6" fill="none" stroke-linecap="round"/>${face(33, 36, 'o', .75, false)}
+    <path d="M6 20 L12 23 M58 20 L52 23 M10 8 L15 14 M54 8 L49 14" stroke="#FFC21A" stroke-width="3" stroke-linecap="round"/></svg>`;
+  // éléments des bonus
+  const icon = inner => `<svg viewBox="0 0 64 64" aria-hidden="true">${inner}</svg>`;
+  const horde = icon(`<g opacity=".8" transform="translate(-10 4) scale(.8)">${zombie().replace(/<\/?svg[^>]*>/g, '')}</g><g transform="translate(14 2) scale(.85)">${zombie().replace(/<\/?svg[^>]*>/g, '')}</g>`);
+  const crate = (kind) => icon(`<rect x="10" y="18" width="44" height="36" rx="3" fill="url(#dWood)" stroke="${K}" stroke-width="2.2"/><path d="M10 18 L54 54 M54 18 L10 54" stroke="#6B4226" stroke-width="3"/><rect x="18" y="28" width="28" height="16" rx="3" fill="#FFF1DC" stroke="${K}" stroke-width="1.6"/>
+    <text x="32" y="41" text-anchor="middle" font-family="Bangers, sans-serif" font-size="12" fill="${kind === 'mult' ? '#E0331E' : '#1A0F14'}">${kind === 'mult' ? '×+1' : 'AMMO'}</text>`);
+  const guns = icon(`<rect x="8" y="26" width="48" height="28" rx="3" fill="#4A5A3A" stroke="${K}" stroke-width="2.2"/><path d="M14 22 L40 22 L44 18 L52 18 L52 24 L44 24" fill="#2A2A2A" stroke="${K}" stroke-width="2"/><text x="32" y="45" text-anchor="middle" font-family="Bangers, sans-serif" font-size="11" fill="#FFC21A">ARMES</text>`);
+  const heli = `<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M4 6 H44" stroke="${K}" stroke-width="3" stroke-linecap="round"/><path d="M24 6 V11" stroke="${K}" stroke-width="3"/><path d="M8 18 C8 12 14 10 22 10 H30 C36 10 40 14 40 20 C40 24 36 26 30 26 H18 C12 26 8 23 8 18 Z" fill="#3AA0FF" stroke="${K}" stroke-width="2"/><path d="M40 18 H46 L47 13" stroke="${K}" stroke-width="2.4" fill="none"/><circle cx="31" cy="17" r="4" fill="#CFF3FF" stroke="${K}" stroke-width="1.6"/><path d="M14 29 H34" stroke="${K}" stroke-width="2.4"/></svg>`;
+  const survivor = icon(person('', 'url(#dSkin)', '#FFC21A', '').replace(/<\/?svg[^>]*>/g, ''));
+  const SYMS = [can, bat, radio, medkit, skater, mechanic, nurse, sheriff];
+  const WILDS = { wild: zombie(), zero: zombie(true) };
+  return { SYMS, SCAT: siren, wild: k => WILDS[k] || WILDS.wild, horde, crate, guns, heli, survivor, K };
+})();
+// ---------- particules : bave verte, braises, étincelles, débris, douilles ----------
+const FX = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cv = document.getElementById('fx'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, running = false, last = 0;
+  const P = [], spawners = [];
+  function resize() { const d = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.setTransform(d, 0, 0, d, 0, 0); }
+  resize(); addEventListener('resize', resize);
+  const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
+  const COLS = { goo: ['#7CFF4F', '#5FD83A', '#B6FF7A'], ember: ['#FF7A1F', '#FFB23D', '#FFE27A', '#E0331E'], spark: ['#FFF6DA', '#FFE7A0', '#FFC21A'], debris: ['#4A3F4E', '#6A5A6E', '#2E2632', '#9A4A22'], cash: ['#FFC21A', '#FFE27A', '#7CFF4F'] };
+  function add(p) {
+    if (reduce) return;
+    P.push(Object.assign({ t: 0, rot: rnd(0, 6.28), vr: rnd(-.12, .12), ph: rnd(0, 6.28), drag: .99, g: 0, sway: 0 }, p));
+    if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+  }
+  function spawnOne(type, x, y, ang, sp, o = {}) {
+    const base = { type, x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, col: o.col || pick(COLS[type] || COLS.spark) };
+    if (type === 'goo') Object.assign(base, { s: rnd(3, 8), g: .18, drag: .97, life: rnd(50, 90) });
+    if (type === 'ember') Object.assign(base, { s: rnd(2, 4), g: -.03, drag: .98, life: rnd(80, 140), sway: .6 });
+    if (type === 'spark') Object.assign(base, { s: rnd(4, 9), g: .03, drag: .94, life: rnd(35, 70) });
+    if (type === 'debris') Object.assign(base, { s: rnd(3, 7), g: .22, drag: .98, life: rnd(60, 100) });
+    if (type === 'cash') Object.assign(base, { s: rnd(5, 9), g: .06, drag: .985, life: rnd(110, 180), sway: .8 });
+    add(base);
+  }
+  function burst(type, x, y, n = 20, speed = 6, o = {}) { for (let i = 0; i < n; i++) spawnOne(type, x, y, rnd(0, Math.PI * 2), rnd(speed * .35, speed), o); }
+  function firework(x, y) { burst('ember', x, y, 30, 7); burst('spark', x, y, 10, 4); }
+  function rain(type, ms, rate) { if (reduce) return; spawners.push({ type, until: performance.now() + ms, rate, acc: 0 }); if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); } }
+  function stopRain() { spawners.length = 0; }
+  function loop(now) {
+    const dt = Math.min(3, (now - last) / 16.67); last = now;
+    for (let i = spawners.length - 1; i >= 0; i--) {
+      const s = spawners[i]; if (now > s.until) { spawners.splice(i, 1); continue; }
+      s.acc += s.rate * dt;
+      while (s.acc >= 1) { s.acc--; s.type === 'ember' ? spawnOne('ember', rnd(0, W), H + 10, -Math.PI / 2 + rnd(-.4, .4), rnd(1, 3)) : spawnOne(s.type, rnd(0, W), -20, Math.PI / 2 + rnd(-.4, .4), rnd(1, 3)); }
+    }
+    ctx.clearRect(0, 0, W, H);
+    for (let i = P.length - 1; i >= 0; i--) {
+      const p = P[i]; p.t += dt;
+      if (p.t > p.life || p.y > H + 40 || p.y < -60) { P.splice(i, 1); continue; }
+      p.vy += p.g * dt; p.vx *= Math.pow(p.drag, dt); p.vy *= Math.pow(p.drag, dt);
+      if (p.type === 'cash' && p.vy > 2.4) p.vy = 2.4;
+      p.x += (p.vx + (p.sway ? Math.sin(p.t * .07 + p.ph) * p.sway : 0)) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      const fade = Math.min(1, (p.life - p.t) / 25);
+      ctx.save(); ctx.globalAlpha = fade; ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      if (p.type === 'goo') { ctx.fillStyle = p.col; ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * .8, 0, 0, 6.29); ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = '#1A0F14'; ctx.stroke(); }
+      else if (p.type === 'debris') { ctx.fillStyle = p.col; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .7); ctx.lineWidth = 1; ctx.strokeStyle = '#1A0F14'; ctx.strokeRect(-p.s / 2, -p.s / 2, p.s, p.s * .7); }
+      else if (p.type === 'cash') { ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(0, 0, p.s, 0, 6.29); ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = '#1A0F14'; ctx.stroke(); ctx.fillStyle = '#1A0F14'; ctx.font = `${p.s * 1.3}px Bangers, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', 0, 1); }
+      else { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(0, 0, 0, 0, 0, p.s * 2.4); g.addColorStop(0, p.col); g.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, p.s * 2.4, 0, 6.29); ctx.fill(); }
+      ctx.restore();
+    }
+    if (P.length || spawners.length) requestAnimationFrame(loop); else { running = false; ctx.clearRect(0, 0, W, H); }
+  }
+  const center = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  return { burst, firework, rain, stopRain, center, W: () => W, H: () => H };
+})();
+// ---------- la rue : voiture de police abandonnée, baril en feu, zombies qui traînent la patte ----------
+const WORLD = (() => {
+  const K = '#1A0F14';
+  const A = {
+    car: `<svg viewBox="0 0 150 70"><g class="siren"><rect class="cop1" x="58" y="4" width="14" height="8" rx="2" fill="#E0331E" stroke="${K}" stroke-width="2"/><rect class="cop2" x="74" y="4" width="14" height="8" rx="2" fill="#3AA0FF" stroke="${K}" stroke-width="2"/></g>
+      <path d="M20 40 L36 14 H106 L126 40 Z" fill="#F4F0EA" stroke="${K}" stroke-width="3" stroke-linejoin="round"/><path d="M42 18 H70 V38 H32 Z M76 18 H102 L116 38 H76 Z" fill="#6A8AA8" stroke="${K}" stroke-width="2"/>
+      <rect x="6" y="38" width="138" height="20" rx="6" fill="#F4F0EA" stroke="${K}" stroke-width="3"/><rect x="6" y="44" width="138" height="6" fill="#1A1A2A"/><circle cx="36" cy="58" r="10" fill="#2A2A2A" stroke="${K}" stroke-width="3"/><circle cx="114" cy="58" r="10" fill="#2A2A2A" stroke="${K}" stroke-width="3"/>
+      <path d="M86 26 L92 34 M90 22 L96 32" stroke="${K}" stroke-width="1.6"/></svg>`,
+    barrel: `<svg viewBox="0 0 40 70"><path class="fire" d="M20 30 C8 22 12 8 20 0 C22 10 32 12 28 26 C27 30 24 32 20 30 Z" fill="#FF7A1F"/><path class="fire" d="M20 30 C15 24 17 16 21 10 C23 18 27 20 24 28 Z" fill="#FFE27A"/>
+      <rect x="6" y="30" width="28" height="38" rx="3" fill="#9A4A22" stroke="${K}" stroke-width="2.4"/><path d="M6 40 H34 M6 58 H34" stroke="${K}" stroke-width="2"/></svg>`,
+    sign: `<svg viewBox="0 0 46 80"><path d="M23 30 V80" stroke="#6A5A6E" stroke-width="4"/><path d="M23 2 L44 38 H2 Z" fill="#FFC21A" stroke="${K}" stroke-width="3" stroke-linejoin="round"/><text x="23" y="33" text-anchor="middle" font-family="Bangers, sans-serif" font-size="18" fill="${K}">!</text></svg>`,
+    walker: c => `<svg viewBox="0 0 50 70"><path d="M18 68 L20 50 M32 68 L30 50" stroke="#3A3050" stroke-width="6" stroke-linecap="round"/><path d="M14 52 C12 38 16 30 25 30 C34 30 38 38 36 52 Z" fill="${c}" stroke="${K}" stroke-width="2"/>
+      <path d="M34 36 L48 34 M32 42 L46 42" stroke="#7CD84A" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="20" r="11" fill="#7CD84A" stroke="${K}" stroke-width="2"/><circle cx="29" cy="18" r="3" fill="#FFF6C8" stroke="${K}" stroke-width="1.2"/><circle cx="21" cy="19" r="2.2" fill="#FFF6C8" stroke="${K}" stroke-width="1.2"/><path d="M22 26 H32" stroke="${K}" stroke-width="2"/></svg>`,
+  };
+  function build() {
+    document.getElementById('fCar').innerHTML = A.car; document.getElementById('fBarrel').innerHTML = A.barrel; document.getElementById('fSign').innerHTML = A.sign;
+    const w = document.getElementById('walkers');
+    ['#6A5A8A', '#8A5A3A', '#3A6A5A'].forEach((c, i) => { const d = document.createElement('div'); d.className = 'animal z'; d.innerHTML = A.walker(c); d.style.setProperty('--d', (26 + i * 9) + 's'); d.style.setProperty('--del', (-i * 11) + 's'); w.appendChild(d); });
+  }
+  return { build, A };
+})();
+(() => {
+const E = ENGINE;
+const $ = id => document.getElementById(id);
+const fmt = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const BETS = [0.2, 0.4, 0.6, 1, 2, 4, 10, 20];
+const TIER_NAME = { 3: 'The Outbreak', 4: 'Last Stand', 5: 'Extraction' };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const S = { balance: 1000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false, st: E.newState() };
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 150) : (S.turbo ? ms * 0.4 : ms)));
+const bet = () => BETS[S.betIdx];
+const cost = () => bet() * (S.ante ? E.ANTE : 1);
+const mode = () => (S.ante ? 'ante' : 'normal');
+const baseCell = x => (x === E.SCAT ? ART.SCAT : x === E.WILD ? ART.wild('wild') : ART.SYMS[x]);
+
+// ---------- décor animé ----------
+(function decor() { WORLD.build(); })();
+
+// ---------- affichage ----------
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('show'), 2200); }
+function setMoney() { $('balance').textContent = fmt(S.balance); $('bet').textContent = fmt(bet()); $('anteBtn').innerHTML = S.ante ? 'Chance<br>+25 %' : 'Chance<br>bonus'; }
+function msg(t) { $('msg').textContent = t; }
+function floatText(t) { const f = document.createElement('div'); f.className = 'float'; f.textContent = t; $('gridwrap').appendChild(f); setTimeout(() => f.remove(), 1300); }
+function pow(t, where = $('gridwrap')) { const p = document.createElement('div'); p.className = 'pow'; p.textContent = t; where.appendChild(p); setTimeout(() => p.remove(), 1150); }
+function shake() { const m = $('main'); m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
+function quake() { const m = $('main'); m.classList.remove('quake'); void m.offsetWidth; m.classList.add('quake'); }
+function buildGrid(cols, rows) {
+  const el = $('grid'); el.innerHTML = ''; el.classList.remove('dimmed');
+  el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  const cells = [];
+  for (let r = 0; r < rows; r++) { cells.push([]); for (let c = 0; c < cols; c++) { const d = document.createElement('div'); d.className = 'cell'; el.appendChild(d); cells[r].push(d); } }
+  return cells;
+}
+function showStatic(g) { const cells = buildGrid(5, 5); for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) cells[r][c].innerHTML = baseCell(g[c][r]); }
+function setGauge(v, invLeft = 0) {
+  const g = $('gauge'); g.classList.toggle('inv', invLeft > 0); g.classList.toggle('hot', !invLeft && v >= 80);
+  $('gfill').style.width = (invLeft ? invLeft / E.GAUGE.invasion * 100 : v) + '%';
+  $('gtxt').textContent = invLeft ? `INVASION MODE : ${invLeft} spin${invLeft > 1 ? 's' : ''}` : `INVASION ${Math.floor(v)} %`;
+  g.setAttribute('aria-valuenow', Math.floor(v));
+  document.body.classList.toggle('inv', invLeft > 0);
+}
+function flyTo(fromEl, toEl, html) {
+  if (reduce || !toEl) return;
+  const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+  const f = document.createElement('div'); f.className = 'fly'; f.innerHTML = html;
+  f.style.left = a.left + 'px'; f.style.top = a.top + 'px'; f.style.width = a.width + 'px'; f.style.height = a.height + 'px';
+  document.body.appendChild(f);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+    f.style.transform = `translate(${dx}px, ${dy}px) scale(.45) rotate(360deg)`; f.style.opacity = '.2';
+  }));
+  setTimeout(() => f.remove(), 700);
+}
+
+// ---------- gros gains : une mise en scène par palier ----------
+const WIN_TIERS = [{ min: 500, t: 4, name: 'Ville libérée !' }, { min: 150, t: 3, name: 'Carnage !' }, { min: 50, t: 2, name: 'Méga gain !' }, { min: 20, t: 1, name: 'Gros gain !' }];
+const winTier = x => WIN_TIERS.find(w => x >= w.min);
+function bigWin(amount, mult) {
+  return new Promise(res => {
+    const wt = winTier(mult); if (!wt) return res();
+    const el = $('bigwin'), bw = $('bw');
+    const dur = [0, 3200, 4400, 5800, 7400][wt.t] * (S.turbo ? 0.5 : 1) * (reduce ? 0.2 : 1);
+    el.dataset.tier = wt.t; const lay = $('bwLayer'); lay.className = 'layer click show bwLayer' + wt.t;
+    bw.innerHTML = `<div class="t">${wt.name}</div><div class="v" id="bwv">0,00</div><div class="x">×${mult.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} la mise</div>` +
+      (wt.t === 4 ? `<div class="dance">${ART.SYMS.map((s, i) => s.replace('<svg', `<svg style="animation-delay:${i * 90}ms"`)).join('')}</div>` : '');
+    el.classList.add('show'); Snd.fx('fanfare');
+    const W = FX.W(), H = FX.H();
+    FX.burst('cash', W / 2, H / 2, 30, 11);
+    FX.rain('cash', dur, wt.t >= 2 ? 1.2 : .7);
+    if (wt.t >= 2) { FX.rain('ember', dur, wt.t >= 4 ? 1.4 : .7); FX.burst('spark', W / 2, H / 2, 24, 9); }
+    if (wt.t >= 3) shake();
+    let fwTimer = null;
+    if (wt.t >= 3) fwTimer = setInterval(() => { FX.firework(W * (0.15 + Math.random() * 0.7), H * (0.12 + Math.random() * 0.4)); Snd.fx('thunk'); }, wt.t === 4 ? 340 : 540);
+    const t0 = performance.now(); let done = false, lastTick = 0;
+    const finish = () => {
+      if (done) return; done = true; clearInterval(fwTimer); $('bwv').textContent = fmt(amount);
+      FX.burst('spark', W / 2, H / 2, 20, 8);
+      setTimeout(() => { el.classList.remove('show'); lay.className = 'layer click'; FX.stopRain(); res(); }, 1600);
+    };
+    lay.onclick = finish;
+    const step = now => {
+      if (done) return;
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      $('bwv').textContent = fmt(amount * e);
+      if (now - lastTick > 70) { Snd.fx('tick', e); lastTick = now; }
+      if (p < 1) requestAnimationFrame(step); else finish();
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// ---------- grille : chute, cascades, horde, infection ----------
+async function revealDrop(g, antic = true) {
+  const cells = buildGrid(5, 5);
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) { cells[r][c].innerHTML = baseCell(g[c][r]); cells[r][c].classList.add('pending'); }
+  let scats = 0;
+  Snd.fx('reelStart'); await sleep(240);
+  for (let c = 0; c < 5; c++) {
+    if (antic && scats >= 2) {
+      for (let r = 0; r < 5; r++) cells[r][c].classList.add('antic');
+      msg(scats === 2 ? 'Encore une sirène et c\'est l\'épidémie !' : 'Ça va très mal tourner…');
+      Snd.fx('antic'); await sleep(900);
+    }
+    for (let r = 0; r < 5; r++) {
+      const d = cells[r][c]; d.classList.remove('pending', 'antic'); d.classList.add('drop');
+      d.firstChild.style.animationDelay = (r * 22) + 'ms';
+      if (g[c][r] === E.SCAT) { scats++; d.classList.add('scat'); const [x, y] = FX.center(d); setTimeout(() => FX.burst('ember', x, y, 10, 4), 200); }
+    }
+    Snd.fx('stop', c);
+    if (g[c].includes(E.SCAT)) Snd.fx('scatter', scats);
+    await sleep(160);
+  }
+  Snd.fx('reelStop');
+  await sleep(300);
+  return cells;
+}
+function setCell(d, x, cls = 'drop') {
+  d.innerHTML = baseCell(x); d.classList.remove('drop', 'popin', 'boom', 'win', 'bite'); void d.offsetWidth; if (cls) d.classList.add(cls);
+}
+function markSticky(cells, sticky) { for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) cells[r][c].classList.toggle('sticky', sticky.has(c * 5 + r)); }
+// joue les étapes d'un spin (après la chute) ; unit convertit le gain brut d'une cascade en crédits
+async function playSteps(cells, steps, unit, o = {}) {
+  let paid = 0;
+  for (const s of steps) {
+    if (s.t === 'drop') continue;
+    if (s.t === 'horde') {
+      pow('HORDE !'); quake(); Snd.fx('horde'); msg('Une horde traverse la rue !');
+      const h = document.createElement('div'); h.className = 'horde';
+      for (let i = 0; i < 4; i++) { const sp = document.createElement('span'); sp.innerHTML = ART.wild('wild'); sp.style.top = (8 + i * 22) + '%'; sp.style.animationDelay = (i * 160) + 'ms'; h.appendChild(sp); }
+      $('gridwrap').appendChild(h); setTimeout(() => h.remove(), 2400);
+      await sleep(500);
+      for (const [c, r] of s.cells) { const d = cells[r][c]; d.classList.add('boom'); const [x, y] = FX.center(d); FX.burst('debris', x, y, 3, 4); Snd.fx('splat', 1); await sleep(70); }
+      await sleep(350);
+      for (const [c, r] of s.cells) setCell(cells[r][c], s.g[c][r]);
+      await sleep(550); continue;
+    }
+    if (s.t === 'zero') {
+      const [c, r] = s.cell, d = cells[r][c];
+      pow('PATIENT ZÉRO'); Snd.fx('zero'); msg('Le patient zéro est là. L\'infection va se propager à chaque cascade.');
+      d.innerHTML = ART.wild('zero'); d.classList.add('zero', 'bite', 'sticky'); const [x, y] = FX.center(d); FX.burst('goo', x, y, 10, 5);
+      await sleep(800);
+      for (const [a, b] of s.infected || []) cells[b][a].classList.add('infected');
+      if ((s.infected || []).length) Snd.fx('infect');
+      await sleep(600); continue;
+    }
+    // cascade gagnante
+    const win = s.amt * unit; paid += win;
+    $('grid').classList.add('dimmed');
+    for (const w of s.wins) for (const [c, r] of w.cells) cells[r][c].classList.add('win');
+    const big = s.wins.reduce((m, w) => Math.max(m, w.size), 0);
+    floatText('+' + fmt(win)); Snd.fx('win', win / bet() >= 5 ? 2 : 1);
+    msg(`Grappe de ${big} : ${fmt(win)}${o.multTxt ? o.multTxt() : ''}`);
+    if (o.onWin) await o.onWin(s);
+    await sleep(750);
+    Snd.fx('splat');
+    s.cells.forEach(([c, r], i) => { const d = cells[r][c]; d.classList.remove('win'); d.classList.add('boom'); if (i % Math.ceil(s.cells.length / 6) === 0) { const [x, y] = FX.center(d); FX.burst('goo', x, y, 3, 4); } }); // quelques éclaboussures seulement, même pour une énorme grappe
+    if (s.cells.length >= 10) shake();
+    await sleep(320);
+    $('grid').classList.remove('dimmed');
+    for (const r of cells) for (const d of r) d.classList.remove('win');
+    for (const [c, r] of s.cells) setCell(cells[r][c], s.g[c][r]);
+    if (s.zombified && s.zombified.length) {
+      await sleep(250); Snd.fx('bite');
+      for (const [c, r] of s.zombified) { const d = cells[r][c]; d.classList.remove('infected'); setCell(d, E.WILD, 'bite'); d.classList.add('sticky'); const [x, y] = FX.center(d); FX.burst('goo', x, y, 3, 4); }
+    }
+    if (s.infected && s.infected.length) { for (const [c, r] of s.infected) cells[r][c].classList.add('infected'); Snd.fx('infect'); }
+    await sleep(450);
+  }
+  return paid;
+}
+function mediumWin(mult) {
+  const [x, y] = FX.center($('gridwrap'));
+  if (mult >= 5) { FX.burst('cash', x, y, 10, 7); FX.burst('spark', x, y, 8, 5); }
+  if (mult >= 10) shake();
+}
+
+// ---------- jeu de base ----------
+async function presentScatters(cells, g) {
+  $('grid').classList.add('dimmed');
+  for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) if (g[c][r] === E.SCAT) {
+    const d = cells[r][c]; d.classList.add('scatwin');
+    const [x, y] = FX.center(d); FX.burst('spark', x, y, 16, 6); FX.burst('ember', x, y, 8, 3);
+  }
+  Snd.fx('bonus'); msg('ALERTE GÉNÉRALE !'); quake();
+  await sleep(2300);
+}
+async function cityFalls() {
+  const el = $('intro'), box = $('introbox');
+  el.classList.add('show', 'fall'); $('introLayer').classList.add('show'); Snd.fx('fall');
+  box.innerHTML = `<div class="ititle">La ville est tombée</div><div class="isub">INVASION MODE : pendant ${E.GAUGE.invasion} spins, tous les survivants qui tombent sur la grille deviennent des zombies jokers.</div><button class="btn" id="introBtn">Survivre</button>`;
+  await new Promise(res => { const b = $('introBtn'); setTimeout(() => b.focus(), 400); b.onclick = () => { el.classList.remove('show', 'fall'); $('introLayer').classList.remove('show'); res(); }; });
+}
+async function spin() {
+  if (S.busy) return false;
+  if (S.balance < cost() - 1e-9) { noCredits(); stopAuto(); return false; }
+  S.busy = true; lockUI(true); Snd.start(); Snd.fx('click');
+  const sb = $('spin'); sb.classList.remove('go'); void sb.offsetWidth; sb.classList.add('go');
+  S.balance -= cost(); setMoney(); msg('');
+  const r = E.playBase(S.st, mode());
+  if (r.inv) { msg('INVASION : les survivants sont devenus des zombies !'); Snd.fx('bite'); }
+  const cells = await revealDrop(r.steps[0].g);
+  const win = await playSteps(cells, r.steps, E.BASE_SCALE[mode()] * bet());
+  const total = r.win * bet();
+  if (total > 0) {
+    const mult = total / bet();
+    msg(`Gain total : ${fmt(total)}`); mediumWin(mult);
+    await bigWin(total, mult);
+    S.balance += total; $('lastWin').textContent = fmt(total); setMoney();
+  } else { $('lastWin').textContent = fmt(0); await sleep(200); }
+  setGauge(r.invasionStart ? 100 : r.gauge, r.invasionStart ? 0 : r.invasionLeft);
+  if (r.invasionStart) { await sleep(700); if (S.auto) stopAuto(); await cityFalls(); setGauge(0, S.st.invasion); }
+  let bonus = false;
+  if (r.scats >= 3) {
+    bonus = true;
+    const tier = Math.min(5, r.scats);
+    if (S.auto) stopAuto();
+    const g0 = r.steps[0].g, c0 = buildGrid(5, 5);
+    for (let rr = 0; rr < 5; rr++) for (let c = 0; c < 5; c++) c0[rr][c].innerHTML = baseCell(g0[c][rr]);
+    await presentScatters(c0, g0);
+    await runBonus(tier, false, r.scats);
+  }
+  S.busy = false; lockUI(false);
+  return bonus;
+}
+function lockUI(on) {
+  for (const id of ['betDown', 'betUp', 'buyBtn', 'anteBtn']) $(id).disabled = on || S.auto > 0;
+  $('spin').disabled = on && !S.auto;
+}
+function noCredits() {
+  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 1 000').then(() => { S.balance += 1000; setMoney(); msg('1 000 crédits ajoutés.'); });
+}
+
+// ---------- spins automatiques ----------
+function stopAuto() { S.auto = 0; $('autoBtn').textContent = 'Auto'; $('autoBtn').classList.remove('on'); $('spin').classList.remove('stop'); $('spin').setAttribute('aria-label', 'Lancer'); lockUI(S.busy); }
+async function autoLoop() {
+  $('autoBtn').classList.add('on'); $('spin').classList.add('stop'); $('spin').setAttribute('aria-label', 'Arrêter les spins automatiques');
+  while (S.auto > 0) {
+    $('autoBtn').textContent = S.auto === Infinity ? '∞' : String(S.auto);
+    const hadBonus = await spin();
+    if (hadBonus || !S.auto) break;
+    if (S.auto !== Infinity) S.auto--;
+    if (!S.auto) { msg('Spins automatiques terminés.'); break; }
+    await sleep(220);
+  }
+  stopAuto();
+}
+function chooseAuto() {
+  $('card').innerHTML = `<h2>Spins auto</h2><p>Ils s'arrêtent au nombre choisi, dès qu'un bonus tombe, quand la ville tombe ou quand le solde ne couvre plus la mise.</p>
+    <div class="choices">${[10, 25, 50, 100, 250].map(n => `<button class="btn" data-n="${n}">${n}</button>`).join('')}<button class="btn" data-n="inf">∞</button></div>
+    <button class="btn" data-n="0">Annuler</button>`;
+  $('overlay').classList.add('show');
+  $('card').querySelectorAll('[data-n]').forEach(bt => bt.onclick = () => {
+    $('overlay').classList.remove('show');
+    const n = bt.dataset.n; if (n === '0') return;
+    Snd.start(); S.auto = n === 'inf' ? Infinity : +n; lockUI(false); autoLoop();
+  });
+  $('card').querySelector('[data-n]').focus();
+}
+
+// ---------- entrée du bonus ----------
+const INTRO_TXT = {
+  3: `8 free spins. À chaque spin, des zombies surgissent sur la grille et y restent jusqu'à la fin. Plus la ville est contaminée, plus les grappes explosent.`,
+  4: `Tu te barricades dans un magasin avec ton butin. À chaque manche, choisis la porte à défendre : quelques zombies (butin ×1,3), une caisse d'armes (×1,6) ou la horde (tu fuis avec 15 %). Tu peux t'enfuir quand tu veux.`,
+  5: `L'hélico t'attend sur le toit. Tu as 5 tours pour grimper 5 étages : chaque grappe te fait monter d'un étage. Les caisses donnent des munitions (+1 tour) ou un multiplicateur.`,
+};
+function introBonus(tier, count, bought) {
+  return new Promise(res => {
+    const el = $('intro'), box = $('introbox');
+    const medals = Array.from({ length: count }, (_, i) => ART.SCAT.replace('<svg', `<svg style="animation-delay:${i * 260}ms"`)).join('');
+    const tDelay = count * 260 + 250;
+    box.innerHTML = `<div class="medals">${medals}</div>
+      <div class="ititle" style="animation-delay:${tDelay}ms">${TIER_NAME[tier]}</div>
+      <div class="isub" style="animation-delay:${tDelay + 350}ms">${bought ? 'Bonus acheté. ' : ''}${INTRO_TXT[tier]}</div>
+      <button class="btn" id="introBtn" style="animation-delay:${tDelay + 600}ms">${tier === 4 ? 'Se barricader' : tier === 5 ? 'Foncer vers le toit' : 'Survivre'}</button>`;
+    box.classList.toggle('many', count > 4);
+    el.classList.add('show'); $('introLayer').classList.add('show'); Snd.fx('whoosh');
+    for (let i = 0; i < count; i++) setTimeout(() => { Snd.fx('thunk'); const W = FX.W(), H = FX.H(); FX.burst('ember', W / 2 + (i - (count - 1) / 2) * 70, H * 0.36, 10, 5); }, i * 260 + 450);
+    setTimeout(() => { Snd.fx('fanfare'); const W = FX.W(), H = FX.H(); FX.burst('goo', W / 2, H * 0.45, 30, 10); if (tier >= 4) FX.firework(W / 2, H * 0.3); }, tDelay + 200);
+    const b = $('introBtn');
+    setTimeout(() => b.focus(), tDelay + 700);
+    b.onclick = () => { el.classList.remove('show'); $('introLayer').classList.remove('show'); res(); };
+  });
+}
+
+// ---------- bonus ----------
+function flashChip(id) { const c = $(id); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
+function hud(tier, info, spinsLbl, spins, multLbl, multV, total) {
+  $('tierName').textContent = TIER_NAME[tier]; $('tierInfo').textContent = info;
+  $('chipSpins').firstChild.textContent = spinsLbl + ' '; $('spinsLeft').textContent = spins;
+  $('multLbl').textContent = multLbl; $('multN').textContent = multV; $('bonusTotal').textContent = fmt(total);
+}
+async function runOutbreak(b, b0) {
+  const unit = E.BONUS_K[3] * b0; let total = 0;
+  const upd = () => hud(3, `${Math.round(b.sticky.size / 25 * 100)} % contaminé`, 'Spins', b.spinsLeft, 'Zombies', `${b.sticky.size}/${E.TIER[3].maxZ}`, total);
+  showStatic(E.spinBase()); upd(); await sleep(700);
+  while (!b.done) {
+    const ev = E.bonusSpin(b); upd(); msg('');
+    const cells = await revealDrop(ev.drop, false);
+    markSticky(cells, new Set([...b.sticky].filter(k => !ev.born.some(([c, r]) => c * 5 + r === k))));
+    for (const [c, r] of ev.born) { const d = cells[r][c]; setCell(d, E.WILD, 'bite'); d.classList.add('sticky'); const [x, y] = FX.center(d); FX.burst('goo', x, y, 6, 5); Snd.fx('bite'); flashChip('chipMult'); await sleep(380); }
+    if (ev.born.length) { msg(ev.born.length > 1 ? 'Deux zombies surgissent !' : 'Un zombie surgit et reste sur la grille !'); await sleep(400); }
+    await playSteps(cells, ev.steps, unit);
+    markSticky(cells, b.sticky);
+    total = Math.min(E.TIER[3].cap * b0, b.total * b0); upd(); if (ev.win > 0) flashChip('chipTotal');
+    if (!ev.steps.length) { msg('Aucune grappe ce spin-ci'); await sleep(700); } else await sleep(500);
+  }
+  return `${b.sticky.size} zombies sur la grille à la fin`;
+}
+const OUT_ART = () => ({ zombies: ART.wild('wild'), armes: ART.guns, horde: ART.horde });
+async function runStand(b, b0) {
+  document.body.classList.add('st');
+  const K = E.BONUS_K[4] * b0, cap = E.TIER[4].cap * b0, val = () => Math.min(cap, b.pot * K);
+  const pot0 = b.pot, xm = () => '×' + (b.pot / pot0).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+  const upd = () => { hud(4, `Manche ${Math.min(b.round + 1, E.TIER[4].rounds)}/${E.TIER[4].rounds}`, 'Manches', `${b.round}/${E.TIER[4].rounds}`, 'Butin', xm(), val());
+    $('pot').innerHTML = `${fmt(val())}<small>butin à emporter</small>`; $('fleeBtn').textContent = `S'enfuir avec ${fmt(val())}`; };
+  const doors = () => {
+    $('doors').innerHTML = ['Gauche', 'Centre', 'Droite'].map((n, i) => `<button class="door" data-i="${i}" ${i === 0 ? 'data-auto' : ''} aria-label="Défendre la porte ${n.toLowerCase()}"><span class="behind"></span><span class="leaf"></span><span class="plank p1"></span><span class="plank p2"></span><span class="lbl">${n}</span></button>`).join('');
+    $('standlog').textContent = 'Quelle porte défends-tu ?';
+  };
+  doors(); upd(); msg('Barricade-toi : choisis une porte, ou fuis avec le butin.');
+  while (!b.done) {
+    const choice = await new Promise(res => {
+      $('doors').querySelectorAll('.door').forEach(d => d.onclick = () => res(+d.dataset.i));
+      $('fleeBtn').disabled = false; $('fleeBtn').onclick = () => res('fuir');
+    });
+    $('fleeBtn').disabled = true; $('doors').querySelectorAll('.door').forEach(d => d.disabled = true);
+    if (choice === 'fuir') { E.bonusSpin(b, 'fuir'); Snd.fx('whoosh'); $('standlog').textContent = `Tu t'enfuis par la ruelle avec ${fmt(val())} !`; await sleep(1200); break; }
+    const ev = E.bonusSpin(b, 'porte'), A = OUT_ART(), picked = $('doors').children[choice];
+    Snd.fx('door'); picked.classList.add('picked');
+    picked.querySelector('.behind').innerHTML = A[ev.out]; picked.classList.add('open');
+    await sleep(700);
+    const [x, y] = FX.center(picked);
+    if (ev.out === 'zombies') { Snd.fx('shots'); FX.burst('goo', x, y, 16, 6); $('standlog').textContent = 'Tu repousses quelques zombies : butin ×1,3 !'; }
+    if (ev.out === 'armes') { Snd.fx('guns'); FX.burst('spark', x, y, 18, 7); FX.burst('cash', x, y, 10, 6); $('standlog').textContent = 'Une caisse d\'armes ! Butin ×1,6 !'; }
+    if (ev.out === 'horde') { Snd.fx('horde'); quake(); FX.burst('debris', x, y, 20, 8); $('standlog').textContent = 'La horde enfonce la barricade ! Tu t\'échappes avec 15 % du butin.'; }
+    upd(); flashChip('chipTotal');
+    await sleep(500);
+    [...$('doors').children].forEach((d, i) => { if (i !== choice) { d.querySelector('.behind').innerHTML = A[ev.others[i < choice ? i : i - 1]]; d.classList.add('open', 'dim'); } });
+    if (ev.survived) { $('standlog').textContent = 'Les secours arrivent ! Tu gardes tout ton butin.'; Snd.fx('heli'); }
+    await sleep(ev.out === 'horde' ? 1600 : 1300);
+    if (!b.done) doors();
+  }
+  document.body.classList.remove('st');
+  return b.history.length ? `${b.history.length} manche${b.history.length > 1 ? 's' : ''} tenue${b.history.length > 1 ? 's' : ''}` : 'fuite immédiate';
+}
+async function runExtraction(b, b0) {
+  document.body.classList.add('ext');
+  const T = E.TIER[5], unit = E.BONUS_K[5] * b0; let total = 0;
+  $('floors').innerHTML = Array.from({ length: T.floors }, (_, i) => `<span class="fl" id="fl${i}"></span>`).join('') + `<span class="heli" id="heliIc">${ART.heli}</span>`;
+  const upd = () => { hud(5, `Étage ${b.floor}/${T.floors}`, 'Tours', b.spinsLeft, 'Multi', '×' + b.mult, total); for (let i = 0; i < T.floors; i++) $('fl' + i).classList.toggle('on', i < b.floor); };
+  showStatic(E.spinBase()); upd(); await sleep(700);
+  while (!b.done) {
+    const f0 = b.floor, ev = E.bonusSpin(b); msg('');
+    hud(5, `Étage ${f0}/${T.floors}`, 'Tours', b.spinsLeft - ev.crates.filter(c => c === 'ammo').length, 'Multi', '×' + (b.mult - ev.crates.filter(c => c === 'mult').length), total);
+    const cells = await revealDrop(ev.drop, false);
+    for (const cr of ev.crates) {
+      const d = cells[Math.floor(Math.random() * 5)][Math.floor(Math.random() * 5)]; Snd.fx('crate'); pow(cr === 'ammo' ? '+1 TOUR' : 'MULTI +1');
+      flyTo(d, $(cr === 'ammo' ? 'chipSpins' : 'chipMult'), ART.crate(cr)); toast(cr === 'ammo' ? 'Caisse de munitions : +1 tour !' : 'Caisse de multiplicateur : +1 !');
+      await sleep(900); flashChip(cr === 'ammo' ? 'chipSpins' : 'chipMult');
+    }
+    let fl = f0;
+    await playSteps(cells, ev.steps, unit, {
+      multTxt: () => (b.mult > 1 ? ` (×${b.mult})` : ''),
+      onWin: async s => { if (s.floor > fl) { fl = s.floor; $('tierInfo').textContent = `Étage ${fl}/${T.floors}`; for (let i = 0; i < T.floors; i++) $('fl' + i).classList.toggle('on', i < fl); Snd.fx('climb', fl); toast(fl >= T.floors ? 'Le toit ! L\'hélico descend…' : `Étage ${fl} atteint !`); } },
+    });
+    total = Math.min(T.cap * b0, b.total * b0); upd();
+    if (ev.roof) {
+      $('heliIc').classList.add('go'); Snd.fx('heli'); pow('EXTRACTION !');
+      const prize = 12 * b.mult * unit; floatText('+' + fmt(prize)); msg(`Extraction réussie : prime du toit ${fmt(prize)} !`);
+      const [x, y] = FX.center($('gridwrap')); FX.burst('cash', x, y, 30, 10); FX.firework(x, y - 60);
+      await sleep(1800);
+    } else if (!ev.steps.length) { msg('Pas de grappe : tu restes coincé à cet étage'); await sleep(800); }
+    else await sleep(500);
+  }
+  document.body.classList.remove('ext'); $('heliIc') && $('heliIc').classList.remove('go');
+  return b.roof ? 'extraction réussie, tu es sur le toit !' : `bloqué à l'étage ${b.floor}, la horde envahit l'immeuble`;
+}
+async function runBonus(tier, bought, count) {
+  const b0 = bet();
+  await introBonus(tier, count, bought);
+  document.body.classList.add('bonus'); Snd.setBonus(true); msg('');
+  const b = E.newBonus(tier);
+  const detail = tier === 3 ? await runOutbreak(b, b0) : tier === 4 ? await runStand(b, b0) : await runExtraction(b, b0);
+  const win = b.total * b0, mult = b.total;
+  await sleep(500);
+  if (b.capped) toast('Gain maximum atteint !');
+  if (winTier(mult)) await bigWin(win, mult);
+  S.balance += win; setMoney(); $('lastWin').textContent = fmt(win);
+  await overlay(`<h2>${fmt(win)}</h2><p>${TIER_NAME[tier]} terminé : ${detail}. ×${mult.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} la mise${bought ? ` (acheté ${E.BUY[tier]}×)` : ''}.</p>`, 'Continuer');
+  document.body.classList.remove('bonus'); Snd.setBonus(false);
+  msg(`${TIER_NAME[tier]} : ${fmt(win)}`);
+  showStatic(E.spinBase());
+}
+
+// ---------- achat du bonus ----------
+function openBuy() {
+  if (S.busy || S.auto) return;
+  const off = t => {
+    const price = E.BUY[t] * bet(), ok = !S.ante && S.balance >= price - 1e-9;
+    const d = t === 3 ? '8 free spins, les zombies restent sur la grille' : 'Barricade : 3 portes par manche, fuis quand tu veux';
+    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} sirènes. ${d}<span class="price">${fmt(price)} crédits (${E.BUY[t]}× la mise)</span></span></button>`;
+  };
+  $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}</div><button class="btn" id="ovBtn">Annuler</button>`;
+  $('overlay').classList.add('show');
+  $('ovBtn').onclick = () => $('overlay').classList.remove('show');
+  $('card').querySelectorAll('.offer').forEach(o => o.onclick = () => { $('overlay').classList.remove('show'); buy(+o.dataset.t); });
+  $('ovBtn').focus();
+}
+async function buy(tier) {
+  const price = E.BUY[tier] * bet();
+  if (S.balance < price - 1e-9) return;
+  S.busy = true; lockUI(true); Snd.start();
+  S.balance -= price; setMoney(); msg(`${TIER_NAME[tier]} acheté`);
+  const g = E.spinBase('normal');
+  for (const col of g) for (let r = 0; r < 5; r++) if (col[r] === E.SCAT) col[r] = 0;
+  const spots = []; for (let c = 0; c < 5; c++) for (let r = 0; r < 5; r++) spots.push([c, r]);
+  spots.sort(() => Math.random() - 0.5).slice(0, tier).forEach(([c, r]) => (g[c][r] = E.SCAT));
+  const cells = await revealDrop(g);
+  await presentScatters(cells, g);
+  await runBonus(tier, true, tier);
+  S.busy = false; lockUI(false);
+}
+
+// ---------- fenêtres ----------
+function overlay(html, btn) {
+  return new Promise(res => {
+    $('card').innerHTML = html + (btn ? `<button class="btn" id="ovBtn">${btn}</button>` : '');
+    $('overlay').classList.add('show');
+    const b = $('ovBtn'); if (b) { b.focus(); b.onclick = () => { $('overlay').classList.remove('show'); res(); }; }
+  });
+}
+function showRules() {
+  const pn = E.scatProbs('normal'), pa = E.scatProbs('ante');
+  const every = p => Math.round(1 / p).toLocaleString('fr-FR');
+  const x = v => v.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+  const SIZES = [5, 6, 8, 10, 12, 15];
+  const rows = E.SYMS.map((s, i) => `<tr><td>${ART.SYMS[i]}</td>${SIZES.map(n => `<td>${x(s.pay * E.SIZE_F[Math.min(n, E.SIZE_F.length - 1)] * E.BASE_SCALE.normal)}</td>`).join('')}</tr>`).join('');
+  $('card').innerHTML = `<div class="rules"><h2>Règles</h2>
+  <p>Grille de 5×5 en <b>grappes</b> : 5 symboles identiques ou plus qui se touchent (haut, bas, gauche, droite) paient. Le zombie <b>WILD</b> remplace tous les symboles sauf la sirène. Les symboles gagnants explosent et de nouveaux tombent à leur place : les <b>cascades</b> continuent tant qu'il y a des grappes. Gains par grappe, en multiples de la mise :</p>
+  <div class="tw"><table><tr><th></th>${SIZES.map(n => `<th>${n}${n === 15 ? '+' : ''}</th>`).join('')}</tr>${rows}</table></div>
+  <h3>La jauge d'invasion</h3>
+  <p>Chaque cascade, chaque sirène, chaque horde et chaque patient zéro remplissent la jauge. À 100 %, la ville tombe : pendant ${E.GAUGE.invasion} spins, tous les survivants qui tombent sur la grille deviennent des zombies jokers (INVASION MODE). La jauge est conservée d'un spin à l'autre.</p>
+  <h3>Pendant le jeu</h3>
+  <ul><li><b>Horde</b> (environ 1 spin sur ${Math.round(1 / E.FEAT.horde)}) : la horde traverse la grille et détruit des petits symboles, remplacés aussitôt. De quoi relancer les cascades.</li>
+  <li><b>Patient zéro</b> (environ 1 spin sur ${Math.round(1 / E.FEAT.zero)}) : un zombie apparaît au centre. À chaque cascade, l'infection gagne ses voisins : humain, puis infecté, puis zombie joker qui reste jusqu'à la fin du spin.</li></ul>
+  <h3>Les bonus des sirènes</h3>
+  <ul><li><b>3 sirènes, The Outbreak</b> (1 spin sur ${every(pn[3])}) : 8 free spins. À chaque spin, des zombies surgissent et restent sur la grille (${E.TIER[3].maxZ} au maximum).</li>
+  <li><b>4 sirènes, Last Stand</b> (1 spin sur ${every(pn[4])}) : ${INTRO_TXT[4]} C'est un pari équitable : en moyenne, fuir ou continuer rapporte la même chose. À toi de choisir ton risque. Au bout de ${E.TIER[4].rounds} manches tenues, les secours arrivent.</li>
+  <li><b>5 sirènes ou plus, Extraction</b> (1 spin sur ${every(pn[5])}) : ${INTRO_TXT[5]} Atteindre le toit rapporte une grosse prime.</li></ul>
+  <h3>Options</h3>
+  <p>Acheter The Outbreak coûte ${E.BUY[3]} fois la mise, Last Stand ${E.BUY[4]} fois. Chance bonus ajoute 25 % à la mise et fait passer les bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
+  <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Crédits fictifs, aucun argent réel.</p></div>
+  <button class="btn" id="ovBtn">Fermer</button>`;
+  $('overlay').classList.add('show'); $('ovBtn').onclick = () => $('overlay').classList.remove('show'); $('ovBtn').focus();
+}
+
+// ---------- commandes ----------
+$('spin').onclick = () => { if (S.auto) { stopAuto(); msg('Spins automatiques arrêtés.'); } else spin(); };
+$('autoBtn').onclick = () => { if (S.auto) { stopAuto(); msg('Spins automatiques arrêtés.'); } else if (!S.busy) chooseAuto(); };
+$('buyBtn').onclick = openBuy;
+$('anteBtn').onclick = () => { if (S.busy || S.auto) return; S.ante = !S.ante; $('anteBtn').classList.toggle('on', S.ante); $('anteBtn').setAttribute('aria-pressed', S.ante); setMoney(); msg(S.ante ? `Chance bonus : mise de ${fmt(cost())}, bonus plus fréquents.` : 'Chance bonus désactivée.'); };
+$('turboBtn').onclick = () => { S.turbo = !S.turbo; $('turboBtn').classList.toggle('on', S.turbo); $('turboBtn').setAttribute('aria-pressed', S.turbo); };
+$('musicBtn').onclick = () => { Snd.start(); const on = Snd.toggleMusic(); $('musicBtn').setAttribute('aria-pressed', on); $('musicBtn').setAttribute('aria-label', on ? 'Couper la musique' : 'Mettre la musique'); };
+$('sfxBtn').onclick = () => { const on = Snd.toggleSfx(); $('sfxBtn').setAttribute('aria-pressed', on); $('sfxBtn').setAttribute('aria-label', on ? 'Couper les effets sonores' : 'Mettre les effets sonores'); };
+$('infoBtn').onclick = () => { if (!$('overlay').classList.contains('show')) showRules(); };
+$('betDown').onclick = () => { if (!S.busy && !S.auto && S.betIdx > 0) { S.betIdx--; setMoney(); } };
+$('betUp').onclick = () => { if (!S.busy && !S.auto && S.betIdx < BETS.length - 1) { S.betIdx++; setMoney(); } };
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space' || $('overlay').classList.contains('show') || $('bwLayer').classList.contains('show') || $('intro').classList.contains('show') || document.body.classList.contains('bonus')) return;
+  if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+  e.preventDefault(); if (!S.auto) spin();
+});
+setGauge(0);
+setMoney(); showStatic(E.spinBase());
+})();
+</script></body></html>

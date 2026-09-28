@@ -5,6 +5,7 @@
 //   node rtp.js jeux/ma-machine.html --calibre  -> calcule SCAT_W et BONUS_K puis les réécrit dans le fichier
 //
 // Options : --rtp 0.985  --n 20000 (bonus simulés par niveau)  --spins 300000 (spins de base simulés)
+//           --freq 150 (avec --calibre : bonus un spin sur 150 en jeu normal, et BASE_SCALE ajusté pour le reste du RTP)
 //           --mega 2000 (gain moyen visé du méga bonus, en fois la mise)  --graine 1
 //
 // Le script lit le bloc `const ENGINE = (() => { ... })();` du fichier HTML et l'exécute dans Node.
@@ -87,7 +88,8 @@ function solveScat(mode, target, cost) {
 }
 function simBase(mode, n) {
   let win = 0, hits = 0, bon = 0;
-  for (let i = 0; i < n; i++) { const r = E.evalBase(E.spinBase(mode), mode); win += r.total; if (r.total > 0) hits++; if (r.scats >= 3) bon++; }
+  // moteur à cascades ou à état (jauge…) : E.fullBase(mode) joue un spin complet ; sinon grille + évaluation
+  for (let i = 0; i < n; i++) { const r = E.fullBase ? E.fullBase(mode) : E.evalBase(E.spinBase(mode), mode); win += r.total; if (r.total > 0) hits++; if (r.scats >= 3) bon++; }
   return { rtp: win / n, hit: hits / n, bonus: bon / n };
 }
 
@@ -97,12 +99,25 @@ const RAW = {}; for (const t of tiers) RAW[t] = simRaw(t, N);
 
 let target = { 3: RTP * E.BUY[3], 4: RTP * E.BUY[4], 5: MEGA };
 if (flag('calibre')) {
-  const K = {}; for (const t of tiers) K[t] = solveK(RAW[t], target[t], E.TIER[t].cap);
+  // E.EXACT_K : coefficient connu exactement (bonus dont le gain moyen se calcule), prioritaire sur la simulation
+  const K = {}; for (const t of tiers) K[t] = E.EXACT_K?.[t] ?? solveK(RAW[t], target[t], E.TIER[t].cap);
   E.BONUS_K = K;
-  E.SCAT_W = { normal: solveScat('normal', target, 1), ante: solveScat('ante', target, E.ANTE) };
+  const FREQ = opt('freq', 0);
+  if (FREQ) {
+    // --freq N : le bonus tombe un spin sur N en jeu normal ; l'échelle des gains du jeu de base comble le reste du RTP
+    let lo = 1e-6, hi = 1e4; const pb = w => { const P = E.scatProbs('normal', w); return P[3] + P[4] + P[5]; };
+    for (let i = 0; i < 200; i++) { const mid = Math.sqrt(lo * hi); (pb(mid) < 1 / FREQ ? (lo = mid) : (hi = mid)); }
+    const swn = Math.sqrt(lo * hi), P = E.scatProbs('normal', swn), bonusPart = tiers.reduce((a, t) => a + P[t] * target[t], 0);
+    E.SCAT_W = { ...E.SCAT_W, normal: swn };
+    const raw = E.analyticBase('normal', 1), scale = (RTP - bonusPart) / raw;
+    if (scale <= 0) throw new Error(`avec un bonus tous les ${FREQ} spins, les bonus dépassent déjà le RTP : augmente --freq`);
+    E.BASE_SCALE = { normal: scale, ante: scale };
+    E.SCAT_W = { normal: swn, ante: solveScat('ante', target, E.ANTE) };
+  } else E.SCAT_W = { normal: solveScat('normal', target, 1), ante: solveScat('ante', target, E.ANTE) };
   let out = html
     .replace(/let SCAT_W = \{[^}]*\};/, `let SCAT_W = { normal: ${E.SCAT_W.normal}, ante: ${E.SCAT_W.ante} };`)
     .replace(/let BONUS_K = \{[^}]*\};/, `let BONUS_K = { 3: ${K[3]}, 4: ${K[4]}, 5: ${K[5]} };`);
+  if (FREQ) { out = out.replace(/let BASE_SCALE = \{[^}]*\};/, `let BASE_SCALE = { normal: ${E.BASE_SCALE.normal}, ante: ${E.BASE_SCALE.ante} };`); console.log(`  BASE_SCALE = { normal: ${E.BASE_SCALE.normal}, ante: ${E.BASE_SCALE.ante} }`); }
   if (out === html) console.log('Attention : les lignes `let SCAT_W = {…};` / `let BONUS_K = {…};` sont introuvables, rien n\'a été écrit.');
   else { fs.writeFileSync(file, out); console.log(`Constantes réécrites dans ${file} :`); }
   console.log(`  SCAT_W  = { normal: ${E.SCAT_W.normal}, ante: ${E.SCAT_W.ante} }`);

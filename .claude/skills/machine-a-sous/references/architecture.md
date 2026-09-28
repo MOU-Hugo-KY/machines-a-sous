@@ -102,3 +102,15 @@ Voir `references/3d.md`. Ils remplacent le contenu d'`ART` une fois les planches
 - Jeu de base : `spin()` → `revealBase(g)` (chute colonne par colonne, suspense dès 2 scatters) → gains (`win`, `mediumWin`, `bigWin` selon `WIN_TIERS` : 20/50/150/500 fois la mise) → `presentScatters` → `runBonus(tier, bought, count)`.
 - Bonus : `introBonus` (médailles de scatter, titre, explication, bouton Commencer), puis la boucle `while (!b.done) { const ev = E.bonusSpin(b); …animer… }`, `bigWin` à la fin, fenêtre de résultat, retour au jeu de base.
 - Autour : `openBuy`/`buy` (achat : on force `tier` scatters sur une grille de base), `chooseAuto`/`autoLoop`, `showRules` (tables de gains calculées depuis `ENGINE`, fréquences depuis `scatProbs`), `noCredits` (recharge de 1 000 crédits fictifs), et la barre d'espace pour lancer.
+
+## Sortir du gabarit (moteur neuf)
+
+Quand l'idée ne rentre pas dans la grille 6×6 en chemins (autre taille de grille, grappes, cascades, fonctions aléatoires, jauge qui persiste, bonus à choix…), écris un moteur neuf en gardant ce contrat. Dead City (`jeux/dead-city.html`) en est l'exemple complet.
+
+- **Toujours présents** : `SYMS`, `TIER` (avec `cap`), `BUY`, `ANTE`, `scatProbs(mode, w)`, `newBonus(tier)`, `bonusSpin(b)` (qui fait monter `b.raw` et passe `b.done` à true), les accesseurs `SCAT_W`, `BASE_SCALE`, `BONUS_K`, et les deux marqueurs du bloc `ENGINE`.
+- **Jeu de base à cascades ou à état** : `playBase(état, mode)` joue un spin complet et renvoie toutes les étapes à animer. `analyticBase(mode, scale)` renvoie l'espérance d'un spin par simulation **à graine fixe**, mise en cache par valeur de `SCAT_W` (sinon la dichotomie de `rtp.js` tremble). `fullBase(mode)` joue un spin avec un état persistant et renvoie `{ total, scats }`, pour la ligne « base simulée » de `rtp.js`.
+- **Calibrage** : `rtp.js --calibre --freq N` fixe la fréquence du bonus (un spin sur N), puis ajuste `BASE_SCALE` pour que le jeu de base comble le reste du RTP. La ligne `let BASE_SCALE = {…};` doit alors tenir sur une ligne.
+- **Bonus au gain moyen connu** (pari équitable, prime fixe) : déclare `EXACT_K = { tier: valeur }`. `rtp.js` l'utilise à la place de la simulation, ce qui retire tout bruit statistique.
+- **Bonus à choix** : `bonusSpin(b, choix)`. Pour que le RTP ne dépende pas du joueur, rends chaque choix **équitable**, c'est-à-dire que continuer ne change pas l'espérance du gain (exemple de Last Stand : ×1,3 à 55 %, ×1,6 à 15 %, ×0,15 à 30 %). La simulation joue la politique par défaut (sans argument). Dans la page, marque le choix par défaut avec `data-auto` : `check.js` le clique.
+- **Ce qui paie** : vise 20 à 30 % de spins gagnants, et une cascade doit rarement en déclencher plus de 2 ou 3. Sur une grille 5×5, les chemins font gagner presque à chaque spin : préfère les grappes (5 cases ou plus qui se touchent).
+- **Effets** : même avec des cascades en chaîne, limite les particules à quelques-unes par étape (une énorme grappe ne doit pas recouvrir l'écran).

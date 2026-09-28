@@ -10,6 +10,7 @@ Toutes les machines du dépôt partagent le même squelette : une grille 6×6 qu
 - `jeux/constella.html` : observatoire de nuit. Bonus à **étoiles collantes** : les étoiles restent au ciel, et une forme de constellation qui se dessine paie et déclenche son pouvoir. Le fichier le plus court (~1 300 lignes), le meilleur point de départ par défaut.
 - `jeux/champi-pop.html` : forêt d'automne. Bonus en **grille qui grandit** : des champignons paient en chemins, avec des pouvoirs (nouvelle ligne, évolution du symbole, +1 spin, rond de sorcière…).
 - `jeux/constella-3d.html` et `jeux/champi-pop-3d.html` : les deux mêmes, **en 3D**. Les symboles sont des personnages Three.js cuits en animations fluides, un **décor 3D vivant entoure la machine** (colline étoilée avec aurores, forêt d'automne qui passe à la nuit), et une ronde 3D en direct accompagne l'entrée du bonus et les gros gains. C'est le point de départ d'une machine en 3D.
+- `jeux/dead-city.html` et `jeux/dead-city-3d.html` : invasion zombie, **hors gabarit**. Grille 5×5 en **grappes avec cascades**, zombie joker, fonctions aléatoires en jeu normal (horde, patient zéro), **jauge d'invasion persistante**, et trois bonus différents selon le nombre de sirènes, dont un **bonus à choix** (portes, fuite avec le gain). C'est le point de départ quand l'idée demande un moteur neuf (voir « Sortir du gabarit » dans `references/architecture.md`).
 
 Avant d'écrire du code, lis `references/architecture.md` : il décrit les modules, les identifiants du DOM à garder, le contrat du moteur et les maths du RTP. Pour une machine en 3D, lis aussi `references/3d.md` (kit 3D, écriture des modèles, branchement).
 
@@ -46,7 +47,8 @@ Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va ju
 ## 3. Calibrer le RTP
 
 ```bash
-node .claude/skills/machine-a-sous/scripts/rtp.js jeux/<nom>.html --calibre
+node .claude/skills/machine-a-sous/scripts/rtp.js jeux/<nom>.html --calibre            # gabarit 6×6
+node .claude/skills/machine-a-sous/scripts/rtp.js jeux/<nom>.html --calibre --freq 280 # moteur neuf : bonus 1 spin sur 280, BASE_SCALE ajusté
 node .claude/skills/machine-a-sous/scripts/rtp.js jeux/<nom>.html --graine 7   # vérification avec un autre tirage
 ```
 

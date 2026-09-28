@@ -108,11 +108,14 @@ async function settle(page, what, bonus = false, shot = null) {
     const st = await page.evaluate(() => {
       const vis = id => { const e = document.getElementById(id); return !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden'; };
       const shown = id => { const e = document.getElementById(id); return !!e && e.classList.contains('show'); };
-      return { intro: vis('introBtn') && shown('intro'), big: shown('bwLayer'), over: shown('overlay') && vis('ovBtn'),
+      const auto = [...document.querySelectorAll('[data-auto]')].some(e => !e.disabled && e.offsetParent !== null);
+      return { auto, intro: vis('introBtn') && shown('intro'), big: shown('bwLayer'), over: shown('overlay') && vis('ovBtn'),
         inBonus: document.body.classList.contains('bonus'), free: !document.getElementById('spin').disabled && !document.getElementById('buyBtn').disabled };
     });
     if (st.inBonus) sawBonus = true;
     if (shot && st.inBonus && !shotMid && Date.now() - t0 > 6000) { await page.screenshot({ path: `${shot}-en-cours.png` }); shotMid = true; }
+    // bonus à choix (portes…) : le bouton marqué data-auto est le choix par défaut du test
+    if (st.auto) { if (shot && !shotMid) { await page.screenshot({ path: `${shot}-en-cours.png` }); shotMid = true; } await page.evaluate(() => { const e = [...document.querySelectorAll('[data-auto]')].find(e => !e.disabled && e.offsetParent !== null); e && e.click(); }); await page.waitForTimeout(300); continue; }
     if (st.intro) { if (shot) await page.screenshot({ path: `${shot}-entree.png` }); await page.click('#introBtn'); continue; }
     if (st.big) { await page.evaluate(() => document.getElementById('bwLayer').click()); await page.waitForTimeout(400); continue; } // clic direct : le calque peut être en train de se refermer
     if (st.over) { if (shot && sawBonus) await page.screenshot({ path: `${shot}-fin.png` }); await page.click('#ovBtn'); continue; }

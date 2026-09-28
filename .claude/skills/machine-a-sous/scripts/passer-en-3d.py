@@ -32,6 +32,8 @@ CSS = '''/* ---------- symboles 3D : planches d'images cuites au chargement (voi
 .cell.twinkle .s3d,.cell.popin .s3d{animation:pop .5s cubic-bezier(.3,1.6,.5,1) both}
 .cell.powhit .s3d{animation:pulse .45s ease-in-out 3}
 .cell.shimmer .s3d{animation:shim 1s ease-in-out}
+.cell.boom .s3d{animation:boom .35s ease-in forwards}
+.cell.bite .s3d{animation:bite .5s cubic-bezier(.3,1.6,.5,1) both}
 .cell.gold .s3d{animation:goldpulse 1.4s ease-in-out infinite alternate}
 .cell.fade .s3d{transition:opacity .8s, transform .8s; opacity:0; transform:scale(.3)}
 .medals .s3d{display:inline-block; width:74px; height:74px; animation:medal .6s cubic-bezier(.3,1.6,.5,1) both}
