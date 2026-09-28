@@ -1,0 +1,29 @@
+# Machines à sous
+
+Des machines à sous thématiques, chacune dans un seul fichier HTML à ouvrir dans un navigateur. On joue avec des crédits fictifs, sans aucun argent réel.
+
+| Machine | Thème | Bonus |
+|---|---|---|
+| [Champi Pop](jeux/champi-pop.html) | Forêt d'automne, machine en bois sous un toit-champignon | Tours gratuits : les champignons paient en chemins, avec des pouvoirs (mycélium, lune rousse, écureuil, spores, rond de sorcière) |
+| [Constella](jeux/constella.html) | Observatoire sur une colline, la nuit | Les étoiles restent au ciel et dessinent des constellations qui paient et déclenchent un pouvoir |
+
+Toutes partagent le même cœur : une grille 6×6 qui paie en chemins, un bonus à 3 niveaux, l'achat du bonus, la Chance bonus, les spins auto, le turbo, et un RTP de 98,5 %.
+
+## Créer une nouvelle machine
+
+Le dépôt contient une skill Claude Code, dans `.claude/skills/machine-a-sous/`. Dans une session Claude Code ouverte sur ce dépôt, il suffit de demander, par exemple :
+
+> Fais-moi une machine à sous sur le thème des pirates, avec un bonus où on déterre des trésors.
+
+Claude rédige un court cahier des charges (nom, symboles, bonus, décor, musique), construit la machine à partir des modèles, calibre le RTP, la teste dans un navigateur, puis la publie.
+
+### Outils
+
+```bash
+# RTP : rapport, ou calibrage automatique des constantes
+node .claude/skills/machine-a-sous/scripts/rtp.js jeux/constella.html
+node .claude/skills/machine-a-sous/scripts/rtp.js jeux/ma-machine.html --calibre
+
+# Essai dans Chromium (Playwright) : spins, achat des bonus, captures dans jeux/captures/
+node .claude/skills/machine-a-sous/scripts/check.js jeux/ma-machine.html
+```

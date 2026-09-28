@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Constella</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chewy&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2B2350; --cream:#FFF3C4; --gold:#E0A94A; --gold2:#FFD66B; --navy:#1E1A4A; --navy2:#2E2A6E; --hi:#FFE27A; --cyan:#9FE8FF; --pink:#FF9EC7;
+  --sky1:#120F36; --sky2:#2C2266; --sky3:#5B3F8E; --hill1:#2C2560; --hill2:#221C4C; --hill3:#18133A; --grass1:#233A5C; --grass2:#1A2B48; --aur:.28;
+  --cell:#2A2358; --cellb:#463C86;
+  --display:"Chewy","Baloo 2","Comic Sans MS",system-ui,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --sky1:#0C0A28; --sky2:#231B55; } }
+:root[data-theme="dark"]{ --sky1:#0C0A28; --sky2:#231B55; }
+body.bonus{ --aur:.85; --sky2:#2A2A70; --sky3:#3E5A9A; }
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0; min-height:100%; color:var(--cream); background:var(--sky1); font-family:"Baloo 2","Trebuchet MS",system-ui,sans-serif; font-weight:500; overflow-x:hidden}
+button{font:inherit; color:inherit}
+/* ---------- ciel ---------- */
+.scene{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+.scene svg.land{position:absolute; inset:0; width:100%; height:100%}
+.scene stop{transition:stop-color 1.2s}
+#skyStars circle{fill:#FFF6DA}
+.tw0{animation:tw 3s ease-in-out infinite alternate} .tw1{animation:tw 4.5s ease-in-out infinite alternate} .tw2{animation:tw 2.2s ease-in-out infinite alternate}
+@keyframes tw{from{opacity:.25}to{opacity:1}}
+.aurora{opacity:var(--aur); transition:opacity 1.5s}
+.aurora path{animation:aur 12s ease-in-out infinite alternate; transform-box:fill-box; transform-origin:center}
+.aurora path:nth-child(2){animation-duration:16s} .aurora path:nth-child(3){animation-duration:9s}
+@keyframes aur{from{transform:translateX(-40px) scaleY(.9)}to{transform:translateX(40px) scaleY(1.15)}}
+.planet{animation:floaty 9s ease-in-out infinite alternate} .planet.p2{animation-duration:12s}
+@keyframes floaty{from{transform:translateY(-10px)}to{transform:translateY(12px)}}
+.blades{transform-box:fill-box; transform-origin:center; animation:spin 14s linear infinite}
+.winlit{animation:flick 3s ease-in-out infinite alternate}
+@keyframes flick{to{opacity:.6}}
+.shooting{position:absolute; width:140px; height:2px; background:linear-gradient(90deg, rgba(255,246,218,0), #FFF6DA); border-radius:2px; opacity:0; transform:rotate(-24deg); animation:shootA 9s linear infinite}
+.shooting::after{content:""; position:absolute; right:-3px; top:-3px; width:8px; height:8px; border-radius:50%; background:#fff; box-shadow:0 0 12px 4px rgba(255,240,200,.9)}
+@keyframes shootA{0%{opacity:0; translate:0 0}2%{opacity:1}9%{opacity:0; translate:-360px 160px}100%{opacity:0; translate:-360px 160px}}
+body.bonus .shooting{animation-duration:4s}
+/* ---------- l'observatoire ---------- */
+main{position:relative; z-index:1; max-width:480px; margin:0 auto; padding:8px 10px 20px}
+main.shake{animation:shake .5s}
+@keyframes shake{20%{transform:translate(-6px,2px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,3px)}80%{transform:translate(3px,-1px)}}
+.topper{position:relative; height:176px; margin:0 -4px -34px; z-index:2}
+.topper .dome{position:absolute; left:0; bottom:0; width:100%; height:176px; overflow:visible}
+.tscope{transform-box:view-box; transform-origin:240px 120px; animation:sweep 10s ease-in-out infinite alternate}
+@keyframes sweep{from{transform:rotate(-24deg)}to{transform:rotate(22deg)}}
+.slitglow{opacity:.35; transition:opacity 1s} body.bonus .slitglow{opacity:1}
+.domeCat{position:absolute; left:23%; top:26px; width:52px; z-index:3}
+.domeCat svg{width:100%; display:block; overflow:visible}
+.dtail{transform-box:fill-box; transform-origin:100% 100%; animation:swish 1.6s ease-in-out infinite alternate}
+@keyframes swish{from{transform:rotate(-10deg)}to{transform:rotate(12deg)}}
+.dhead{transform-box:fill-box; transform-origin:50% 90%; animation:look 8s ease-in-out infinite}
+@keyframes look{0%,40%,100%{transform:rotate(0)}50%,65%{transform:rotate(18deg) translateY(-1px)}75%{transform:rotate(-8deg)}}
+.deyes{transform-box:fill-box; transform-origin:center; animation:blinkC 4.5s infinite}
+@keyframes blinkC{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.topper .hbtns{position:absolute; right:14%; bottom:60px; display:flex; gap:6px; z-index:3}
+.ico{width:34px; height:34px; border-radius:50%; border:2.5px solid var(--ink); background:radial-gradient(circle at 35% 30%, #FFFFFF, #CFC8F4); display:grid; place-items:center; cursor:pointer; padding:0; box-shadow:0 0 0 3px var(--gold), 0 3px 0 3px var(--ink)}
+.ico svg{width:17px; height:17px}
+.ico[aria-pressed="false"]{opacity:.45}
+.ico:focus-visible,.btn:focus-visible,.spin:focus-visible,.pm:focus-visible{outline:3px dashed var(--hi); outline-offset:3px}
+.plate{position:absolute; left:50%; bottom:16px; transform:translateX(-50%); padding:2px 20px 5px; border-radius:14px; border:3px solid var(--ink);
+  background:linear-gradient(#3B3290,#241E5E); box-shadow:inset 0 0 0 2px var(--gold), 0 5px 0 var(--ink), 0 0 24px rgba(159,232,255,.35); z-index:3}
+.logo{font-family:var(--display); font-weight:400; font-size:clamp(1.9rem, 9vw, 2.6rem); line-height:1.05; margin:0; white-space:nowrap}
+.logo span{display:inline-block; color:var(--c); transform:rotate(var(--r)) translateY(var(--y)); animation:wave 3.4s ease-in-out infinite; animation-delay:var(--d);
+  text-shadow:0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink), 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink), 0 0 14px var(--c)}
+@keyframes wave{0%,100%{transform:rotate(var(--r)) translateY(var(--y))}50%{transform:rotate(var(--r)) translateY(calc(var(--y) - 4px))}}
+.cabinet{position:relative; border-radius:30px; padding:44px 11px 14px; border:4px solid var(--ink);
+  background:radial-gradient(circle at 20% 30%, rgba(255,246,218,.5) 0 1px, transparent 1.5px) 0 0/37px 41px, radial-gradient(circle at 70% 60%, rgba(255,246,218,.35) 0 1px, transparent 1.5px) 0 0/53px 47px, linear-gradient(180deg,var(--navy2),var(--navy));
+  box-shadow:inset 0 0 0 4px var(--gold), inset 0 0 0 7px #4A3A12, 0 10px 0 var(--ink), 0 26px 60px rgba(10,6,40,.7), 0 0 40px rgba(120,110,255,.25)}
+.etch{position:absolute; inset:0; pointer-events:none; opacity:.18}
+.screen{position:relative; border-radius:22px; padding:8px; border:4px solid var(--ink); background:radial-gradient(ellipse at 50% 20%, #2F2870, #171339); box-shadow:inset 0 0 0 2px var(--gold), inset 0 8px 20px rgba(0,0,0,.45)}
+.hud{display:none; align-items:center; justify-content:space-between; gap:6px; padding:2px 2px 8px; flex-wrap:wrap}
+body.bonus .hud{display:flex}
+.hud .tier{font-family:var(--display); font-size:1.25rem; width:100%; display:flex; justify-content:space-between; color:var(--hi); text-shadow:0 2px 0 #000}
+.chip{background:rgba(255,243,196,.08); border:2px solid rgba(224,169,74,.65); border-radius:999px; padding:1px 10px; font-size:.82rem; display:flex; align-items:center; gap:5px}
+.chip b{font-family:var(--display); font-weight:400; font-size:1.12rem; color:var(--cream)}
+.chip.flash{animation:flash .7s ease-out}
+@keyframes flash{0%{background:var(--hi); transform:scale(1.2)}100%{transform:none}}
+.atlas{display:flex; gap:4px; width:100%; justify-content:space-between}
+.badge2{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; border-radius:10px; padding:2px 0 1px; background:rgba(159,232,255,.06); border:1.5px solid rgba(159,232,255,.25); opacity:.55; transition:opacity .4s}
+.badge2.on{opacity:1; border-color:var(--cyan); box-shadow:0 0 10px rgba(159,232,255,.5)}
+.badge2 svg{width:36px; height:22px}
+.badge2 small{font-size:.58rem; line-height:1.1; white-space:nowrap}
+.badge2.pulse{animation:flash .8s}
+.gridwrap{max-height:58vh; overflow:hidden; border-radius:14px; position:relative}
+.grid{display:grid; grid-template-columns:repeat(6,1fr); gap:4px}
+.grid.big{gap:3px}
+.cell{aspect-ratio:1; background:radial-gradient(circle at 50% 40%, #3D3585, var(--cell)); border:2px solid var(--cellb); border-radius:13px; position:relative; display:grid; place-items:center; transition:opacity .3s, background .6s}
+body.bonus .cell{background:radial-gradient(circle at 50% 40%, #1E1A48, #120F33); border-color:#2E2766}
+.cell svg{width:92%; height:92%; display:block; overflow:visible}
+.cell.pending svg{visibility:hidden}
+.cell.drop svg{animation:drop .46s cubic-bezier(.3,1.55,.55,1) both}
+.cell.twinkle svg{animation:twin .6s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes twin{from{transform:scale(0) rotate(-90deg); opacity:0}to{transform:none; opacity:1}}
+.grid.dimmed .cell:not(.win):not(.scatwin){opacity:.35}
+.cell.win{border-color:var(--gold2); box-shadow:0 0 0 2px var(--hi), 0 0 14px rgba(255,220,120,.9); z-index:1}
+.cell.win svg{animation:squish .55s ease-in-out infinite alternate}
+.cell.antic{animation:antic .5s ease-in-out infinite alternate}
+@keyframes antic{from{box-shadow:0 0 0 2px var(--gold)}to{box-shadow:0 0 0 3px var(--cyan), 0 0 18px var(--cyan)}}
+.cell.scat::after{content:""; position:absolute; inset:-4px; border-radius:50%; border:3px solid var(--cyan); animation:ring .7s ease-out forwards; pointer-events:none}
+@keyframes ring{from{transform:scale(.4); opacity:1}to{transform:scale(1.5); opacity:0}}
+.cell.scatwin{z-index:2; box-shadow:0 0 0 3px var(--cyan), 0 0 24px 6px rgba(159,232,255,.9)}
+.cell.scatwin svg{animation:scatpulse .6s ease-in-out infinite alternate}
+@keyframes scatpulse{from{transform:scale(1)}to{transform:scale(1.2) rotate(-4deg)}}
+.rays{transform-box:view-box; transform-origin:32px 32px; animation:spin 9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cell.lit{background:radial-gradient(circle, #2A4A7A, #16244A)!important; border-color:#5FA8D8!important}
+.cell.gold svg{animation:goldpulse 1.4s ease-in-out infinite alternate}
+@keyframes goldpulse{to{filter:drop-shadow(0 0 6px #FFC43A)}}
+.cell.fade svg{transition:opacity .8s, transform .8s; opacity:0; transform:scale(.3)}
+#constLines{position:absolute; left:0; top:0; pointer-events:none; z-index:3; overflow:visible}
+#constLines path{fill:none; stroke:#C9F4FF; stroke-width:3; stroke-linecap:round; filter:drop-shadow(0 0 4px #9FE8FF); stroke-dasharray:var(--l); stroke-dashoffset:var(--l); animation:draw .9s ease-out forwards}
+#constLines path.done{animation:none; stroke-dashoffset:0}
+#constLines text{font-family:var(--display); fill:#FFF3C4; font-size:15px; paint-order:stroke; stroke:#2B2350; stroke-width:4px; animation:fadein .5s both}
+#constLines .gone{transition:opacity .8s; opacity:0}
+@keyframes draw{to{stroke-dashoffset:0}}
+.aurwash{position:fixed; inset:0; z-index:14; pointer-events:none; opacity:0; background:linear-gradient(100deg, transparent 10%, rgba(120,255,200,.35) 30%, rgba(159,232,255,.4) 45%, rgba(201,162,255,.4) 60%, transparent 80%); background-size:250% 100%}
+.aurwash.go{animation:aurw 2.2s ease-in-out}
+@keyframes aurw{0%{opacity:0; background-position:100% 0}30%{opacity:1}100%{opacity:0; background-position:0 0}}
+@keyframes drop{from{transform:translateY(-80%) scale(.9); opacity:0}to{transform:none; opacity:1}}
+@keyframes squish{0%{transform:scale(1,1) translateY(0)}40%{transform:scale(1.08,.92) translateY(2px)}100%{transform:scale(.95,1.07) translateY(-4px)}}
+@keyframes pulse{50%{transform:scale(1.22)}}
+.float{position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); font-family:var(--display); font-size:2rem; color:var(--hi); pointer-events:none; z-index:5; white-space:nowrap;
+  text-shadow:0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink), 0 0 16px rgba(255,220,120,.8); animation:rise 1.3s ease-out forwards}
+@keyframes rise{from{opacity:0; transform:translate(-50%,-20%) scale(.6)}20%{opacity:1; transform:translate(-50%,-50%) scale(1.15)}to{opacity:0; transform:translate(-50%,-130%)}}
+.msg{min-height:1.5em; text-align:center; font-weight:800; margin:9px 0 2px; color:var(--cream); text-shadow:0 2px 0 var(--ink)}
+/* ---------- commandes ---------- */
+.deck{margin-top:6px; display:flex; flex-direction:column; gap:9px}
+.meters{display:grid; grid-template-columns:1fr auto 1fr; gap:6px}
+.meter{border-radius:14px; padding:3px 10px; display:flex; flex-direction:column; justify-content:center; min-width:0; background:linear-gradient(#141036,#0E0B28); border:2.5px solid var(--ink); box-shadow:inset 0 0 0 1.5px rgba(224,169,74,.6)}
+.meter small{font-size:.68rem; color:#B7C3FF}
+.meter b{font-family:var(--display); font-weight:400; font-size:clamp(.92rem, 4.3vw, 1.2rem); color:var(--cyan); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.02em; text-shadow:0 0 8px rgba(159,232,255,.5)}
+.meter.r{text-align:right}
+.bet{display:flex; align-items:center; gap:4px; border-radius:14px; padding:3px; background:linear-gradient(#141036,#0E0B28); border:2.5px solid var(--ink); box-shadow:inset 0 0 0 1.5px rgba(224,169,74,.6)}
+.bet .mid{display:flex; flex-direction:column; align-items:center; min-width:50px}
+.bet small{font-size:.66rem; color:#B7C3FF}
+.bet b{font-family:var(--display); font-weight:400; font-size:1.15rem; color:var(--cream)}
+.pm{width:30px; height:30px; border-radius:50%; border:2px solid var(--ink); background:linear-gradient(#FFE9A8,#E0A94A); font-weight:800; cursor:pointer; padding:0; line-height:1; color:var(--ink)}
+.row{display:flex; align-items:center; justify-content:space-between; gap:6px}
+.btn{height:50px; min-width:52px; border-radius:15px; border:3px solid var(--ink); background:linear-gradient(#FFF1C4,#E0A94A); color:var(--ink); font-weight:800; font-size:.68rem; cursor:pointer; padding:0 6px;
+  box-shadow:0 4px 0 var(--ink), inset 0 2px 0 rgba(255,255,255,.6); display:grid; place-items:center; line-height:1.05; text-align:center}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink)}
+.btn:disabled{opacity:.45; cursor:default}
+.btn.on{background:linear-gradient(#C9F4FF,#6FC8F0)}
+.btn svg{width:22px; height:22px}
+.btn.buy{background:linear-gradient(#9A86FF,#5B47C9); color:var(--cream); text-shadow:0 1px 0 var(--ink)}
+.spin{width:90px; height:90px; flex:none; border-radius:50%; border:4px solid var(--ink); cursor:pointer; display:grid; place-items:center; padding:0; position:relative;
+  background:radial-gradient(circle at 35% 28%, #FFD6EC, #C98BFF 45%, #5B47C9 90%); box-shadow:0 6px 0 var(--ink), inset 0 -6px 12px rgba(20,10,60,.35), 0 0 0 5px rgba(224,169,74,.5), 0 0 26px rgba(201,139,255,.6)}
+.spin svg{width:50px; height:50px; transition:transform .5s}
+.spin.go svg{transform:rotate(360deg)}
+.spin:active{transform:translateY(4px); box-shadow:0 2px 0 var(--ink)}
+.spin:disabled{opacity:.6; cursor:default}
+.spin.stop{background:radial-gradient(circle at 35% 28%, #FFF6C2, #FFD35A 50%, #E0801E 90%)}
+body.bonus .deck .row button, body.bonus .bet .pm{visibility:hidden}
+/* ---------- fenêtres ---------- */
+.overlay{position:fixed; inset:0; display:none; place-items:center; background:rgba(8,5,30,.7); padding:18px; z-index:20}
+.overlay.show{display:grid}
+.card{background:radial-gradient(ellipse at 50% 0%, #3B3290, #1E1A4A); color:var(--cream); border:4px solid var(--ink); border-radius:24px; padding:20px; max-width:400px; width:100%; text-align:center;
+  box-shadow:inset 0 0 0 2px var(--gold), 0 8px 0 var(--ink), 0 0 40px rgba(120,110,255,.4); max-height:88vh; overflow-y:auto}
+.card h2{font-family:var(--display); font-weight:400; margin:0 0 6px; font-size:2rem; color:var(--hi)}
+.card p{margin:6px 0 14px; line-height:1.5}
+.card .btn{margin:4px auto 0; padding:0 22px}
+.choices{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:10px 0 14px}
+.offers{display:grid; gap:10px; margin:10px 0 14px}
+.offer{display:flex; align-items:center; gap:12px; text-align:left; background:linear-gradient(#2E2A6E,#1E1A4A); border:3px solid var(--ink); border-radius:18px; padding:10px 12px; cursor:pointer; box-shadow:0 4px 0 var(--ink), inset 0 0 0 1.5px var(--gold); color:var(--cream)}
+.offer:disabled{opacity:.45; cursor:default}
+.offer svg{width:54px; height:54px; flex:none; overflow:visible}
+.offer span{display:flex; flex-direction:column; gap:1px; font-size:.84rem}
+.offer strong{font-family:var(--display); font-weight:400; font-size:1.25rem; color:var(--hi)}
+.offer .price{font-weight:800; color:var(--cyan)}
+.rules{text-align:left}
+.rules h2{text-align:center}
+.rules h3{font-family:var(--display); font-weight:400; font-size:1.2rem; margin:14px 0 4px; color:var(--hi)}
+.rules table{width:100%; border-collapse:collapse; font-size:.84rem; margin:6px 0 8px}
+.rules td,.rules th{padding:3px 4px; text-align:center; border-bottom:1px solid rgba(183,195,255,.25)}
+.rules td svg{width:34px; height:34px; vertical-align:middle}
+.rules td.cic svg{width:48px; height:30px}
+.rules p,.rules li{font-size:.9rem; line-height:1.5}
+.rules ul{padding-left:18px; margin:4px 0 8px}
+.intro{position:fixed; inset:0; z-index:18; display:none; overflow:hidden; background:radial-gradient(circle, rgba(40,30,110,.94), rgba(6,4,20,.98))}
+.intro.show{display:grid}
+.layer{position:fixed; inset:0; z-index:20; display:none; place-items:center; pointer-events:none; padding:16px}
+.layer.show{display:grid}
+.layer.click{pointer-events:auto; cursor:pointer}
+.layer .btn{pointer-events:auto}
+.bigrays{position:absolute; left:50%; top:50%; width:220vmax; height:220vmax; margin:-110vmax 0 0 -110vmax; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg, rgba(159,232,255,.18) 0deg 7deg, transparent 7deg 18deg); animation:spin 26s linear infinite;
+  -webkit-mask:radial-gradient(circle, #000 0, transparent 55%); mask:radial-gradient(circle, #000 0, transparent 55%)}
+.introbox{position:relative; text-align:center; padding:20px; max-width:420px}
+.medals{display:flex; justify-content:center; gap:4px; margin-bottom:10px; flex-wrap:wrap}
+.medals svg{width:74px; height:74px; overflow:visible; animation:medal .6s cubic-bezier(.3,1.6,.5,1) both}
+.introbox.many .medals svg{width:58px; height:58px}
+@keyframes medal{from{transform:translateY(-60vh) rotate(-200deg) scale(.4); opacity:0}to{transform:none; opacity:1}}
+.ititle{font-family:var(--display); font-size:3.3rem; line-height:1; color:var(--hi); letter-spacing:.03em; text-shadow:0 4px 0 #5B47C9, 0 8px 0 var(--ink), 0 0 30px rgba(159,232,255,.8); animation:stamp .55s cubic-bezier(.3,1.7,.5,1) both}
+@keyframes stamp{from{transform:scale(2.6) rotate(-8deg); opacity:0}to{transform:rotate(-3deg); opacity:1}}
+.isub{color:var(--cream); font-weight:700; margin:14px 0 18px; line-height:1.45; animation:fadein .5s both}
+@keyframes fadein{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+.introbox .btn{margin:0 auto; padding:0 26px; font-size:1rem; animation:fadein .5s both}
+.bigwin{position:fixed; inset:0; z-index:16; display:none; overflow:hidden; background:radial-gradient(circle, rgba(70,50,170,.7), rgba(8,5,30,.93))}
+.bigwin.show{display:grid}
+.bigwin .bigrays{display:none}
+.bigwin[data-tier="2"] .bigrays,.bigwin[data-tier="3"] .bigrays,.bigwin[data-tier="4"] .bigrays{display:block}
+.bigwin[data-tier="4"] .bigrays{background:repeating-conic-gradient(from 0deg, rgba(255,158,199,.25) 0deg 6deg, rgba(255,226,122,.25) 6deg 12deg, rgba(159,232,255,.22) 12deg 18deg, rgba(201,162,255,.22) 18deg 24deg, transparent 24deg 34deg)}
+.bw{position:relative; text-align:center; animation:pop .55s cubic-bezier(.3,1.6,.5,1)}
+.bw .t{font-family:var(--display); font-size:3.2rem; line-height:1; color:var(--hi); text-shadow:0 4px 0 #5B47C9, 0 8px 0 var(--ink); animation:wobble 1s ease-in-out infinite alternate}
+.bwLayer3 .bw .t{color:#FF9EC7; text-shadow:0 4px 0 #8A2A5A, 0 8px 0 var(--ink), 0 0 30px rgba(255,158,199,.8)}
+.bwLayer4 .bw .t{background:linear-gradient(90deg,#FF9EC7,#FFE27A,#9FE8FF,#C9A2FF); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:none; filter:drop-shadow(0 4px 0 var(--ink))}
+.bw .v{font-family:var(--display); font-size:2.8rem; color:var(--cream); margin-top:10px; text-shadow:0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink)}
+.bw .x{color:#B7C3FF; margin-top:4px; font-weight:800}
+.dance{display:flex; justify-content:center; gap:2px; margin-top:14px}
+.dance svg{width:40px; height:40px; animation:hop .5s ease-in-out infinite alternate}
+@keyframes hop{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
+@keyframes pop{from{transform:scale(.3)}to{transform:none}}
+@keyframes wobble{from{transform:rotate(-3deg) scale(1)}to{transform:rotate(3deg) scale(1.06)}}
+.fly{position:fixed; z-index:17; pointer-events:none; transition:transform .65s cubic-bezier(.5,-0.3,.4,1.2), opacity .65s}
+.fly svg{width:100%; height:100%}
+#fx{position:fixed; inset:0; z-index:19; pointer-events:none}
+.toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top,0px) + 16px); transform:translateX(-50%); background:linear-gradient(#FFF1C4,#E0A94A); color:var(--ink); border:3px solid var(--ink);
+  border-radius:999px; padding:7px 18px; font-weight:800; z-index:21; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 0 var(--ink)}
+.toast.show{opacity:1}
+/* ---------- la colline ---------- */
+.floor{position:relative; z-index:1; height:230px; margin-top:-36px; overflow:hidden; --k:1}
+.floor .ground{position:absolute; inset:0; width:100%; height:100%}
+.floor .deco,.floor .animal{position:absolute}
+.floor .deco svg,.floor .animal svg{width:100%; display:block; overflow:visible}
+#fTent{left:2%; bottom:70px; width:calc(118px * var(--k))}
+#fLamp1{left:33%; bottom:76px; width:calc(28px * var(--k))}
+#fLamp2{left:88%; bottom:70px; width:calc(28px * var(--k))}
+#fFlowers1{left:24%; bottom:14px; width:calc(80px * var(--k))}
+#fFlowers2{left:74%; bottom:22px; width:calc(80px * var(--k))}
+#fRocks{left:60%; bottom:60px; width:calc(86px * var(--k))}
+#aKid{left:36%; bottom:48px; width:calc(92px * var(--k))}
+.kidhead{transform-box:fill-box; transform-origin:50% 90%; animation:kidlook 12s ease-in-out infinite}
+@keyframes kidlook{0%,35%{transform:rotate(0)}40%,60%{transform:rotate(-22deg)}66%,100%{transform:rotate(0)}}
+.kidarm{transform-box:fill-box; transform-origin:0% 50%; animation:kidarm 12s ease-in-out infinite}
+@keyframes kidarm{0%,40%{transform:rotate(0)}45%,58%{transform:rotate(-70deg)}52%{transform:rotate(-80deg)}64%,100%{transform:rotate(0)}}
+.tglow{animation:flick 2.6s ease-in-out infinite alternate}
+.animal.cat{bottom:24px; width:calc(58px * var(--k)); animation:ctMove 20s linear infinite}
+.animal.cat .body{animation:ctBody 20s linear infinite}
+.ctail{transform-box:fill-box; transform-origin:100% 100%; animation:swish 1.2s ease-in-out infinite alternate}
+.animal .legs .l1{animation:leg .3s ease-in-out infinite alternate}
+.animal .legs .l2{animation:leg .3s ease-in-out infinite alternate-reverse}
+@keyframes leg{to{transform:translateX(2.5px)}}
+.firefly{position:absolute; width:6px; height:6px; border-radius:50%; background:#FFF3B0; box-shadow:0 0 12px 4px rgba(255,236,150,.8); animation:fly var(--d) ease-in-out infinite alternate; animation-delay:var(--del)}
+@keyframes fly{0%{transform:translate(0,0); opacity:.3}50%{opacity:1}100%{transform:translate(var(--x),var(--y)); opacity:.4}}
+#aHedge{left:84%; bottom:12px; width:calc(56px * var(--k))}
+.zz{animation:zz 3s ease-in-out infinite}
+@keyframes zz{0%{opacity:0; transform:translate(0,4px)}40%{opacity:1}100%{opacity:0; transform:translate(8px,-10px)}}
+.credit{position:absolute; left:0; right:0; bottom:6px; margin:0; text-align:center; font-size:.72rem; color:#B7C3FF; opacity:.85}
+@media (min-width:900px){ .floor{height:300px; --k:1.4} #fTent{bottom:96px} #aKid{bottom:66px} #fLamp1,#fLamp2{bottom:100px} #fRocks{bottom:84px} }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} .shooting,.firefly{display:none} #constLines path{stroke-dashoffset:0} }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="oMoon" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#FFF8D6"/><stop offset=".6" stop-color="#FFE9A0"/><stop offset="1" stop-color="#E9C05A"/></radialGradient>
+    <radialGradient id="oRock" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#D8D2F4"/><stop offset=".6" stop-color="#AFA6DA"/><stop offset="1" stop-color="#7D73B4"/></radialGradient>
+    <linearGradient id="oTail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8FD3FF" stop-opacity=".2"/><stop offset="1" stop-color="#CFF3FF"/></linearGradient>
+    <radialGradient id="oComet" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#BDEBFF"/><stop offset="1" stop-color="#6FB8F0"/></radialGradient>
+    <radialGradient id="oPink" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#FFE0EE"/><stop offset=".6" stop-color="#FFB1D0"/><stop offset="1" stop-color="#E77FAE"/></radialGradient>
+    <radialGradient id="oGlass" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset=".6" stop-color="#CFE3FF" stop-opacity=".55"/><stop offset="1" stop-color="#8FA8FF" stop-opacity=".7"/></radialGradient>
+    <linearGradient id="oFlame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset=".6" stop-color="#FF8A4C"/><stop offset="1" stop-color="#FF5A7A" stop-opacity="0"/></linearGradient>
+    <linearGradient id="oHull" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#F1EEFF"/><stop offset="1" stop-color="#C9C2F0"/></linearGradient>
+    <radialGradient id="oSun" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#FFF6C2"/><stop offset=".55" stop-color="#FFD35A"/><stop offset="1" stop-color="#F29A2E"/></radialGradient>
+    <linearGradient id="oHat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6B7BD8"/><stop offset="1" stop-color="#3B3C9A"/></linearGradient>
+    <radialGradient id="oHalo"><stop offset="0" stop-color="#E6ECFF" stop-opacity=".95"/><stop offset=".6" stop-color="#9FB0FF" stop-opacity=".35"/><stop offset="1" stop-color="#9FB0FF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="oBrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE3A0"/><stop offset=".5" stop-color="#E0A94A"/><stop offset="1" stop-color="#A86E22"/></linearGradient>
+    <radialGradient id="oStar" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#FFF3B0"/><stop offset="1" stop-color="#F5D66A"/></radialGradient>
+    <radialGradient id="oGoldStar" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#FFF6C2"/><stop offset=".5" stop-color="#FFC43A"/><stop offset="1" stop-color="#E0801E"/></radialGradient>
+    <radialGradient id="oLitStar" cx=".4" cy=".3" r=".9"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#C9F4FF"/><stop offset="1" stop-color="#7AD0F0"/></radialGradient>
+    <radialGradient id="oGlow"><stop offset="0" stop-color="#FFF3C4" stop-opacity=".9"/><stop offset=".5" stop-color="#FFD98A" stop-opacity=".35"/><stop offset="1" stop-color="#FFD98A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="oMoonGlow"><stop offset="0" stop-color="#FFF6D0" stop-opacity=".8"/><stop offset=".5" stop-color="#C9C2FF" stop-opacity=".25"/><stop offset="1" stop-color="#C9C2FF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="oDome" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E9E6FF"/><stop offset=".45" stop-color="#FFFFFF"/><stop offset="1" stop-color="#B9B2E8"/></linearGradient>
+  </defs>
+</svg>
+
+<div class="scene" aria-hidden="true">
+  <svg class="land" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sky1)"/><stop offset=".6" style="stop-color:var(--sky2)"/><stop offset="1" style="stop-color:var(--sky3)"/></linearGradient>
+      <linearGradient id="aur1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6CFFC9" stop-opacity="0"/><stop offset=".3" stop-color="#6CFFC9" stop-opacity=".7"/><stop offset=".6" stop-color="#9FE8FF" stop-opacity=".6"/><stop offset="1" stop-color="#C9A2FF" stop-opacity="0"/></linearGradient>
+      <radialGradient id="milky" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#C9C2FF" stop-opacity=".22"/><stop offset="1" stop-color="#C9C2FF" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="1600" height="1000" fill="url(#sky)"/>
+    <ellipse cx="800" cy="260" rx="900" ry="120" fill="url(#milky)" transform="rotate(-18 800 260)"/>
+    <g id="skyStars"></g>
+    <g class="aurora"><path d="M-100 300 C200 200 400 360 700 260 C1000 160 1200 320 1700 220 L1700 260 C1200 380 1000 220 700 320 C400 420 200 260 -100 360 Z" fill="url(#aur1)"/>
+      <path d="M-100 220 C250 140 500 280 800 190 C1100 100 1300 240 1700 150 L1700 180 C1300 280 1100 150 800 240 C500 330 250 190 -100 260 Z" fill="url(#aur1)" opacity=".7"/>
+      <path d="M-100 380 C300 320 600 420 900 350 C1200 280 1400 380 1700 330 L1700 350 C1400 410 1200 320 900 390 C600 460 300 360 -100 410 Z" fill="url(#aur1)" opacity=".5"/></g>
+    <circle cx="1250" cy="230" r="220" fill="url(#oMoonGlow)"/>
+    <g transform="translate(1250 230)"><path d="M30 -92 C-24 -84 -70 -40 -70 14 C-70 66 -26 104 30 96 C-10 76 -34 44 -34 4 C-34 -40 -8 -76 30 -92 Z" fill="url(#oMoon)" stroke="#2B2350" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M-58 16 Q-50 24 -42 16 M-30 16 Q-22 24 -14 16" stroke="#2B2350" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="-58" cy="32" rx="7" ry="4" fill="#FF9EC7" opacity=".7"/><path d="M-40 38 Q-36 42 -32 38" stroke="#2B2350" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="-40" cy="-30" r="7" fill="#E9D48A"/><circle cx="-20" cy="60" r="5" fill="#E9D48A"/></g>
+    <g class="planet"><g transform="translate(260 250)"><path d="M-80 20 C-80 0 80 -20 80 0" fill="none" stroke="#2B2350" stroke-width="12" stroke-linecap="round"/><path d="M-80 20 C-80 0 80 -20 80 0" fill="none" stroke="#FFD66B" stroke-width="6" stroke-linecap="round"/>
+      <circle r="48" fill="url(#oPink)" stroke="#2B2350" stroke-width="5"/><path d="M-44 -8 C-20 -2 20 -2 44 -12 M-42 14 C-16 20 20 18 42 10" stroke="#F58FB8" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M80 0 C80 20 -40 44 -80 20" fill="none" stroke="#2B2350" stroke-width="12" stroke-linecap="round"/><path d="M80 0 C80 20 -40 44 -80 20" fill="none" stroke="#FFD66B" stroke-width="6" stroke-linecap="round"/></g></g>
+    <g class="planet p2"><g transform="translate(1480 470)"><circle r="30" fill="url(#oComet)" stroke="#2B2350" stroke-width="4"/><circle cx="-10" cy="-8" r="6" fill="#8FC8F0"/><circle cx="12" cy="10" r="4" fill="#8FC8F0"/></g></g>
+    <path d="M0 640 C160 580 340 610 520 600 C700 590 860 540 1060 560 C1260 580 1420 540 1600 560 L1600 1000 L0 1000 Z" style="fill:var(--hill1)"/>
+    <g fill="#1A1540"><path d="M40 640 L24 640 L40 600 L56 640 Z"/><path d="M110 640 L94 640 L110 563 L126 640 Z"/><path d="M180 640 L164 640 L180 566 L196 640 Z"/><path d="M250 640 L234 640 L250 569 L266 640 Z"/><path d="M320 640 L304 640 L320 572 L336 640 Z"/><path d="M390 640 L374 640 L390 575 L406 640 Z"/><path d="M460 640 L444 640 L460 578 L476 640 Z"/><path d="M530 640 L514 640 L530 581 L546 640 Z"/><path d="M600 640 L584 640 L600 584 L616 640 Z"/><path d="M670 640 L654 640 L670 587 L686 640 Z"/><path d="M740 640 L724 640 L740 590 L756 640 Z"/><path d="M810 640 L794 640 L810 593 L826 640 Z"/><path d="M880 640 L864 640 L880 596 L896 640 Z"/><path d="M950 640 L934 640 L950 599 L966 640 Z"/><path d="M1020 640 L1004 640 L1020 562 L1036 640 Z"/><path d="M1090 640 L1074 640 L1090 565 L1106 640 Z"/><path d="M1160 640 L1144 640 L1160 568 L1176 640 Z"/><path d="M1230 640 L1214 640 L1230 571 L1246 640 Z"/><path d="M1300 640 L1284 640 L1300 574 L1316 640 Z"/><path d="M1370 640 L1354 640 L1370 577 L1386 640 Z"/><path d="M1440 640 L1424 640 L1440 580 L1456 640 Z"/><path d="M1510 640 L1494 640 L1510 583 L1526 640 Z"/><path d="M1580 640 L1564 640 L1580 586 L1596 640 Z"/></g>
+    <g transform="translate(1180 610)"><rect x="-40" y="-30" width="34" height="30" fill="#2A2358" stroke="#120F33" stroke-width="3"/><path d="M-46 -30 L-23 -52 L0 -30 Z" fill="#3B3290" stroke="#120F33" stroke-width="3"/><rect class="winlit" x="-30" y="-22" width="12" height="10" fill="#FFD98A"/>
+      <rect x="6" y="-40" width="40" height="40" fill="#2A2358" stroke="#120F33" stroke-width="3"/><path d="M0 -40 L26 -64 L52 -40 Z" fill="#3B3290" stroke="#120F33" stroke-width="3"/><rect class="winlit" x="14" y="-30" width="10" height="10" fill="#FFD98A" style="animation-delay:-1s"/><rect class="winlit" x="30" y="-30" width="10" height="10" fill="#FFD98A" style="animation-delay:-2s"/>
+      <rect x="60" y="-26" width="28" height="26" fill="#2A2358" stroke="#120F33" stroke-width="3"/><path d="M55 -26 L74 -44 L93 -26 Z" fill="#3B3290" stroke="#120F33" stroke-width="3"/><rect class="winlit" x="68" y="-18" width="10" height="9" fill="#FFD98A" style="animation-delay:-.5s"/></g>
+    <g transform="translate(330 640)"><path d="M-16 0 L-8 -110 L8 -110 L16 0 Z" fill="#3B3290" stroke="#120F33" stroke-width="4"/><rect class="winlit" x="-5" y="-70" width="10" height="14" fill="#FFD98A"/>
+      <g transform="translate(0 -112)"><g class="blades"><path d="M0 0 L-8 -80 L8 -80 Z M0 0 L80 -8 L80 8 Z M0 0 L8 80 L-8 80 Z M0 0 L-80 8 L-80 -8 Z" fill="#E6DAFF" stroke="#120F33" stroke-width="3" stroke-linejoin="round"/><circle r="8" fill="#FFD66B" stroke="#120F33" stroke-width="3"/></g></g></g>
+    <path d="M0 740 C220 690 420 720 620 730 C860 742 1060 690 1260 700 C1440 710 1540 695 1600 700 L1600 1000 L0 1000 Z" style="fill:var(--hill2)"/>
+    <path d="M0 850 C300 820 600 860 900 845 C1200 830 1400 850 1600 845 L1600 1000 L0 1000 Z" style="fill:var(--hill3)"/>
+  </svg>
+  <div class="shooting" style="left:70%; top:12%; animation-delay:1s"></div><div class="shooting" style="left:40%; top:6%; animation-delay:4s"></div><div class="shooting" style="left:95%; top:28%; animation-delay:7s"></div>
+</div>
+<main id="main">
+  <div class="topper">
+    <svg class="dome" viewBox="0 0 480 176" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      <g class="tscope"><rect x="228" y="20" width="24" height="100" rx="6" fill="url(#oBrass)" stroke="#2B2350" stroke-width="4"/><rect x="222" y="12" width="36" height="16" rx="5" fill="#E0A94A" stroke="#2B2350" stroke-width="4"/><circle class="slitglow" cx="240" cy="14" r="22" fill="url(#oGlow)"/></g>
+      <path d="M110 146 C110 70 168 26 240 26 C312 26 370 70 370 146 Z" fill="url(#oDome)" stroke="#2B2350" stroke-width="5"/>
+      <path d="M160 146 C160 84 196 44 240 40 M320 146 C320 84 284 44 240 40" fill="none" stroke="#B9B2E8" stroke-width="3"/>
+      <path d="M224 30 H256 V146 H224 Z" fill="#171339" stroke="#2B2350" stroke-width="4"/><rect class="slitglow" x="226" y="32" width="28" height="112" fill="#6C5AE0" opacity=".5"/>
+      <circle cx="232" cy="60" r="1.6" fill="#FFF3C4"/><circle cx="246" cy="84" r="1.2" fill="#FFF3C4"/><circle cx="236" cy="112" r="1.4" fill="#FFF3C4"/>
+      <path d="M140 60 C160 40 190 30 214 28" stroke="#fff" stroke-width="6" opacity=".6" fill="none" stroke-linecap="round"/>
+      <svg id="domeCat" x="146" y="-4" width="54" height="54" viewBox="0 0 50 50" overflow="visible"></svg>
+      <rect x="92" y="140" width="296" height="22" rx="8" fill="url(#oBrass)" stroke="#2B2350" stroke-width="4"/>
+      <circle cx="110" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="140" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="170" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="200" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="230" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="260" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="290" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="320" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/><circle cx="350" cy="151" r="3" fill="#FFF3C4" stroke="#2B2350" stroke-width="1.5"/>
+    </svg>
+    <div class="hbtns">
+      <button class="ico" id="musicBtn" aria-label="Couper la musique" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="#2B2350" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="3" fill="#2B2350"/><circle cx="17.5" cy="16" r="3" fill="#2B2350"/></svg></button>
+      <button class="ico" id="sfxBtn" aria-label="Couper les effets sonores" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#2B2350"/><path d="M16 9c1.3 1.6 1.3 4.4 0 6M18.5 6.5c2.8 3 2.8 8 0 11" fill="none" stroke="#2B2350" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <button class="ico" id="infoBtn" aria-label="Règles et gains"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#2B2350" stroke-width="2.4"/><path d="M12 11v6" stroke="#2B2350" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="7.3" r="1.6" fill="#2B2350"/></svg></button>
+    </div>
+    <div class="plate"><h1 class="logo" aria-label="Constella"><span style="--c:#FFE27A; --r:-5deg; --y:0px; --d:0.00s">C</span><span style="--c:#B7C3FF; --r:3deg; --y:-2px; --d:0.14s">o</span><span style="--c:#FF9EC7; --r:-2deg; --y:1px; --d:0.28s">n</span><span style="--c:#9FE8FF; --r:4deg; --y:-3px; --d:0.42s">s</span><span style="--c:#C9A2FF; --r:-4deg; --y:0px; --d:0.56s">t</span><span style="--c:#FFE27A; --r:2deg; --y:-2px; --d:0.70s">e</span><span style="--c:#B7C3FF; --r:-3deg; --y:1px; --d:0.84s">l</span><span style="--c:#FF9EC7; --r:4deg; --y:-1px; --d:0.98s">l</span><span style="--c:#9FE8FF; --r:-2deg; --y:0px; --d:1.12s">a</span></h1></div>
+  </div>
+  <div class="cabinet">
+    <svg class="etch" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M4 70 L10 60 L16 66 L12 78 M88 20 L94 30 L90 40 L96 46 M6 20 L12 14 L18 22" stroke="#FFF3C4" stroke-width=".5" fill="none" vector-effect="non-scaling-stroke"/></svg>
+    <div class="screen">
+      <div class="hud" id="hud">
+        <div class="tier"><span id="tierName">Bonus</span><span id="tierSize"></span></div>
+        <div class="chip" id="chipSpins">Spins <b id="spinsLeft">8</b></div>
+        <div class="chip" id="chipMult">Multi <b id="multN">×1</b></div>
+        <div class="chip" id="chipTotal">Total <b id="bonusTotal">0,00</b></div>
+        <div class="atlas" id="atlas"></div>
+      </div>
+      <div class="gridwrap" id="gridwrap"><div class="grid" id="grid"></div></div>
+    </div>
+    <div class="msg" id="msg" aria-live="polite">Trois télescopes lancent le bonus.</div>
+    <div class="deck">
+      <div class="meters">
+        <div class="meter"><small>Crédits</small><b id="balance">1 000,00</b></div>
+        <div class="bet"><button class="pm" id="betDown" aria-label="Baisser la mise">−</button><div class="mid"><small>Mise</small><b id="bet">1,00</b></div><button class="pm" id="betUp" aria-label="Augmenter la mise">+</button></div>
+        <div class="meter r"><small>Gain</small><b id="lastWin">0,00</b></div>
+      </div>
+      <div class="row">
+        <button class="btn buy" id="buyBtn">Acheter<br>bonus</button>
+        <button class="btn" id="anteBtn" aria-pressed="false">Chance<br>bonus</button>
+        <button class="spin" id="spin" aria-label="Lancer"><svg viewBox="0 0 48 48"><path d="M24 7a17 17 0 1 1-15.5 10" fill="none" stroke="#FFF3C4" stroke-width="5" stroke-linecap="round"/><path d="M5 7v11h11" fill="none" stroke="#FFF3C4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 15 L26.3 20.6 L32.3 21 L27.6 24.8 L29.2 30.6 L24 27.4 L18.8 30.6 L20.4 24.8 L15.7 21 L21.7 20.6 Z" fill="#FFE27A" stroke="#2B2350" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+        <button class="btn" id="autoBtn">Auto</button>
+        <button class="btn" id="turboBtn" aria-pressed="false" aria-label="Mode turbo"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="#5B47C9" stroke="#2B2350" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </div>
+</main>
+<section class="floor" aria-hidden="true">
+  <svg class="ground" viewBox="0 0 1200 220" preserveAspectRatio="none"><path d="M0 60 C200 40 400 70 600 58 C800 46 1000 72 1200 54 L1200 220 L0 220 Z" style="fill:var(--grass1)"/><path d="M0 120 C250 100 500 130 750 116 C950 106 1100 124 1200 114 L1200 220 L0 220 Z" style="fill:var(--grass2)"/></svg>
+  <div class="deco" id="fTent"></div>
+  <div class="deco" id="fLamp1"></div>
+  <div class="deco" id="fRocks"></div>
+  <div class="deco" id="fLamp2"></div>
+  <div class="animal" id="aKid"></div>
+  <div class="deco" id="fFlowers1"></div>
+  <div class="deco" id="fFlowers2"></div>
+  <div class="animal cat" id="aCat"></div>
+  <div class="animal" id="aHedge"></div>
+  <div id="flies"></div>
+  <p class="credit">Crédits fictifs, aucun argent réel. RTP 98,5 %.</p>
+</section>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="aurwash" id="aurwash"></div>
+<div class="intro" id="intro"><div class="bigrays"></div></div>
+<div class="layer" id="introLayer"><div class="introbox" id="introbox"></div></div>
+<div class="bigwin" id="bigwin"><div class="bigrays"></div></div>
+<div class="layer click" id="bwLayer"><div class="bw" id="bw"></div></div>
+<div class="overlay" id="overlay"><div class="card" id="card"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+// ---------- son : berceuse étoilée, ambiance de nuit et bruits de machine, tout généré en direct ----------
+const Snd = (() => {
+  let ctx = null, master, musicBus, sfxBus, ambBus, noise, timer = null, ambTimer = null, windNodes = null;
+  let step = 0, next = 0, musicOn = true, sfxOn = true, bonus = false, ratchet = null;
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const pluckCache = new Map();
+  function init() {
+    if (ctx) return true;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+      master = ctx.createGain(); master.gain.value = 0.9; master.connect(comp).connect(ctx.destination);
+      musicBus = ctx.createGain(); musicBus.gain.value = 0.34; musicBus.connect(master);
+      sfxBus = ctx.createGain(); sfxBus.gain.value = 0.5; sfxBus.connect(master);
+      ambBus = ctx.createGain(); ambBus.gain.value = 0.16; ambBus.connect(master);
+      noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      return true;
+    } catch (e) { return false; }
+  }
+  const now = () => ctx.currentTime;
+  function env(g, t, a, peak, dur) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
+  function tone(bus, freq, t, dur, type, vol, slideTo, attack = 0.008, pan = 0) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur * .9);
+    env(g, t, attack, vol, dur);
+    let out = g;
+    if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+    o.connect(g); out.connect(bus); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noiseHit(bus, t, dur, type, freq, q, vol, attack = 0.004) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; s.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    env(g, t, attack, vol, dur);
+    s.connect(f).connect(g).connect(bus); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
+    return f;
+  }
+  // corde pincée (Karplus-Strong)
+  function pluckBuf(m) {
+    if (pluckCache.has(m)) return pluckCache.get(m);
+    const sr = ctx.sampleRate, N = Math.round(sr / mtof(m)), len = Math.floor(sr * 1.8);
+    const buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+    for (let i = 0; i < N; i++) d[i] = (Math.random() * 2 - 1) * 0.8;
+    for (let i = 1; i < N; i++) d[i] = (d[i] + d[i - 1]) * 0.5;
+    const decay = m < 50 ? 0.9975 : 0.996;
+    for (let i = N; i < len; i++) d[i] = decay * 0.5 * (d[i - N] + d[i - N - 1 < 0 ? 0 : i - N - 1]);
+    pluckCache.set(m, buf); return buf;
+  }
+  function pluck(m, t, vol, bus = musicBus) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    s.buffer = pluckBuf(m); f.type = 'lowpass'; f.frequency.value = 3200; g.gain.value = vol;
+    s.connect(f).connect(g).connect(bus); s.start(t);
+  }
+  function flute(m, t, dur, vol) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    const f = mtof(m); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f * 2;
+    lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.008, t + 0.25);
+    lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+    const g2 = ctx.createGain(); g2.gain.value = 0.12; o2.connect(g2).connect(g); o.connect(g);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.07); g.gain.setValueAtTime(vol, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(musicBus); o.start(t); o2.start(t); lfo.start(t); o.stop(t + dur + .05); o2.stop(t + dur + .05); lfo.stop(t + dur + .05);
+    noiseHit(musicBus, t, Math.min(0.25, dur), 'bandpass', f * 2, 3, vol * 0.25, 0.03);
+  }
+  function bell(m, t, vol, dur = 1.4, bus = sfxBus, pan = 0) {
+    const f = mtof(m);
+    [[1, 1], [2.0, .35], [2.76, .25], [5.4, .12], [8.93, .06]].forEach(([k, a]) => tone(bus, f * k, t, dur / (1 + k * 0.3), 'sine', vol * a, null, 0.003, pan));
+  }
+  function woodblock(t, vol, f = 900) { tone(musicBus, f, t, 0.07, 'sine', vol, f * .7, 0.002); noiseHit(musicBus, t, 0.03, 'bandpass', 2400, 4, vol * .5, 0.001); }
+  function shaker(t, vol) { noiseHit(musicBus, t, 0.06, 'highpass', 6000, .7, vol, 0.02); }
+
+  // ---------- musique du jeu : berceuse rêveuse, célesta et guitare douce ----------
+  const CH = [[48, [60, 64, 67, 71]], [41, [57, 60, 64, 65]], [45, [57, 60, 64, 67]], [43, [55, 59, 62, 67]]];
+  const ARP = [0, 1, 2, 3, 2, 1, 3, 1];
+  const MEL = [[0, 76, 3], [4, 79, 2], [6, 76, 2], [8, 77, 4], [12, 76, 2], [14, 72, 2], [16, 76, 3], [20, 74, 2], [22, 72, 2], [24, 71, 4], [28, 74, 4],
+    [32, 83, 3], [36, 79, 2], [38, 76, 2], [40, 77, 3], [44, 81, 4], [48, 79, 2], [50, 76, 2], [52, 72, 4], [56, 74, 3], [60, 71, 2], [62, 72, 2]];
+  const melAt = new Map(MEL.map(x => [x[0], x]));
+  function playStep(s, t, sd) {
+    const bar = Math.floor(s / 8) % 4, i = s % 8, [bass, chord] = CH[bar];
+    if (i === 0) { pluck(bass, t, .55); for (const n of chord.slice(0, 3)) tone(musicBus, mtof(n), t, sd * 8, 'triangle', .02, null, .5); }
+    pluck(chord[ARP[i]] + 12, t, .13);
+    const m = melAt.get(s);
+    if (m) bell(m[1], t, .12, .9 + m[2] * .3, musicBus);
+    if (i % 4 === 2) shaker(t, .035);
+  }
+  // musique du bonus : ronde mystérieuse en ré mineur, chœur doux et boîte à musique rapide
+  const BCH = [[38, [50, 53, 57, 62]], [34, [50, 53, 58, 62]], [41, [53, 57, 60, 65]], [36, [52, 55, 60, 64]]];
+  const BMEL = [[0, 74, 3], [3, 77, 3], [6, 81, 6], [12, 82, 3], [15, 81, 3], [18, 77, 6], [24, 81, 3], [27, 79, 3], [30, 77, 3], [33, 76, 3], [36, 74, 6], [42, 72, 3], [45, 76, 3]];
+  const bmelAt = new Map(BMEL.map(x => [x[0], x]));
+  function choir(m, t, dur, vol) { for (const d of [-4, 4]) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = mtof(m); o.detune.value = d; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * .4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(musicBus); o.start(t); o.stop(t + dur + .05); } }
+  function playBonusStep(s, t, sd) {
+    const bar = Math.floor(s / 12) % 4, i = s % 12, [bass, chord] = BCH[bar];
+    if (i === 0) { tone(musicBus, 90, t, .2, 'sine', .4, 42); pluck(bass, t, .6); for (const n of chord.slice(0, 3)) choir(n + 12, t, sd * 12, .03); }
+    if (i === 6) { tone(musicBus, 90, t, .18, 'sine', .28, 42); pluck(bass + 7, t, .35); }
+    bell(chord[[0, 1, 2, 3, 2, 1][i % 6]] + 24, t, .045, .4, musicBus);
+    const m = bmelAt.get(s % 48);
+    if (m) bell(m[1], t, .13, .7 + m[2] * .12, musicBus);
+    if (i % 3 === 2) shaker(t, .04);
+  }
+  function tick() {
+    const sd = 60 / (bonus ? 128 : 84) / 2;
+    while (next < ctx.currentTime + 0.15) {
+      if (bonus) { playBonusStep(step % 48, next, sd); step = (step + 1) % 48; }
+      else { playStep(step, next, sd); step = (step + 1) % 64; }
+      next += sd;
+    }
+  }
+  // ---------- ambiance : grillons, hibou et petite brise de nuit ----------
+  function startWind() {
+    if (windNodes) return;
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    s.buffer = noise; s.loop = true; f.type = 'bandpass'; f.frequency.value = 420; f.Q.value = .7; g.gain.value = .12;
+    lfo.frequency.value = .07; lg.gain.value = 200; lfo.connect(lg).connect(f.frequency);
+    s.connect(f).connect(g).connect(ambBus); s.start(); lfo.start();
+    windNodes = { s, g, lfo };
+  }
+  function crickets(t, v) { const f = 4400 + Math.random() * 400, p = Math.random() - .5; for (let k = 0; k < 4; k++) tone(ambBus, f, t + k * .045, .03, 'sine', v, null, .003, p); }
+  function owl(t) { tone(ambBus, 390, t, .5, 'sine', .35, 350, .12); tone(ambBus, 380, t + .75, .9, 'sine', .4, 330, .15); }
+  function ambience() {
+    if (!ctx || !musicOn) return;
+    const t = now() + .05;
+    if (Math.random() < (bonus ? .9 : .55)) crickets(t, bonus ? .2 : .14);
+    if (Math.random() < .04) owl(t + .3);
+  }
+  function startMusic() {
+    if (!musicOn || !init()) return; ctx.resume();
+    if (!timer) { next = ctx.currentTime + 0.05; timer = setInterval(tick, 25); }
+    startWind(); if (!ambTimer) ambTimer = setInterval(ambience, 900);
+  }
+  function stopMusic() { if (timer) { clearInterval(timer); timer = null; } if (ambTimer) { clearInterval(ambTimer); ambTimer = null; } if (windNodes) { windNodes.s.stop(); windNodes.lfo.stop(); windNodes = null; } }
+
+  // ---------- bruitages ----------
+  function coin(t, vol = .22, pan = 0) {
+    const f = 2200 + Math.random() * 900;
+    [[1, 1], [2.76, .5], [5.4, .3], [8.9, .15]].forEach(([k, a]) => tone(sfxBus, f * k * .5, t, .28 / Math.sqrt(k), 'sine', vol * a, null, .001, pan));
+  }
+  const S = {
+    click() { const t = now(); woodblockSfx(t, .35, 1100); },
+    reelStart() { if (ratchet) return; ratchet = setInterval(() => { const t = now(); noiseHit(sfxBus, t, .018, 'bandpass', 3200, 6, .22, .001); tone(sfxBus, 1500, t, .02, 'square', .025); }, 55); },
+    reelStop() { clearInterval(ratchet); ratchet = null; },
+    stop(c) { const t = now(); tone(sfxBus, 150 - c * 6, t, .16, 'sine', .7, 70, .002); noiseHit(sfxBus, t, .07, 'bandpass', 700, 2, .35, .001); },
+    plop(p = 0) { const t = now(); tone(sfxBus, 360 + p * 40, t, .12, 'sine', .28, 720 + p * 60, .004); },
+    land(c) { S.stop(c); },
+    scatter(n) { const t = now(); bell(79 + n * 3, t, .28, 1.6); bell(86 + n * 3, t + .08, .12, 1.2); for (let k = 0; k < 5; k++) tone(sfxBus, mtof(91 + n * 3 + k * 2), t + .1 + k * .04, .15, 'sine', .08); },
+    antic() { const t = now(); for (let k = 0; k < 18; k++) noiseHit(sfxBus, t + k * .045, .04, 'bandpass', 900, 1.5, .05 + k * .014, .002); tone(sfxBus, 180, t, .85, 'sawtooth', .03, 600, .3); },
+    win(level) { const t = now(), n = level > 1 ? 10 : 4; for (let k = 0; k < n; k++) coin(t + k * (.05 + Math.random() * .04), .2, Math.random() - .5); [67, 71, 74, 79].slice(0, level > 1 ? 4 : 3).forEach((m, i) => pluck(m, t + i * .07, .5, sfxBus)); },
+    tick(p) { const t = now(); noiseHit(sfxBus, t, .02, 'bandpass', 2600 + p * 1500, 8, .18, .001); if (Math.random() < .35) coin(t, .08, Math.random() - .5); },
+    fanfare() { const t = now(); [55, 59, 62, 67, 71, 74, 79].forEach((m, i) => pluck(m, t + i * .025, .55, sfxBus)); [79, 83, 86, 91].forEach((m, i) => bell(m, t + .35 + i * .12, .18, 1.6)); for (let k = 0; k < 16; k++) coin(t + .2 + k * .06, .16, Math.random() * 1.6 - .8); },
+    bonus() { const t = now(); for (let k = 0; k < 10; k++) { bell(84, t + k * .11, .22 * (1 - k / 14), .6); bell(88, t + k * .11 + .055, .12, .4); } for (let k = 0; k < 14; k++) coin(t + .3 + k * .07, .14, Math.random() * 1.6 - .8); },
+    thunk() { const t = now(); tone(sfxBus, 170, t, .3, 'sine', .8, 60, .002); noiseHit(sfxBus, t, .09, 'lowpass', 500, 1, .4, .001); bell(74, t + .02, .08, .6); },
+    whoosh() { const t = now(); const f = noiseHit(sfxBus, t, .6, 'bandpass', 300, 1.2, .35, .25); f.frequency.exponentialRampToValueAtTime(2400, t + .55); },
+    ting(p = 0) { const t = now(), sc = [79, 81, 84, 86, 88, 91, 93, 96]; bell(sc[(p + Math.floor(Math.random() * 3)) % sc.length], t, .09, .6, sfxBus, Math.random() - .5); },
+    constel(n) { const t = now(); [67, 71, 74, 79, 83, 86, 91].slice(0, 3 + n).forEach((m, i) => pluck(m, t + i * .05, .45, sfxBus)); [79, 83, 86].forEach((m, i) => bell(m, t + .3 + i * .02, .16, 1.6)); },
+    aurora() { const t = now(); const f = noiseHit(sfxBus, t, 2.2, 'bandpass', 300, 1, .25, .8); f.frequency.exponentialRampToValueAtTime(2400, t + 2); [60, 64, 67, 71, 74].forEach((m, i) => tone(sfxBus, mtof(m + 12), t + i * .12, 2.4, 'sine', .07, null, .6)); },
+    gold() { const t = now(); for (let k = 0; k < 16; k++) bell(88 + (k % 5) * 2, t + k * .04, .07, .4, sfxBus, Math.sin(k) * .7); },
+    shower() { const t = now(); for (let k = 0; k < 3; k++) { const f = noiseHit(sfxBus, t + k * .22, .5, 'bandpass', 3200, 2, .2, .02); f.frequency.exponentialRampToValueAtTime(500, t + k * .22 + .45); bell(91 - k * 3, t + k * .22 + .4, .12, .7); } },
+    mult() { const t = now(); pluck(67, t, .5, sfxBus); pluck(74, t + .1, .5, sfxBus); bell(86, t + .2, .2, 1.4); bell(91, t + .26, .12, 1.2); },
+    spins() { const t = now(); [72, 76, 79, 84].forEach((m, i) => bell(m, t + i * .08, .15, .9)); },
+    // pouvoirs
+    grow() { const t = now(); const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = 70; f.type = 'bandpass'; f.Q.value = 6; f.frequency.setValueAtTime(260, t);
+      for (let k = 0; k < 8; k++) f.frequency.linearRampToValueAtTime(260 + Math.random() * 700, t + .1 + k * .1); env(g, t, .05, .5, 1); o.connect(f).connect(g).connect(sfxBus); o.start(t); o.stop(t + 1.05);
+      tone(sfxBus, 55, t, 1, 'sine', .5, 40, .1); },
+    color() { const t = now(); [72, 74, 76, 79, 81, 84, 86, 88, 91].forEach((m, i) => bell(m, t + i * .06, .13, 1.1, sfxBus, Math.sin(i) * .6)); tone(sfxBus, mtof(60), t, 1.4, 'sine', .15, mtof(67), .4); },
+    heal() { const t = now(); for (let k = 0; k < 7; k++) tone(sfxBus, 3200 + Math.random() * 700, t + k * .065, .05, 'sine', .22, 2300, .003, -.6 + k * .2); S.plop(3); setTimeout(() => ctx && woodblockSfx(now(), .35, 700), 700); },
+    stack() { const t = now(); const f = noiseHit(sfxBus, t, .8, 'lowpass', 500, .7, .45, .12); f.frequency.exponentialRampToValueAtTime(2200, t + .5); for (let k = 0; k < 6; k++) bell(91 + (k % 3) * 3, t + .3 + k * .07, .06, .5); },
+    ring() { const t = now(); [72, 74, 76, 79, 81, 84, 81, 79, 76, 74, 72].forEach((m, i) => bell(m, t + i * .075, .12, .9, sfxBus, Math.sin(i / 11 * Math.PI * 2) * .9)); },
+  };
+  function woodblockSfx(t, vol, f) { tone(sfxBus, f, t, .07, 'sine', vol, f * .7, .002); noiseHit(sfxBus, t, .03, 'bandpass', 2400, 4, vol * .5, .001); }
+  return {
+    start() { if (!init()) return; ctx.resume(); startMusic(); },
+    toggleMusic() { musicOn = !musicOn; musicOn ? startMusic() : stopMusic(); return musicOn; },
+    toggleSfx() { sfxOn = !sfxOn; if (!sfxOn) S.reelStop(); return sfxOn; },
+    setBonus(v) { bonus = v; step = 0; if (ctx) next = Math.max(next, ctx.currentTime + 0.1); },
+    fx(name, ...a) { if (!sfxOn || !init() || ctx.state !== 'running') return; try { S[name](...a); } catch (e) {} },
+  };
+})();
+// Constella, moteur mathématique (partagé par le jeu et la simulation)
+const ENGINE = (() => {
+  const COLS = 6, ROWS = 6;
+  const SYMS = [
+    { id: 'l1', w: 158, pay: [0.01, 0.02, 0.04, 0.08] },
+    { id: 'l2', w: 150, pay: [0.015, 0.03, 0.06, 0.12] },
+    { id: 'l3', w: 142, pay: [0.02, 0.04, 0.09, 0.18] },
+    { id: 'l4', w: 134, pay: [0.03, 0.06, 0.13, 0.26] },
+    { id: 'h1', w: 118, pay: [0.05, 0.1, 0.25, 0.5] },
+    { id: 'h2', w: 110, pay: [0.08, 0.16, 0.4, 0.8] },
+    { id: 'h3', w: 98, pay: [0.12, 0.25, 0.6, 1.25] },
+    { id: 'h4', w: 80.5, pay: [0.2, 0.5, 1.25, 3.0] },
+  ];
+  const SYM_W = SYMS.reduce((a, s) => a + s.w, 0);
+  let SCAT_W = { normal: 8.059789917528096, ante: 9.528642782040478 }; // poids du scatter (calibrés : RTP 98,5 % dans les deux modes)
+  let BASE_SCALE = { normal: 0.7662866778138974, ante: 0.7662866778138974 }; // même table de gains dans les deux modes
+  let BONUS_K = { 3: 4.811884611229653, 4: 11.308143151615871, 5: 9.946715583057884 }; // bonus moyens 98,5 / 394 / 2 000 x mise
+  // taille du ciel, spins, multiplicateur de départ, étoiles offertes au premier spin, chance d'étoile par case vide
+  const TIER = {
+    3: { size: 6, spins: 8,  mult0: 1, gift: 0, p: 0.13, gold: 0.06, cap: 10000 },
+    4: { size: 7, spins: 10, mult0: 1, gift: 6, p: 0.09, gold: 0.06, cap: 25000 },
+    5: { size: 8, spins: 12, mult0: 2, gift: 8, p: 0.085, gold: 0.06, cap: 50000 },
+  };
+  const BUY = { 3: 100, 4: 400 }; // RTP des achats : 98,5 %
+  const ANTE = 1.25;
+  // constellations : cases [ligne, colonne], traits entre étoiles, prime et pouvoir
+  const CONSTS = [
+    { id: 'uma', name: 'Grande Ourse', cells: [[0, 0], [0, 1], [1, 2], [1, 3], [2, 3], [2, 5], [1, 5]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]], prize: 12, fx: 'aurora' },
+    { id: 'ori', name: 'Orion', cells: [[0, 0], [0, 3], [2, 1], [2, 2], [4, 0], [4, 3]], lines: [[0, 2], [1, 3], [2, 3], [2, 4], [3, 5], [0, 1]], prize: 8, fx: 'gold' },
+    { id: 'umi', name: 'Petite Ourse', cells: [[0, 0], [0, 1], [1, 2], [1, 3], [2, 3], [2, 2]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2]], prize: 5, fx: 'spins' },
+    { id: 'cas', name: 'Cassiopée', cells: [[0, 0], [1, 1], [0, 2], [1, 3], [0, 4]], lines: [[0, 1], [1, 2], [2, 3], [3, 4]], prize: 3, fx: 'mult' },
+    { id: 'lyr', name: 'Lyre', cells: [[0, 1], [1, 0], [2, 1], [1, 2]], lines: [[0, 1], [1, 2], [2, 3], [3, 0]], prize: 1.5, fx: 'shower' },
+  ];
+  // variantes : la forme telle quelle et en miroir
+  for (const k of CONSTS) {
+    const w = Math.max(...k.cells.map(c => c[1]));
+    const mir = k.cells.map(([r, c]) => [r, w - c]);
+    k.variants = [k.cells, mir];
+    k.h = Math.max(...k.cells.map(c => c[0])) + 1; k.w = w + 1;
+  }
+  const rand = () => Math.random();
+
+  // ---------- jeu de base ----------
+  function spinBase(mode = 'normal') {
+    const tot = SYM_W + SCAT_W[mode], g = [];
+    for (let c = 0; c < COLS; c++) { g.push([]); for (let r = 0; r < ROWS; r++) {
+      let x = rand() * tot, s = -1;
+      for (let i = 0; i < SYMS.length; i++) { if ((x -= SYMS[i].w) < 0) { s = i; break; } }
+      g[c].push(s);
+    } }
+    return g;
+  }
+  function evalBase(g, mode = 'normal') {
+    const wins = []; let total = 0;
+    for (let s = 0; s < SYMS.length; s++) {
+      let ways = 1, len = 0;
+      for (let c = 0; c < COLS; c++) { const n = g[c].filter(x => x === s).length; if (!n) break; ways *= n; len++; }
+      if (len >= 3) { const amt = SYMS[s].pay[len - 3] * ways * BASE_SCALE[mode]; total += amt; wins.push({ s, len, ways, amt }); }
+    }
+    let scats = 0; for (const col of g) for (const x of col) if (x === -1) scats++;
+    return { wins, total, scats };
+  }
+  function analyticBase(mode = 'normal', scale = 1) {
+    const tot = SYM_W + SCAT_W[mode]; let e = 0;
+    for (const s of SYMS) { const p = s.w / tot;
+      for (let L = 3; L <= 6; L++) e += s.pay[L - 3] * Math.pow(6 * p, L) * (L < 6 ? Math.pow(1 - p, 6) : 1); }
+    return e * scale;
+  }
+  function scatProbs(mode = 'normal', w) {
+    const sw = w ?? SCAT_W[mode], p = sw / (SYM_W + sw), n = 36;
+    const C = (n, k) => { let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return r; };
+    const pk = []; for (let k = 0; k <= n; k++) pk.push(C(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k));
+    let p5 = 0; for (let k = 5; k <= n; k++) p5 += pk[k];
+    return { 3: pk[3], 4: pk[4], 5: p5 };
+  }
+
+
+  // ---------- bonus : le ciel se remplit d'étoiles collantes, les constellations se forment ----------
+  function newBonus(tier) {
+    const T = TIER[tier], n = T.size;
+    const sky = []; for (let r = 0; r < n; r++) sky.push(new Array(n).fill(0)); // 0 vide, 1 étoile, 3 étoile dorée, 2 étoile prise dans une constellation
+    return { tier, size: n, sky, spinsLeft: T.spins, mult: T.mult0, gift: T.gift, raw: 0, total: 0, spinNo: 0, done: false, capped: false, counts: {} };
+  }
+  function empties(b) { const out = []; for (let r = 0; r < b.size; r++) for (let c = 0; c < b.size; c++) if (!b.sky[r][c]) out.push([r, c]); return out; }
+  const newStar = b => (rand() < TIER[b.tier].gold ? 3 : 1);
+  function addRandomStars(b, k) {
+    const e = empties(b), got = [];
+    for (let i = 0; i < k && i < e.length; i++) { const j = i + Math.floor(rand() * (e.length - i)); [e[i], e[j]] = [e[j], e[i]]; const v = newStar(b); b.sky[e[i][0]][e[i][1]] = v; got.push([e[i][0], e[i][1], v]); }
+    return got;
+  }
+  function findConst(b) {
+    const n = b.size;
+    for (const k of CONSTS) for (let v = 0; v < k.variants.length; v++) {
+      const cells = k.variants[v];
+      for (let r0 = 0; r0 + k.h <= n; r0++) for (let c0 = 0; c0 + k.w <= n; c0++) {
+        let ok = true;
+        for (const [r, c] of cells) { const v = b.sky[r0 + r][c0 + c]; if (v !== 1 && v !== 3) { ok = false; break; } }
+        if (ok) return { k, cells: cells.map(([r, c]) => [r0 + r, c0 + c]) };
+      }
+    }
+    return null;
+  }
+  function bonusSpin(b) {
+    const T = TIER[b.tier];
+    b.spinsLeft--; b.spinNo++;
+    const landed = [];
+    if (b.gift) { landed.push(...addRandomStars(b, b.gift)); b.gift = 0; }
+    for (const [r, c] of empties(b)) if (rand() < T.p) { const v = newStar(b); b.sky[r][c] = v; landed.push([r, c, v]); }
+    const events = [];
+    const before = b.total;
+    let f;
+    while ((f = findConst(b))) {
+      let gold = 0;
+      for (const [r, c] of f.cells) { if (b.sky[r][c] === 3) gold++; b.sky[r][c] = 2; }
+      const pay = f.k.prize * b.mult * Math.pow(2, gold);
+      b.raw += pay; b.counts[f.k.id] = (b.counts[f.k.id] || 0) + 1;
+      const ev = { id: f.k.id, cells: f.cells, prize: f.k.prize, mult: b.mult, gold, pay, fx: f.k.fx };
+      if (f.k.fx === 'mult') b.mult *= 2;
+      if (f.k.fx === 'spins') b.spinsLeft += 2;
+      if (f.k.fx === 'shower') ev.added = addRandomStars(b, 3);
+      if (f.k.fx === 'gold') { ev.golded = []; for (let r = 0; r < b.size; r++) for (let c = 0; c < b.size; c++) if (b.sky[r][c] === 1) { b.sky[r][c] = 3; ev.golded.push([r, c]); } }
+      if (f.k.fx === 'aurora') { ev.cleared = []; for (let r = 0; r < b.size; r++) for (let c = 0; c < b.size; c++) if (b.sky[r][c] === 2) { b.sky[r][c] = 0; ev.cleared.push([r, c]); } }
+      ev.multAfter = b.mult; ev.spinsAfter = b.spinsLeft;
+      events.push(ev);
+    }
+    b.total = Math.min(T.cap, b.raw * BONUS_K[b.tier]);
+    if (b.total >= T.cap) { b.capped = true; b.done = true; }
+    if (b.spinsLeft <= 0) b.done = true;
+    return { landed, events, win: b.total - before, sky: b.sky.map(r => r.slice()) };
+  }
+  return {
+    COLS, ROWS, SYMS, TIER, BUY, ANTE, CONSTS,
+    spinBase, evalBase, analyticBase, scatProbs, newBonus, bonusSpin,
+    get SCAT_W() { return SCAT_W; }, set SCAT_W(v) { SCAT_W = v; },
+    get BASE_SCALE() { return BASE_SCALE; }, set BASE_SCALE(v) { BASE_SCALE = v; },
+    get BONUS_K() { return BONUS_K; }, set BONUS_K(v) { BONUS_K = v; },
+  };
+})();
+if (typeof module !== 'undefined') module.exports = ENGINE;
+// ---------- illustrations de Constella (dessins originaux) ----------
+const ART = (() => {
+  const K = '#2B2350';
+  const svg = inner => `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="60.5" rx="17" ry="2.4" fill="#0E0A26" opacity=".22"/>${inner}</svg>`;
+  function face(cx, cy, kind = 'smile', blush = true, s = 1) {
+    let e = `<circle cx="${cx - 5 * s}" cy="${cy}" r="${1.8 * s}" fill="${K}"/><circle cx="${cx + 5 * s}" cy="${cy}" r="${1.8 * s}" fill="${K}"/><circle cx="${cx - 4.4 * s}" cy="${cy - .6}" r=".55" fill="#fff"/><circle cx="${cx + 5.6 * s}" cy="${cy - .6}" r=".55" fill="#fff"/>`;
+    if (kind === 'sleep') e = `<path d="M${cx - 7 * s} ${cy} Q${cx - 5 * s} ${cy + 2} ${cx - 3 * s} ${cy} M${cx + 3 * s} ${cy} Q${cx + 5 * s} ${cy + 2} ${cx + 7 * s} ${cy}" stroke="${K}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+    if (kind === 'happy') e = `<path d="M${cx - 7 * s} ${cy + 1} Q${cx - 5 * s} ${cy - 2} ${cx - 3 * s} ${cy + 1} M${cx + 3 * s} ${cy + 1} Q${cx + 5 * s} ${cy - 2} ${cx + 7 * s} ${cy + 1}" stroke="${K}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+    const m = kind === 'o' ? `<ellipse cx="${cx}" cy="${cy + 4}" rx="1.6" ry="2" fill="${K}"/>` : `<path d="M${cx - 2} ${cy + 3} Q${cx} ${cy + 5} ${cx + 2} ${cy + 3}" stroke="${K}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+    const b = blush ? `<ellipse cx="${cx - 8.5 * s}" cy="${cy + 2.6}" rx="2.5" ry="1.4" fill="#FF9EC7" opacity=".75"/><ellipse cx="${cx + 8.5 * s}" cy="${cy + 2.6}" rx="2.5" ry="1.4" fill="#FF9EC7" opacity=".75"/>` : '';
+    return e + m + b;
+  }
+  const star5 = (cx, cy, R, r = R * .45) => { let d = ''; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R; d += (i ? 'L' : 'M') + (cx + Math.cos(a) * rr).toFixed(1) + ' ' + (cy + Math.sin(a) * rr).toFixed(1) + ' '; } return d + 'Z'; };
+  const shine = d => `<path d="${d}" stroke="#fff" stroke-width="2.2" opacity=".6" fill="none" stroke-linecap="round"/>`;
+  const moon = svg(`<path d="M40 6 C24 8 12 20 12 34 C12 49 25 60 40 58 C30 52 24 44 24 33 C24 21 31 11 40 6 Z" fill="url(#oMoon)" stroke="${K}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M40 6 C44 4 50 6 52 10 C48 9 44 9 40 6 Z" fill="#6B7BD8" stroke="${K}" stroke-width="1.6"/><circle cx="53" cy="10" r="2.6" fill="#fff" stroke="${K}" stroke-width="1.2"/>
+    <circle cx="22" cy="26" r="2.4" fill="#E9D48A"/><circle cx="18" cy="42" r="1.8" fill="#E9D48A"/>${face(21, 36, "sleep", true, .7)}
+    <text x="44" y="30" font-family="Chewy, sans-serif" font-size="8" fill="#B7C3FF">z</text><text x="49" y="22" font-family="Chewy, sans-serif" font-size="6" fill="#B7C3FF">z</text>`);
+  const asteroid = svg(`<path d="M10 34 C8 22 18 10 32 10 C46 9 56 20 55 33 C54 47 44 56 31 56 C18 56 11 46 10 34 Z" fill="url(#oRock)" stroke="${K}" stroke-width="2.2"/>
+    <ellipse cx="22" cy="22" rx="5" ry="4" fill="#8C84B8" stroke="${K}" stroke-width="1.2"/><ellipse cx="45" cy="44" rx="4" ry="3" fill="#8C84B8" stroke="${K}" stroke-width="1.2"/><ellipse cx="44" cy="20" rx="2.6" ry="2" fill="#8C84B8"/>${shine('M16 28 C17 21 22 16 28 14')}${face(31, 34, 'smile')}`);
+  const comet = svg(`<path d="M30 40 C20 34 12 22 4 8 C14 16 22 18 30 22 C24 14 20 8 18 2 C28 12 36 18 42 26 Z" fill="url(#oTail)" stroke="${K}" stroke-width="1.8" stroke-linejoin="round" opacity=".95"/>
+    <circle cx="42" cy="40" r="15" fill="url(#oComet)" stroke="${K}" stroke-width="2.2"/>${shine('M33 34 C34 30 37 28 40 27')}${face(42, 41, 'happy', true, .85)}`);
+  const ringed = svg(`<path d="M4 38 C4 30 60 22 60 30" fill="none" stroke="${K}" stroke-width="7" stroke-linecap="round"/><path d="M4 38 C4 30 60 22 60 30" fill="none" stroke="#FFD66B" stroke-width="3.6" stroke-linecap="round"/>
+    <circle cx="32" cy="32" r="18" fill="url(#oPink)" stroke="${K}" stroke-width="2.2"/><path d="M15 28 C24 30 40 30 49 26 M16 38 C26 40 40 39 48 36" stroke="#F58FB8" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M60 30 C60 38 20 48 6 42" fill="none" stroke="${K}" stroke-width="7" stroke-linecap="round"/><path d="M60 30 C60 38 20 48 6 42" fill="none" stroke="#FFD66B" stroke-width="3.6" stroke-linecap="round"/>${face(32, 31, 'smile', true, .85)}`);
+  const cat = svg(`<circle cx="32" cy="32" r="26" fill="url(#oGlass)" stroke="${K}" stroke-width="2.2"/><path d="M12 48 C18 58 46 58 52 48 L50 54 C42 62 22 62 14 54 Z" fill="#9AA6E8" stroke="${K}" stroke-width="1.8"/>
+    <path d="M18 24 L20 12 L28 20 Z M46 24 L44 12 L36 20 Z" fill="#fff" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/><path d="M21 21 L21.5 15 L25 19 Z M43 21 L42.5 15 L39 19 Z" fill="#FF9EC7"/>
+    <ellipse cx="32" cy="34" rx="16" ry="14" fill="#fff" stroke="${K}" stroke-width="1.8"/>${face(32, 32, 'smile', true, .85)}<path d="M12 33 L20 34 M12 37 L20 36 M52 33 L44 34 M52 37 L44 36" stroke="${K}" stroke-width="1"/>
+    <path d="M14 18 C18 11 26 8 32 8" stroke="#fff" stroke-width="3" opacity=".7" fill="none" stroke-linecap="round"/>`);
+  const rocket = svg(`<path d="M24 50 C22 56 28 62 32 64 C36 62 42 56 40 50 Z" fill="url(#oFlame)"/>
+    <path d="M22 40 L12 50 L14 36 Z M42 40 L52 50 L50 36 Z" fill="#E8466A" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M32 4 C44 12 46 30 42 50 H22 C18 30 20 12 32 4 Z" fill="url(#oHull)" stroke="${K}" stroke-width="2.2"/><path d="M26 8.5 C28 6.5 36 6.5 38 8.5 C36 7 34 6 32 4 C30 6 28 7 26 8.5 Z" fill="#E8466A"/>
+    <circle cx="32" cy="28" r="8.5" fill="#8FD3FF" stroke="${K}" stroke-width="2"/>${face(32, 27, 'happy', false, .6)}<path d="M22 44 H42" stroke="#E8466A" stroke-width="3"/>`);
+  const sun = svg(`<g fill="#FFB547" stroke="${K}" stroke-width="1.6" stroke-linejoin="round">${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => { const a = i * Math.PI / 6; const x = 32 + Math.cos(a) * 28, y = 32 + Math.sin(a) * 28, x1 = 32 + Math.cos(a - .18) * 19, y1 = 32 + Math.sin(a - .18) * 19, x2 = 32 + Math.cos(a + .18) * 19, y2 = 32 + Math.sin(a + .18) * 19; return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} L${x.toFixed(1)} ${y.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)} Z"/>`; }).join('')}</g>
+    <circle cx="32" cy="32" r="19" fill="url(#oSun)" stroke="${K}" stroke-width="2.2"/>${shine('M20 26 C22 20 27 16 32 15')}${face(32, 32, 'happy')}`);
+  const owl = svg(`<path d="M18 30 C14 44 18 58 32 58 C46 58 50 44 46 30 Z" fill="#7B5CC9" stroke="${K}" stroke-width="2.2"/><ellipse cx="32" cy="46" rx="9" ry="10" fill="#E6DAFF"/>
+    <path d="M27 42 l2 2 2 -2 M33 42 l2 2 2 -2 M29 48 l2 2 2 -2" stroke="#9E86E0" stroke-width="1.2" fill="none"/>
+    <circle cx="25" cy="32" r="7" fill="#fff" stroke="${K}" stroke-width="1.6"/><circle cx="39" cy="32" r="7" fill="#fff" stroke="${K}" stroke-width="1.6"/><circle cx="25" cy="32" r="3.4" fill="${K}"/><circle cx="39" cy="32" r="3.4" fill="${K}"/><circle cx="26.2" cy="30.8" r="1.1" fill="#fff"/><circle cx="40.2" cy="30.8" r="1.1" fill="#fff"/>
+    <path d="M30 36 L32 40 L34 36 Z" fill="#FFB547" stroke="${K}" stroke-width="1.2"/>
+    <path d="M14 27 C22 22 42 22 50 27 L34 2 Z" fill="url(#oHat)" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><path d="${star5(33, 15, 3.4)}" fill="#FFE27A"/><circle cx="27" cy="21" r="1.2" fill="#FFE27A"/><circle cx="40" cy="20" r="1" fill="#FFE27A"/>
+    <g transform="translate(48 44) rotate(-35)"><rect x="-3" y="-12" width="6" height="18" rx="2" fill="#E0A94A" stroke="${K}" stroke-width="1.4"/><rect x="-4" y="-14" width="8" height="4" rx="1.5" fill="#B77A2A" stroke="${K}" stroke-width="1.2"/></g>`);
+  function rays(n, r, col, op) {
+    let s = ''; for (let i = 0; i < n; i++) { const a = i * 2 * Math.PI / n, w = Math.PI / n * .45; s += `<path d="M32 32 L${(32 + r * Math.cos(a - w)).toFixed(1)} ${(32 + r * Math.sin(a - w)).toFixed(1)} L${(32 + r * Math.cos(a + w)).toFixed(1)} ${(32 + r * Math.sin(a + w)).toFixed(1)} Z"/>`; }
+    return `<g class="rays" fill="${col}" opacity="${op}">${s}</g>`;
+  }
+  const scatter = `<svg viewBox="0 0 64 64" aria-hidden="true">${rays(12, 34, '#B7C3FF', .45)}<circle cx="32" cy="30" r="27" fill="url(#oHalo)"/>
+    <path d="M22 50 L30 36 M42 50 L34 36 M32 50 V38" stroke="${K}" stroke-width="3" stroke-linecap="round"/><path d="M22 50 L30 36 M42 50 L34 36 M32 50 V38" stroke="#B77A2A" stroke-width="1.6" stroke-linecap="round"/>
+    <g transform="rotate(-30 32 30)"><rect x="14" y="24" width="34" height="11" rx="3" fill="url(#oBrass)" stroke="${K}" stroke-width="2"/><rect x="44" y="21" width="8" height="17" rx="2.5" fill="#E0A94A" stroke="${K}" stroke-width="2"/><rect x="10" y="26" width="6" height="7" rx="1.5" fill="#B77A2A" stroke="${K}" stroke-width="1.6"/><path d="M22 24 V35 M34 24 V35" stroke="#B77A2A" stroke-width="1.6"/></g>
+    <path d="${star5(52, 10, 5)}" fill="#FFE27A" stroke="${K}" stroke-width="1.2"/><path d="${star5(12, 12, 3.4)}" fill="#FFE27A"/>
+    <path d="M6 47 L58 47 L55 53 L58 59 L6 59 L9 53 Z" fill="#5B47C9" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>
+    <text x="32" y="56.3" text-anchor="middle" font-family="Chewy, Baloo 2, sans-serif" font-size="9" letter-spacing=".6" fill="#FFF3C4">SCATTER</text></svg>`;
+  // étoiles du bonus
+  const starCell = kind => {
+    const fill = kind === 'gold' ? 'url(#oGoldStar)' : kind === 'lit' ? 'url(#oLitStar)' : 'url(#oStar)';
+    const glow = kind === 'gold' ? '#FFB547' : kind === 'lit' ? '#9FE8FF' : '#FFF3B0';
+    return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="${glow}" opacity=".22"/><circle cx="32" cy="32" r="16" fill="${glow}" opacity=".3"/>
+      <path d="${star5(32, 33, 20, 9)}" fill="${fill}" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>${kind === 'gold' ? `<path d="${star5(50, 14, 4, 1.6)}" fill="#fff"/><path d="${star5(14, 48, 3, 1.2)}" fill="#fff"/>` : ''}
+      ${face(32, 34, kind === 'lit' ? 'happy' : 'smile', true, .55)}</svg>`;
+  };
+  // petits schémas de constellation pour l'atlas
+  function constIcon(k) {
+    const pts = k.cells.map(([r, c]) => [4 + c * (40 / Math.max(k.w - 1, 1)), 4 + r * (24 / Math.max(k.h - 1, 1))]);
+    const W = 48, H = 32;
+    return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${k.lines.map(([a, b]) => `<line x1="${pts[a][0]}" y1="${pts[a][1]}" x2="${pts[b][0]}" y2="${pts[b][1]}" stroke="#9FE8FF" stroke-width="1.4" opacity=".8"/>`).join('')}${pts.map(([x, y]) => `<path d="${star5(x, y, 3.4, 1.5)}" fill="#FFF3B0"/>`).join('')}</svg>`;
+  }
+  const logoStar = `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="${star5(32, 34, 28, 12)}" fill="url(#oGoldStar)" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>${face(32, 36, 'happy', true, .8)}</svg>`;
+  return { SYMS: [moon, asteroid, comet, ringed, cat, rocket, sun, owl], SCAT: scatter, star: starCell, constIcon, star5, logoStar, K };
+})();
+// ---------- particules : étoiles, étincelles, poussière d'étoiles, étoiles filantes ----------
+const FX = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cv = document.getElementById('fx'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, running = false, last = 0;
+  const P = [], spawners = [];
+  function resize() { const d = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px'; ctx.setTransform(d, 0, 0, d, 0, 0); }
+  resize(); addEventListener('resize', resize);
+  const STAR_COL = ['#FFF3B0', '#FFD66B', '#B7C3FF', '#FF9EC7', '#9FE8FF', '#FFFFFF'];
+  const FIRE_COL = ['#FFD66B', '#FF9EC7', '#B7C3FF', '#9FE8FF', '#C9A2FF', '#FFFFFF'];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function add(p) {
+    if (reduce) return;
+    P.push(Object.assign({ t: 0, rot: rnd(0, 6.28), vr: rnd(-.08, .08), ph: rnd(0, 6.28), drag: .99, g: 0, sway: 0 }, p));
+    if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+  }
+  function spawnOne(type, x, y, ang, sp, o = {}) {
+    const base = { type, x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp };
+    if (type === 'star') Object.assign(base, { s: rnd(5, 11), col: pick(STAR_COL), g: .05, drag: .98, sway: rnd(.3, 1), life: rnd(120, 200) });
+    if (type === 'spark') Object.assign(base, { s: rnd(4, 9), col: pick(['#FFF6DA', '#FFE7A0', '#C9F4FF']), g: .02, drag: .95, life: rnd(40, 80) });
+    if (type === 'dust') Object.assign(base, { s: rnd(2, 4.5), col: pick(['#FFF3C4', '#C9F4FF', '#E6DAFF']), g: -.02, drag: .97, life: rnd(80, 140), sway: .4 });
+    if (type === 'fire') Object.assign(base, { s: rnd(2.5, 4.5), col: o.col || pick(FIRE_COL), g: .05, drag: .965, life: rnd(60, 100) });
+    if (type === 'shoot') Object.assign(base, { s: rnd(3, 5), col: '#FFF6DA', g: 0, drag: 1, life: o.life || 60, trail: [] });
+    add(Object.assign(base, o.extra || {}));
+  }
+  function burst(type, x, y, n = 20, speed = 6, o = {}) { for (let i = 0; i < n; i++) spawnOne(type, x, y, rnd(0, Math.PI * 2), rnd(speed * .35, speed), o); }
+  function firework(x, y) { const col = pick(FIRE_COL); burst('fire', x, y, 36, 7, { col }); burst('spark', x, y, 8, 3); }
+  // étoile filante d'un point à un autre
+  function shoot(x0, y0, x1, y1, frames = 40) { spawnOne('shoot', x0, y0, Math.atan2(y1 - y0, x1 - x0), Math.hypot(x1 - x0, y1 - y0) / frames, { life: frames }); }
+  function rain(type, ms, rate) { if (reduce) return; spawners.push({ type, until: performance.now() + ms, rate, acc: 0 }); if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); } }
+  function stopRain() { spawners.length = 0; }
+  function starPath(s) { ctx.beginPath(); for (let k = 0; k < 10; k++) { const r = k % 2 ? s * .45 : s, a = -Math.PI / 2 + k * Math.PI / 5; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); }
+  function loop(now) {
+    const dt = Math.min(3, (now - last) / 16.67); last = now;
+    for (let i = spawners.length - 1; i >= 0; i--) {
+      const s = spawners[i]; if (now > s.until) { spawners.splice(i, 1); continue; }
+      s.acc += s.rate * dt;
+      while (s.acc >= 1) { s.acc--; if (s.type === 'shoot') { const x = rnd(0, W); shoot(x, -20, x + rnd(-300, -120), rnd(H * .3, H * .7), 45); } else spawnOne(s.type, rnd(0, W), -20, Math.PI / 2 + rnd(-.4, .4), rnd(1, 3)); }
+    }
+    ctx.clearRect(0, 0, W, H);
+    for (let i = P.length - 1; i >= 0; i--) {
+      const p = P[i]; p.t += dt;
+      if (p.t > p.life || p.y > H + 40) { P.splice(i, 1); continue; }
+      p.vy += p.g * dt; p.vx *= Math.pow(p.drag, dt); p.vy *= Math.pow(p.drag, dt);
+      if (p.type === 'star' && p.vy > 2.4) p.vy = 2.4;
+      p.x += (p.vx + (p.sway ? Math.sin(p.t * .07 + p.ph) * p.sway : 0)) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      const fade = Math.min(1, (p.life - p.t) / 25);
+      if (p.type === 'shoot') {
+        p.trail.push([p.x, p.y]); if (p.trail.length > 14) p.trail.shift();
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (let k = 1; k < p.trail.length; k++) { ctx.strokeStyle = `rgba(255,240,200,${(k / p.trail.length * .8).toFixed(2)})`; ctx.lineWidth = k / p.trail.length * p.s * 1.4; ctx.beginPath(); ctx.moveTo(...p.trail[k - 1]); ctx.lineTo(...p.trail[k]); ctx.stroke(); }
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.s * 3); g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, 'rgba(255,230,160,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, p.s * 3, 0, 6.29); ctx.fill();
+        ctx.restore(); continue;
+      }
+      ctx.save(); ctx.globalAlpha = fade * (p.type === 'star' ? (.7 + .3 * Math.sin(p.t * .3 + p.ph)) : 1); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      if (p.type === 'star') { starPath(p.s); ctx.fillStyle = p.col; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#2B2350'; ctx.stroke(); }
+      else {
+        ctx.globalCompositeOperation = 'lighter';
+        if (p.type === 'spark') { ctx.fillStyle = p.col; ctx.beginPath(); for (let k = 0; k < 8; k++) { const r = k % 2 ? p.s * .3 : p.s; const a = k * Math.PI / 4; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fill(); }
+        else { const g = ctx.createRadialGradient(0, 0, 0, 0, 0, p.s * 2.5); g.addColorStop(0, p.col); g.addColorStop(1, 'rgba(200,210,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, p.s * 2.5, 0, 6.29); ctx.fill(); }
+      }
+      ctx.restore();
+    }
+    if (P.length || spawners.length) requestAnimationFrame(loop); else { running = false; ctx.clearRect(0, 0, W, H); }
+  }
+  const center = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  return { burst, firework, shoot, rain, stopRain, center, W: () => W, H: () => H };
+})();
+// ---------- le monde de Constella : colline de nuit, astronome, chat, hérisson ----------
+const WORLD = (() => {
+  const K = '#2B2350';
+  const eye = (x, y, r = 1.6) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${K}"/><circle cx="${x + r * .35}" cy="${y - r * .35}" r="${r * .35}" fill="#fff"/>`;
+  const A = {
+    // petite astronome au télescope
+    kid: `<svg viewBox="0 0 90 90"><g class="tele"><path d="M58 88 L66 58 M78 88 L68 58 M68 88 V60" stroke="${K}" stroke-width="3.4" stroke-linecap="round"/><path d="M58 88 L66 58 M78 88 L68 58 M68 88 V60" stroke="#B77A2A" stroke-width="1.8" stroke-linecap="round"/>
+        <g transform="rotate(-38 67 56)"><rect x="42" y="50" width="40" height="11" rx="3" fill="url(#oBrass)" stroke="${K}" stroke-width="2"/><rect x="78" y="47" width="8" height="17" rx="2.5" fill="#E0A94A" stroke="${K}" stroke-width="2"/><rect x="38" y="52" width="6" height="7" rx="1.5" fill="#B77A2A" stroke="${K}" stroke-width="1.6"/></g></g>
+      <g class="kidbody"><path d="M24 88 L27 70 M36 88 L34 70" stroke="#3B3C9A" stroke-width="6" stroke-linecap="round"/><ellipse cx="23" cy="88" rx="5" ry="2.6" fill="${K}"/><ellipse cx="37" cy="88" rx="5" ry="2.6" fill="${K}"/>
+        <path d="M18 72 C16 60 20 48 30 46 C40 48 44 60 42 72 Z" fill="#E8466A" stroke="${K}" stroke-width="2"/><path d="M22 60 H38" stroke="#FFD66B" stroke-width="2.4"/>
+        <g class="kidarm"><path d="M38 52 L50 50" stroke="#E8466A" stroke-width="6" stroke-linecap="round"/><circle cx="52" cy="50" r="3.2" fill="#F6CBA6" stroke="${K}" stroke-width="1.4"/></g>
+        <g class="kidhead"><circle cx="31" cy="34" r="12" fill="#F6CBA6" stroke="${K}" stroke-width="2"/><path d="M19 32 C18 20 26 16 33 17 C40 17 45 23 44 30 C38 26 28 26 19 32 Z" fill="#6B4226" stroke="${K}" stroke-width="1.6"/>
+          <path d="M18 24 C18 14 44 12 46 22 C40 20 26 20 18 24 Z" fill="#5B47C9" stroke="${K}" stroke-width="1.8"/><circle cx="33" cy="12" r="3" fill="#FFD66B" stroke="${K}" stroke-width="1.2"/>
+          <circle cx="36" cy="35" r="4" fill="#fff" fill-opacity=".35" stroke="${K}" stroke-width="1.4"/>${eye(36, 35, 1.4)}<ellipse cx="29" cy="39" rx="2.4" ry="1.4" fill="#FF9EC7"/><path d="M36 41 Q38 42.5 40 41" stroke="${K}" stroke-width="1.3" fill="none" stroke-linecap="round"/></g></g></svg>`,
+    cat: `<svg viewBox="0 0 64 44"><g class="ctail"><path d="M10 34 C2 30 2 18 8 14 C12 12 14 16 11 19 C8 23 10 28 14 30" fill="none" stroke="${K}" stroke-width="5.6" stroke-linecap="round"/><path d="M10 34 C2 30 2 18 8 14 C12 12 14 16 11 19 C8 23 10 28 14 30" fill="none" stroke="#3A3560" stroke-width="3.4" stroke-linecap="round"/></g>
+      <ellipse cx="28" cy="32" rx="16" ry="9" fill="#3A3560" stroke="${K}" stroke-width="2"/><g class="legs"><rect class="l1" x="16" y="36" width="5" height="7" rx="2" fill="#3A3560" stroke="${K}" stroke-width="1.4"/><rect class="l2" x="34" y="36" width="5" height="7" rx="2" fill="#3A3560" stroke="${K}" stroke-width="1.4"/></g>
+      <circle cx="46" cy="22" r="10" fill="#3A3560" stroke="${K}" stroke-width="2"/><path d="M38 16 L39 6 L45 13 Z M50 13 L55 6 L55 17 Z" fill="#3A3560" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>
+      <ellipse cx="44" cy="22" rx="2.2" ry="2.6" fill="#FFE27A"/><ellipse cx="51" cy="22" rx="2.2" ry="2.6" fill="#FFE27A"/><circle cx="44.5" cy="22" r="1" fill="${K}"/><circle cx="51.5" cy="22" r="1" fill="${K}"/><path d="M47 26 l1.5 1.2 1.5 -1.2" stroke="#FF9EC7" stroke-width="1.2" fill="none"/></svg>`,
+    hedgehog: `<svg viewBox="0 0 60 36"><path d="M6 32 C2 20 10 6 26 5 C42 4 54 14 54 26 C54 30 50 32 46 32 Z" fill="#6A5A7A" stroke="${K}" stroke-width="2"/><path d="M14 16 L10 10 M22 11 L20 4 M31 9 L32 2 M40 11 L44 5 M47 17 L52 12" stroke="${K}" stroke-width="2" stroke-linecap="round"/>
+      <path d="M40 24 C44 20 52 21 56 28 C54 32 46 33 40 31 Z" fill="#E9D2B8" stroke="${K}" stroke-width="1.8"/><path d="M46 26 Q48 28 50 26" stroke="${K}" stroke-width="1.4" fill="none"/><circle cx="56" cy="28" r="1.8" fill="${K}"/>
+      <text class="zz" x="46" y="14" font-family="Chewy, sans-serif" font-size="10" fill="#B7C3FF">z</text></svg>`,
+    tent: `<svg viewBox="0 0 120 80"><circle cx="60" cy="54" r="46" fill="url(#oGlow)" class="tglow"/><path d="M10 78 L60 8 L110 78 Z" fill="#5B47C9" stroke="${K}" stroke-width="2.6" stroke-linejoin="round"/><path d="M60 8 L44 78 H76 Z" fill="#FFD98A" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M60 8 L30 78 M60 8 L90 78" stroke="#7B64E0" stroke-width="2"/><path d="M60 8 L60 2" stroke="${K}" stroke-width="2"/><path d="M60 2 L72 6 L60 9 Z" fill="#FF9EC7" stroke="${K}" stroke-width="1.4"/>
+      <path d="M52 70 C54 62 66 62 68 70 Z" fill="#E8B060"/><circle cx="60" cy="64" r="3" fill="#FFF3C4"/></svg>`,
+    lamp: `<svg viewBox="0 0 30 70"><path d="M15 70 V16" stroke="#3B3470" stroke-width="4"/><path d="M15 16 H24 V20" fill="none" stroke="#3B3470" stroke-width="2.4"/><circle cx="24" cy="30" r="15" fill="url(#oGlow)"/><path d="M19 22 H29 L28 36 H20 Z" fill="#FFE9A8" stroke="${K}" stroke-width="1.8"/><path d="M18 22 H30 L27 19 H21 Z M19 36 H29" stroke="${K}" stroke-width="1.8" fill="#5B47C9"/></svg>`,
+    flowers: `<svg viewBox="0 0 80 40">${[[10, 30, '#9FE8FF'], [24, 24, '#C9A2FF'], [38, 32, '#9FE8FF'], [52, 22, '#FF9EC7'], [66, 30, '#C9A2FF']].map(([x, y, c]) => `<path d="M${x} 40 V${y + 4}" stroke="#3E6A6A" stroke-width="2"/><circle cx="${x}" cy="${y}" r="5" fill="${c}" opacity=".3"/><circle cx="${x}" cy="${y}" r="3" fill="${c}" stroke="${K}" stroke-width="1.2"/>`).join('')}</svg>`,
+    rocks: `<svg viewBox="0 0 90 36"><path d="M4 34 C4 22 14 14 26 16 C34 8 50 10 54 20 C64 16 78 20 80 34 Z" fill="#4A4278" stroke="${K}" stroke-width="2.2"/><path d="M20 24 C24 20 30 20 32 24 M50 26 C54 22 62 22 64 26" stroke="#6A62A0" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+    domeCat: `<svg viewBox="0 0 50 50"><g class="dtail"><path d="M14 44 C4 42 2 30 8 26 C12 24 14 28 11 31" fill="none" stroke="${K}" stroke-width="5.4" stroke-linecap="round"/><path d="M14 44 C4 42 2 30 8 26 C12 24 14 28 11 31" fill="none" stroke="#2F2A55" stroke-width="3.2" stroke-linecap="round"/></g>
+      <path d="M14 48 C12 36 16 28 25 26 C34 28 38 36 36 48 Z" fill="#2F2A55" stroke="${K}" stroke-width="2"/><g class="dhead"><circle cx="25" cy="20" r="10" fill="#2F2A55" stroke="${K}" stroke-width="2"/><path d="M16 14 L17 4 L23 11 Z M34 14 L33 4 L27 11 Z" fill="#2F2A55" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>
+      <g class="deyes"><ellipse cx="21" cy="20" rx="2.3" ry="2.8" fill="#FFE27A"/><ellipse cx="29" cy="20" rx="2.3" ry="2.8" fill="#FFE27A"/><circle cx="21.4" cy="19.4" r="1.1" fill="${K}"/><circle cx="29.4" cy="19.4" r="1.1" fill="${K}"/></g><path d="M23.5 24 l1.5 1.2 1.5 -1.2" stroke="#FF9EC7" stroke-width="1.2" fill="none"/></g></svg>`,
+  };
+  function routine(name, dur, pts, hopH, hopP) {
+    const L = [], T = [];
+    for (const [t, x] of pts) L.push(`${(t / dur * 100).toFixed(2)}%{left:${x}%}`);
+    for (let t = 0; t <= dur + 1e-9; t += 0.1) {
+      let seg = pts[0]; for (const p of pts) if (p[0] <= t + 1e-9) seg = p;
+      const y = seg[3] ? -hopH * Math.abs(Math.sin(Math.PI * (t - seg[0]) / hopP)) : 0;
+      T.push(`${(t / dur * 100).toFixed(2)}%{transform:translateY(${y.toFixed(1)}px) scaleX(${seg[2]})}`);
+    }
+    return `@keyframes ${name}Move{${L.join('')}} @keyframes ${name}Body{${T.join('')}}`;
+  }
+  // le chat chasse une luciole : petits trots, arrêts, bonds
+  const css = routine('ct', 20, [[0, 56, 1, 1], [3, 70, 1, 0], [4.2, 70, 1, 1], [4.8, 76, 1, 0], [7, 76, -1, 1], [10, 60, -1, 0], [11.5, 60, -1, 1], [12.1, 54, -1, 0], [14.5, 54, 1, 0], [15, 54, 1, 1], [18, 56, 1, 0], [20, 56, 1, 0]], 6, .32);
+  function build() {
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    const f = id => document.getElementById(id);
+    f('fTent').innerHTML = A.tent; f('fLamp1').innerHTML = A.lamp; f('fLamp2').innerHTML = A.lamp; f('fFlowers1').innerHTML = A.flowers; f('fFlowers2').innerHTML = A.flowers; f('fRocks').innerHTML = A.rocks;
+    f('aKid').innerHTML = A.kid; f('aCat').innerHTML = `<div class="body">${A.cat}</div>`; f('aHedge').innerHTML = A.hedgehog; f('domeCat').innerHTML = A.domeCat.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+    // étoiles scintillantes du ciel
+    const g = document.getElementById('skyStars'); let s = '';
+    for (let i = 0; i < 140; i++) { const x = Math.random() * 1600, y = Math.random() * 620, r = Math.random() < .12 ? 2.4 : .8 + Math.random() * 1.2; s += `<circle class="tw${i % 3}" cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${r.toFixed(1)}" style="animation-delay:${(-Math.random() * 4).toFixed(2)}s"/>`; }
+    g.innerHTML = s;
+  }
+  return { build, A };
+})();
+(() => {
+const E = ENGINE;
+const $ = id => document.getElementById(id);
+const fmt = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const BETS = [0.2, 0.4, 0.6, 1, 2, 4, 10, 20];
+const TIER_NAME = { 3: 'Bonus', 4: 'Super bonus', 5: 'Méga bonus' };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const S = { balance: 1000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false };
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 150) : (S.turbo ? ms * 0.4 : ms)));
+const bet = () => BETS[S.betIdx];
+const cost = () => bet() * (S.ante ? E.ANTE : 1);
+const mode = () => (S.ante ? 'ante' : 'normal');
+const baseCell = s => (s === -1 ? ART.SCAT : ART.SYMS[s]);
+
+// ---------- décor animé ----------
+(function decor() {
+  WORLD.build();
+  const fl = $('flies');
+  for (let i = 0; i < 12; i++) {
+    const f = document.createElement('div'); f.className = 'firefly';
+    f.style.left = (8 + Math.random() * 84) + '%'; f.style.top = (10 + Math.random() * 60) + '%';
+    f.style.setProperty('--d', (3 + Math.random() * 4) + 's'); f.style.setProperty('--del', (-Math.random() * 6) + 's');
+    f.style.setProperty('--x', ((Math.random() - .5) * 120) + 'px'); f.style.setProperty('--y', ((Math.random() - .5) * 80) + 'px');
+    fl.appendChild(f);
+  }
+})();
+
+// ---------- affichage ----------
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('show'), 1900); }
+function setMoney() { $('balance').textContent = fmt(S.balance); $('bet').textContent = fmt(bet()); $('anteBtn').innerHTML = S.ante ? 'Chance<br>+25 %' : 'Chance<br>bonus'; }
+function msg(t) { $('msg').textContent = t; }
+function floatText(t) { const f = document.createElement('div'); f.className = 'float'; f.textContent = t; $('gridwrap').appendChild(f); setTimeout(() => f.remove(), 1300); }
+function shake() { const m = $('main'); m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
+function buildGrid(cols, rows) {
+  const el = $('grid'); el.innerHTML = ''; el.classList.remove('dimmed');
+  el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; el.classList.toggle('big', cols > 6);
+  const cells = [];
+  for (let r = 0; r < rows; r++) { cells.push([]); for (let c = 0; c < cols; c++) { const d = document.createElement('div'); d.className = 'cell'; el.appendChild(d); cells[r].push(d); } }
+  return cells;
+}
+function showStatic(g) { const cells = buildGrid(6, 6); for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) cells[r][c].innerHTML = baseCell(g[c][r]); }
+function flyTo(fromEl, toEl, html) {
+  if (reduce || !toEl) return;
+  const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+  const f = document.createElement('div'); f.className = 'fly'; f.innerHTML = html;
+  f.style.left = a.left + 'px'; f.style.top = a.top + 'px'; f.style.width = a.width + 'px'; f.style.height = a.height + 'px';
+  document.body.appendChild(f);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+    f.style.transform = `translate(${dx}px, ${dy}px) scale(.45) rotate(360deg)`; f.style.opacity = '.2';
+  }));
+  setTimeout(() => f.remove(), 700);
+}
+
+// ---------- gros gains : une mise en scène par palier ----------
+const WIN_TIERS = [{ min: 500, t: 4, name: 'Supernova !' }, { min: 150, t: 3, name: 'Énorme gain !' }, { min: 50, t: 2, name: 'Méga gain !' }, { min: 20, t: 1, name: 'Gros gain !' }];
+const winTier = x => WIN_TIERS.find(w => x >= w.min);
+function bigWin(amount, mult) {
+  return new Promise(res => {
+    const wt = winTier(mult); if (!wt) return res();
+    const el = $('bigwin'), bw = $('bw');
+    const dur = [0, 3200, 4400, 5800, 7400][wt.t] * (S.turbo ? 0.5 : 1) * (reduce ? 0.2 : 1);
+    el.dataset.tier = wt.t; const lay = $('bwLayer'); lay.className = 'layer click show bwLayer' + wt.t;
+    bw.innerHTML = `<div class="t">${wt.name}</div><div class="v" id="bwv">0,00</div><div class="x">×${mult.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} la mise</div>` +
+      (wt.t === 4 ? `<div class="dance">${ART.SYMS.map((s, i) => s.replace('<svg', `<svg style="animation-delay:${i * 90}ms"`)).join('')}</div>` : '');
+    el.classList.add('show'); Snd.fx('fanfare');
+    const W = FX.W(), H = FX.H();
+    FX.burst('star', W / 2, H / 2, 40, 12);
+    FX.rain('star', dur, wt.t >= 2 ? 1.4 : .9);
+    if (wt.t >= 2) { FX.rain('shoot', dur, wt.t >= 4 ? 0.12 : 0.06); FX.burst('spark', W / 2, H / 2, 30, 9); }
+    if (wt.t >= 3) shake();
+    let fwTimer = null;
+    if (wt.t >= 3) fwTimer = setInterval(() => { FX.firework(W * (0.15 + Math.random() * 0.7), H * (0.12 + Math.random() * 0.4)); Snd.fx('thunk'); }, wt.t === 4 ? 320 : 520);
+    const t0 = performance.now(); let done = false, lastTick = 0;
+    const finish = () => {
+      if (done) return; done = true; clearInterval(fwTimer); $('bwv').textContent = fmt(amount);
+      FX.burst('spark', W / 2, H / 2, 24, 8);
+      setTimeout(() => { el.classList.remove('show'); lay.className = 'layer click'; FX.stopRain(); res(); }, 1600);
+    };
+    lay.onclick = finish;
+    const step = now => {
+      if (done) return;
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      $('bwv').textContent = fmt(amount * e);
+      if (now - lastTick > 70) { Snd.fx('tick', e); lastTick = now; }
+      if (p < 1) requestAnimationFrame(step); else finish();
+    };
+    requestAnimationFrame(step);
+  });
+}
+function mediumWin(mult) {
+  const [x, y] = FX.center($('gridwrap'));
+  if (mult >= 5) { FX.burst('star', x, y, 22, 9); FX.burst('spark', x, y, 14, 6); }
+  if (mult >= 10) shake();
+}
+
+// ---------- jeu de base ----------
+async function revealBase(g) {
+  const cells = buildGrid(6, 6);
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) { cells[r][c].innerHTML = baseCell(g[c][r]); cells[r][c].classList.add('pending'); }
+  let scats = 0;
+  Snd.fx('reelStart'); await sleep(260);
+  for (let c = 0; c < 6; c++) {
+    if (scats >= 2) {
+      for (let r = 0; r < 6; r++) cells[r][c].classList.add('antic');
+      msg(scats === 2 ? 'Encore un télescope pour le bonus !' : 'Super bonus en vue !');
+      Snd.fx('antic'); await sleep(950);
+    }
+    for (let r = 0; r < 6; r++) {
+      const d = cells[r][c]; d.classList.remove('pending', 'antic'); d.classList.add('drop');
+      d.firstChild.style.animationDelay = (r * 18) + 'ms';
+      if (g[c][r] === -1) {
+        scats++; d.classList.add('scat');
+        const [x, y] = FX.center(d); setTimeout(() => FX.burst('spark', x, y, 12, 4), 200);
+      }
+    }
+    Snd.fx('stop', c);
+    if (g[c].includes(-1)) Snd.fx('scatter', scats);
+    await sleep(175);
+  }
+  Snd.fx('reelStop');
+  await sleep(380);
+  return cells;
+}
+async function presentScatters(cells, g) {
+  $('grid').classList.add('dimmed');
+  for (let c = 0; c < 6; c++) for (let r = 0; r < 6; r++) if (g[c][r] === -1) {
+    const d = cells[r][c]; d.classList.add('scatwin');
+    const [x, y] = FX.center(d); FX.burst('spark', x, y, 18, 6); FX.burst('dust', x, y, 8, 2);
+  }
+  Snd.fx('bonus'); msg('Bonus !');
+  await sleep(2300);
+}
+async function spin() {
+  if (S.busy) return false;
+  if (S.balance < cost() - 1e-9) { noCredits(); stopAuto(); return false; }
+  S.busy = true; lockUI(true); Snd.start(); Snd.fx('click');
+  const sb = $('spin'); sb.classList.remove('go'); void sb.offsetWidth; sb.classList.add('go');
+  S.balance -= cost(); setMoney(); msg('');
+  const g = E.spinBase(mode()), res = E.evalBase(g, mode());
+  const cells = await revealBase(g);
+  const win = res.total * bet();
+  if (win > 0) {
+    $('grid').classList.add('dimmed');
+    for (const w of res.wins) for (let c = 0; c < w.len; c++) for (let r = 0; r < 6; r++) if (g[c][r] === w.s) cells[r][c].classList.add('win');
+    const ways = res.wins.reduce((a, w) => a + w.ways, 0), mult = win / bet();
+    msg(`Gain ${fmt(win)} sur ${ways} chemin${ways > 1 ? 's' : ''}`);
+    floatText('+' + fmt(win)); Snd.fx('win', mult >= 5 ? 2 : 1); mediumWin(mult);
+    await sleep(winTier(mult) ? 700 : 1300);
+    await bigWin(win, mult);
+    S.balance += win; $('lastWin').textContent = fmt(win); setMoney();
+    if (!res.scats || res.scats < 3) await sleep(400);
+  } else { $('lastWin').textContent = fmt(0); await sleep(250); }
+  let bonus = false;
+  if (res.scats >= 3) {
+    bonus = true;
+    const tier = Math.min(5, res.scats);
+    if (S.auto) stopAuto();
+    if (win > 0) await sleep(700);
+    for (const row of cells) for (const d of row) d.classList.remove('win');
+    await presentScatters(cells, g);
+    await runBonus(tier, false, res.scats);
+  }
+  S.busy = false; lockUI(false);
+  return bonus;
+}
+function lockUI(on) {
+  for (const id of ['betDown', 'betUp', 'buyBtn', 'anteBtn']) $(id).disabled = on || S.auto > 0;
+  $('spin').disabled = on && !S.auto;
+}
+function noCredits() {
+  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 1 000').then(() => { S.balance += 1000; setMoney(); msg('1 000 crédits ajoutés.'); });
+}
+
+// ---------- spins automatiques ----------
+function stopAuto() { S.auto = 0; $('autoBtn').textContent = 'Auto'; $('autoBtn').classList.remove('on'); $('spin').classList.remove('stop'); $('spin').setAttribute('aria-label', 'Lancer'); lockUI(S.busy); }
+async function autoLoop() {
+  $('autoBtn').classList.add('on'); $('spin').classList.add('stop'); $('spin').setAttribute('aria-label', 'Arrêter les spins automatiques');
+  while (S.auto > 0) {
+    $('autoBtn').textContent = S.auto === Infinity ? '∞' : String(S.auto);
+    const hadBonus = await spin();
+    if (hadBonus || !S.auto) break;
+    if (S.auto !== Infinity) S.auto--;
+    if (!S.auto) { msg('Spins automatiques terminés.'); break; }
+    await sleep(220);
+  }
+  stopAuto();
+}
+function chooseAuto() {
+  $('card').innerHTML = `<h2>Spins auto</h2><p>Ils s'arrêtent au nombre choisi, dès qu'un bonus tombe ou quand le solde ne couvre plus la mise.</p>
+    <div class="choices">${[10, 25, 50, 100, 250].map(n => `<button class="btn" data-n="${n}">${n}</button>`).join('')}<button class="btn" data-n="inf">∞</button></div>
+    <button class="btn" data-n="0">Annuler</button>`;
+  $('overlay').classList.add('show');
+  $('card').querySelectorAll('[data-n]').forEach(bt => bt.onclick = () => {
+    $('overlay').classList.remove('show');
+    const n = bt.dataset.n; if (n === '0') return;
+    Snd.start(); S.auto = n === 'inf' ? Infinity : +n; lockUI(false); autoLoop();
+  });
+  $('card').querySelector('[data-n]').focus();
+}
+
+// ---------- entrée du bonus ----------
+function introBonus(tier, count, bought) {
+  return new Promise(res => {
+    const T = E.TIER[tier], el = $('intro'), box = $('introbox');
+    const gifts = (T.gift ? `, ${T.gift} étoiles offertes au premier spin` : '') + (T.mult0 > 1 ? `, multiplicateur ×${T.mult0} dès le départ` : '');
+    const medals = Array.from({ length: count }, (_, i) => ART.SCAT.replace('<svg', `<svg style="animation-delay:${i * 260}ms"`)).join('');
+    const tDelay = count * 260 + 250;
+    box.innerHTML = `<div class="medals">${medals}</div>
+      <div class="ititle" style="animation-delay:${tDelay}ms">${TIER_NAME[tier]} !</div>
+      <div class="isub" style="animation-delay:${tDelay + 350}ms">${bought ? 'Bonus acheté. ' : ''}Ciel de ${T.size}×${T.size} et ${T.spins} spins${gifts}.<br>Les étoiles qui tombent restent au ciel. Quand elles dessinent une constellation, elle s'illumine, paie et déclenche son pouvoir.</div>
+      <button class="btn" id="introBtn" style="animation-delay:${tDelay + 600}ms">Commencer</button>`;
+    box.classList.toggle('many', count > 4);
+    el.classList.add('show'); $('introLayer').classList.add('show'); Snd.fx('whoosh');
+    for (let i = 0; i < count; i++) setTimeout(() => { Snd.fx('thunk'); const W = FX.W(), H = FX.H(); FX.burst('spark', W / 2 + (i - (count - 1) / 2) * 70, H * 0.36, 10, 5); }, i * 260 + 450);
+    setTimeout(() => { Snd.fx('fanfare'); const W = FX.W(), H = FX.H(); FX.burst('star', W / 2, H * 0.45, 46, 12); if (tier >= 4) FX.firework(W / 2, H * 0.3); }, tDelay + 200);
+    const b = $('introBtn');
+    setTimeout(() => b.focus(), tDelay + 700);
+    b.onclick = () => { el.classList.remove('show'); $('introLayer').classList.remove('show'); res(); };
+  });
+}
+
+// ---------- bonus : les étoiles restent au ciel et dessinent des constellations ----------
+const NS = 'http://www.w3.org/2000/svg';
+const FX_TXT = { shower: 'pluie de 3 étoiles filantes !', mult: 'multiplicateur doublé !', spins: '+2 spins !', gold: 'toutes les étoiles se dorent !', aurora: 'aurore boréale, le ciel se libère !' };
+function hud(b, st) {
+  $('tierName').textContent = TIER_NAME[b.tier];
+  $('tierSize').textContent = `Ciel ${b.size}×${b.size}`;
+  $('spinsLeft').textContent = st.spins; $('multN').textContent = '×' + st.mult;
+  $('bonusTotal').textContent = fmt(st.total);
+}
+function buildAtlas() {
+  $('atlas').innerHTML = E.CONSTS.slice().reverse().map(k => `<div class="badge2" id="at_${k.id}">${ART.constIcon(k)}<small>${k.name} <b id="atn_${k.id}"></b></small></div>`).join('');
+}
+function flashChip(id) { const c = $(id); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
+const starKind = v => (v === 3 ? 'gold' : v === 2 ? 'lit' : 'star');
+function setStar(d, v) {
+  d.classList.remove('lit', 'gold', 'fade');
+  if (!v) { d.innerHTML = ''; return; }
+  d.innerHTML = ART.star(starKind(v)); d.classList.toggle('lit', v === 2); d.classList.toggle('gold', v === 3);
+}
+function twinkle(d) { d.classList.remove('twinkle', 'pending'); void d.offsetWidth; d.classList.add('twinkle'); }
+function linesLayer() {
+  let s = $('constLines');
+  if (!s) { s = document.createElementNS(NS, 'svg'); s.id = 'constLines'; $('gridwrap').appendChild(s); }
+  const g = $('grid'); s.setAttribute('width', g.offsetWidth); s.setAttribute('height', g.offsetHeight); s.innerHTML = '';
+  return s;
+}
+const cellCenter = d => [d.offsetLeft + d.offsetWidth / 2, d.offsetTop + d.offsetHeight / 2];
+async function showConst(e, cells, L, b, st, b0) {
+  const k = E.CONSTS.find(x => x.id === e.id);
+  for (const [r, c] of e.cells) cells[r][c].classList.add('powhit');
+  Snd.fx('constel', k.cells.length - 3);
+  // les traits se dessinent d'étoile en étoile
+  const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'cg');
+  const pts = e.cells.map(([r, c]) => cellCenter(cells[r][c]));
+  const step = 170 * (S.turbo ? .4 : 1);
+  let html = '';
+  k.lines.forEach(([a, z], i) => { const [x1, y1] = pts[a], [x2, y2] = pts[z]; html += `<path d="M${x1.toFixed(0)} ${y1.toFixed(0)} L${x2.toFixed(0)} ${y2.toFixed(0)}" style="--l:${Math.hypot(x2 - x1, y2 - y1).toFixed(0)}; animation-delay:${i * step}ms"/>`; });
+  const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cy = Math.max(14, Math.min(...pts.map(p => p[1])) - 18);
+  html += `<text x="${cx.toFixed(0)}" y="${cy.toFixed(0)}" text-anchor="middle" style="animation-delay:${k.lines.length * step}ms">${k.name}</text>`;
+  g.innerHTML = html; L.appendChild(g);
+  await sleep(k.lines.length * 170 + 450);
+  for (const [r, c] of e.cells) { const d = cells[r][c]; setStar(d, 2); twinkle(d); d.classList.remove('powhit'); const [x, y] = FX.center(d); FX.burst('spark', x, y, 6, 4); }
+  st.counts[e.id] = (st.counts[e.id] || 0) + 1;
+  const badge = $('at_' + e.id); $('atn_' + e.id).textContent = '×' + st.counts[e.id]; badge.classList.add('on'); badge.classList.remove('pulse'); void badge.offsetWidth; badge.classList.add('pulse');
+  // gain de la constellation
+  const pay = e.pay * E.BONUS_K[b.tier] * b0;
+  st.total = Math.min(E.TIER[b.tier].cap * b0, st.total + pay); hud(b, st); flashChip('chipTotal');
+  floatText('+' + fmt(pay)); Snd.fx('win', pay / b0 >= 10 ? 2 : 1);
+  const extra = e.gold ? `, ${e.gold} étoile${e.gold > 1 ? 's' : ''} dorée${e.gold > 1 ? 's' : ''} ×${2 ** e.gold}` : '';
+  msg(`${k.name} : ${fmt(pay)}${e.mult > 1 ? ` (×${e.mult}${extra})` : extra ? ` (${extra.slice(2)})` : ''}`);
+  if (FX_TXT[e.fx]) toast(`${k.name} : ${FX_TXT[e.fx]}`);
+  if (pay / b0 >= 25) { const [x, y] = FX.center($('gridwrap')); FX.burst('star', x, y, 20, 8); }
+  await sleep(750);
+  // son pouvoir
+  if (e.fx === 'mult') { st.mult = e.multAfter; Snd.fx('mult'); hud(b, st); flashChip('chipMult'); const [x, y] = FX.center($('chipMult')); FX.burst('spark', x, y, 16, 6); await sleep(850); }
+  if (e.fx === 'spins') { Snd.fx('spins'); flyTo(cells[e.cells[0][0]][e.cells[0][1]], $('chipSpins'), ART.star('lit')); await sleep(650); st.spins += 2; hud(b, st); flashChip('chipSpins'); await sleep(450); }
+  if (e.fx === 'shower') {
+    Snd.fx('shower');
+    for (const [r, c, v] of e.added) { const d = cells[r][c]; const [x, y] = FX.center(d); FX.shoot(x - 170, y - 240, x, y, 26); await sleep(430); setStar(d, v); twinkle(d); Snd.fx('ting', c); FX.burst('spark', x, y, 8, 4); }
+    await sleep(400);
+  }
+  if (e.fx === 'gold') {
+    Snd.fx('gold');
+    for (const [r, c] of e.golded) { const d = cells[r][c]; setStar(d, 3); twinkle(d); const [x, y] = FX.center(d); FX.burst('spark', x, y, 4, 3); await sleep(70); }
+    await sleep(500);
+  }
+  if (e.fx === 'aurora') {
+    Snd.fx('aurora'); const w = $('aurwash'); w.classList.remove('go'); void w.offsetWidth; w.classList.add('go');
+    await sleep(900);
+    for (const [r, c] of e.cleared) cells[r][c].classList.add('fade');
+    for (const gg of L.querySelectorAll('.cg')) gg.classList.add('gone');
+    await sleep(950);
+    for (const [r, c] of e.cleared) setStar(cells[r][c], 0);
+    L.innerHTML = '';
+    await sleep(300);
+  }
+  await sleep(300);
+}
+async function runBonus(tier, bought, count) {
+  const b0 = bet();
+  await introBonus(tier, count, bought);
+  document.body.classList.add('bonus'); Snd.setBonus(true); msg('');
+  const b = E.newBonus(tier), n = b.size;
+  const st = { spins: b.spinsLeft, mult: b.mult, total: 0, counts: {} };
+  buildAtlas(); hud(b, st);
+  const cells = buildGrid(n, n);
+  await sleep(60);
+  const L = linesLayer();
+  await sleep(900);
+  while (!b.done) {
+    st.spins--; hud(b, st); msg('');
+    const ev = E.bonusSpin(b);
+    const landed = ev.landed.slice().sort((p, q) => p[1] - q[1] || p[0] - q[0]);
+    if (landed.length) Snd.fx('reelStart');
+    for (const [r, c, v] of landed) { const d = cells[r][c]; setStar(d, v); twinkle(d); Snd.fx('ting', c); if (v === 3) { const [x, y] = FX.center(d); FX.burst('spark', x, y, 8, 4); } await sleep(landed.length > 12 ? 55 : 110); }
+    Snd.fx('reelStop');
+    if (!landed.length) msg('Aucune étoile ce spin-ci');
+    await sleep(ev.events.length ? 450 : 300);
+    for (const e of ev.events) await showConst(e, cells, L, b, st, b0);
+    st.total = b.total * b0; hud(b, st);
+    if (!ev.events.length) { msg(landed.length ? 'Pas encore de constellation' : 'Aucune étoile ce spin-ci'); await sleep(900); }
+    else await sleep(600);
+  }
+  const win = b.total * b0, mult = b.total;
+  await sleep(600);
+  if (b.capped) toast('Gain maximum atteint !');
+  if (winTier(mult)) await bigWin(win, mult);
+  S.balance += win; setMoney(); $('lastWin').textContent = fmt(win);
+  const nb = Object.values(st.counts).reduce((a, x) => a + x, 0);
+  await overlay(`<h2>${fmt(win)}</h2><p>${TIER_NAME[tier]} terminé : ${nb} constellation${nb > 1 ? 's' : ''}, ×${mult.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} la mise${bought ? ` (acheté ${E.BUY[tier]}×)` : ''}.</p>`, 'Continuer');
+  document.body.classList.remove('bonus'); Snd.setBonus(false);
+  $('constLines') && $('constLines').remove();
+  msg(`${TIER_NAME[tier]} : ${fmt(win)}`);
+  showStatic(E.spinBase());
+}
+
+// ---------- achat du bonus ----------
+function openBuy() {
+  if (S.busy || S.auto) return;
+  const off = t => {
+    const price = E.BUY[t] * bet(), ok = !S.ante && S.balance >= price - 1e-9, T = E.TIER[t];
+    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} télescopes, ciel ${T.size}×${T.size}, ${T.spins} spins${T.gift ? `, ${T.gift} étoiles offertes` : ''}${T.mult0 > 1 ? `, ×${T.mult0}` : ''}<span class="price">${fmt(price)} crédits (${E.BUY[t]}× la mise)</span></span></button>`;
+  };
+  $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}</div><button class="btn" id="ovBtn">Annuler</button>`;
+  $('overlay').classList.add('show');
+  $('ovBtn').onclick = () => $('overlay').classList.remove('show');
+  $('card').querySelectorAll('.offer').forEach(o => o.onclick = () => { $('overlay').classList.remove('show'); buy(+o.dataset.t); });
+  $('ovBtn').focus();
+}
+async function buy(tier) {
+  const price = E.BUY[tier] * bet();
+  if (S.balance < price - 1e-9) return;
+  S.busy = true; lockUI(true); Snd.start();
+  S.balance -= price; setMoney(); msg(`${TIER_NAME[tier]} acheté`);
+  const g = E.spinBase('normal');
+  for (const col of g) for (let r = 0; r < 6; r++) if (col[r] === -1) col[r] = 0;
+  const cols = [0, 1, 2, 3, 4, 5].sort(() => Math.random() - 0.5).slice(0, tier).sort();
+  for (const c of cols) g[c][Math.floor(Math.random() * 6)] = -1;
+  const cells = await revealBase(g);
+  await presentScatters(cells, g);
+  await runBonus(tier, true, tier);
+  S.busy = false; lockUI(false);
+}
+
+// ---------- fenêtres ----------
+function overlay(html, btn) {
+  return new Promise(res => {
+    $('card').innerHTML = html + (btn ? `<button class="btn" id="ovBtn">${btn}</button>` : '');
+    $('overlay').classList.add('show');
+    const b = $('ovBtn'); if (b) { b.focus(); b.onclick = () => { $('overlay').classList.remove('show'); res(); }; }
+  });
+}
+function showRules() {
+  const pn = E.scatProbs('normal'), pa = E.scatProbs('ante');
+  const every = p => Math.round(1 / p).toLocaleString('fr-FR');
+  const x = v => v.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+  const rows = E.SYMS.map((s, i) => `<tr><td>${ART.SYMS[i]}</td>${s.pay.map(p => `<td>${(p * E.BASE_SCALE.normal).toFixed(3).replace('.', ',')}</td>`).join('')}</tr>`).join('');
+  const POW = { shower: 'fait tomber 3 étoiles filantes', mult: 'double le multiplicateur', spins: 'donne 2 spins de plus', gold: 'dore toutes les étoiles libres du ciel', aurora: "fait se lever l'aurore : les constellations formées s'effacent et libèrent le ciel" };
+  const crow = E.CONSTS.slice().reverse().map(k => `<tr><td class="cic">${ART.constIcon(k)}</td><td>${k.name}<br><small>${k.cells.length} étoiles</small></td>${[3, 4, 5].map(t => `<td>${x(k.prize * E.BONUS_K[t])}</td>`).join('')}</tr>`).join('');
+  $('card').innerHTML = `<div class="rules"><h2>Règles</h2>
+  <p>Grille de 6×6 en chemins : un symbole paie s'il apparaît dans au moins 3 colonnes consécutives depuis la gauche. Chaque combinaison de cases forme un chemin. Gains par chemin, en multiples de la mise :</p>
+  <table><tr><th></th><th>3</th><th>4</th><th>5</th><th>6</th></tr>${rows}</table>
+  <h3>Bonus des constellations</h3>
+  <p>Des télescopes n'importe où lancent un bonus de tours gratuits dans un ciel vide. À chaque spin, des étoiles tombent et restent au ciel jusqu'à la fin. Quand des étoiles libres dessinent la forme d'une constellation, à l'endroit ou en miroir, elle s'illumine, paie sa prime multipliée par le multiplicateur en cours et déclenche son pouvoir. Ses étoiles ne servent qu'une fois. Une étoile dorée double la prime de la constellation qui la contient, deux la quadruplent, et ainsi de suite.</p>
+  <table><tr><th></th><th></th><th>Bonus</th><th>Super</th><th>Méga</th></tr>${crow}</table>
+  <ul>${E.CONSTS.slice().reverse().map(k => `<li>${k.name} : ${POW[k.fx]}.</li>`).join('')}</ul>
+  <table><tr><th>Télescopes</th><th>Bonus</th><th>Ciel</th><th>Spins</th><th>Départ</th><th>Fréquence</th></tr>
+  ${[3, 4, 5].map(t => { const T = E.TIER[t]; return `<tr><td>${t === 5 ? '5+' : t}</td><td>${TIER_NAME[t]}</td><td>${T.size}×${T.size}</td><td>${T.spins}</td><td>${T.gift ? T.gift + ' étoiles' : '-'}${T.mult0 > 1 ? ', ×' + T.mult0 : ''}</td><td>1 / ${every(pn[t])}</td></tr>`; }).join('')}</table>
+  <h3>Options</h3>
+  <p>Acheter le bonus coûte ${E.BUY[3]} fois la mise, le super bonus ${E.BUY[4]} fois. Chance bonus ajoute 25 % à la mise et fait passer le bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
+  <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Crédits fictifs, aucun argent réel.</p></div>
+  <button class="btn" id="ovBtn">Fermer</button>`;
+  $('overlay').classList.add('show'); $('ovBtn').onclick = () => $('overlay').classList.remove('show'); $('ovBtn').focus();
+}
+
+// ---------- commandes ----------
+$('spin').onclick = () => { if (S.auto) { stopAuto(); msg('Spins automatiques arrêtés.'); } else spin(); };
+$('autoBtn').onclick = () => { if (S.auto) { stopAuto(); msg('Spins automatiques arrêtés.'); } else if (!S.busy) chooseAuto(); };
+$('buyBtn').onclick = openBuy;
+$('anteBtn').onclick = () => { if (S.busy || S.auto) return; S.ante = !S.ante; $('anteBtn').classList.toggle('on', S.ante); $('anteBtn').setAttribute('aria-pressed', S.ante); setMoney(); msg(S.ante ? `Chance bonus : mise de ${fmt(cost())}, bonus plus fréquent.` : 'Chance bonus désactivée.'); };
+$('turboBtn').onclick = () => { S.turbo = !S.turbo; $('turboBtn').classList.toggle('on', S.turbo); $('turboBtn').setAttribute('aria-pressed', S.turbo); };
+$('musicBtn').onclick = () => { Snd.start(); const on = Snd.toggleMusic(); $('musicBtn').setAttribute('aria-pressed', on); $('musicBtn').setAttribute('aria-label', on ? 'Couper la musique' : 'Mettre la musique'); };
+$('sfxBtn').onclick = () => { const on = Snd.toggleSfx(); $('sfxBtn').setAttribute('aria-pressed', on); $('sfxBtn').setAttribute('aria-label', on ? 'Couper les effets sonores' : 'Mettre les effets sonores'); };
+$('infoBtn').onclick = () => { if (!$('overlay').classList.contains('show')) showRules(); };
+$('betDown').onclick = () => { if (!S.busy && !S.auto && S.betIdx > 0) { S.betIdx--; setMoney(); } };
+$('betUp').onclick = () => { if (!S.busy && !S.auto && S.betIdx < BETS.length - 1) { S.betIdx++; setMoney(); } };
+document.addEventListener('keydown', e => {
+  if (e.code !== 'Space' || $('overlay').classList.contains('show') || $('bwLayer').classList.contains('show') || $('intro').classList.contains('show')) return;
+  if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+  e.preventDefault(); if (!S.auto) spin();
+});
+setMoney(); showStatic(E.spinBase());
+})();
+</script></body></html>
