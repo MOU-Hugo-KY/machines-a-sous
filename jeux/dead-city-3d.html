@@ -270,6 +270,8 @@ body.bonus .deck .row button, body.bonus .bet .pm{visibility:hidden}
 @keyframes sheet{from{background-position-x:0%}to{background-position-x:100%}}
 .cell:nth-child(3n) .s3d b{animation-delay:-.7s} .cell:nth-child(5n+1) .s3d b{animation-delay:-1.4s} .cell:nth-child(7n+2) .s3d b{animation-delay:-.35s}
 .cell.pending .s3d{visibility:hidden}
+.art3d-in .s3d{animation:s3din .7s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes s3din{from{opacity:0; transform:scale(.8)}}
 .cell.drop .s3d{animation:drop .46s cubic-bezier(.3,1.55,.55,1) both}
 .cell.twinkle .s3d,.cell.popin .s3d{animation:pop .5s cubic-bezier(.3,1.6,.5,1) both}
 .cell.powhit .s3d{animation:pulse .45s ease-in-out 3}
@@ -957,6 +959,9 @@ const SALLE = (() => {
 // ---------- KIT 3D : personnages en 3D façon dessin animé (Three.js), cuits en planches animées ----------
 // À coller tel quel dans la machine, juste avant ART3D. Aucune dépendance autre que THREE (passé en paramètre).
 // Voir .claude/skills/machine-a-sous/references/3d.md
+// HTML d'un symbole cuit : la planche défile en arrière-plan (background-position), sans calque graphique par case,
+// ce qui reste léger même avec 144 cases ; le CSS choisit la planche (.cell.win -> victoire)
+const S3D_HTML = (b, cls = '') => `<i class="s3d ${cls}" style="--n:${b.frames}; --idle:url(${b.idle}); --win:url(${b.win})"><b></b></i>`;
 const KIT3D = THREE => {
   const TAU = Math.PI * 2;
   // dégradé en 4 paliers : l'ombrage « cel » des dessins animés
@@ -1109,9 +1114,7 @@ const KIT3D = THREE => {
     ANIM.idle(0, pivot);
     return { ...out, frames: N, model };
   }
-  // HTML d'un symbole cuit : la planche défile en arrière-plan (background-position), sans calque graphique par case,
-  // ce qui reste léger même avec 144 cases ; le CSS choisit la planche (.cell.win -> victoire)
-  const html = (b, cls = '') => `<i class="s3d ${cls}" style="--n:${b.frames}; --idle:url(${b.idle}); --win:url(${b.win})"><b></b></i>`;
+  const html = S3D_HTML;
 
   // ---------- scène en direct : entrée du bonus ----------
   // const st = K.live(canvas); st.set([modèles]); st.play((t, objs) => {...}); st.stop();
@@ -1169,26 +1172,52 @@ const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module
 const STAGE3D = { intro() {}, big() {}, stop() {} }; // restent vides exprès : pas de personnages 3D qui tournent autour des grands écrans
 window.ART3D_STATE = 'chargement';
 // DECOR (facultatif) : décor 3D en fond d'écran, voir setupDecor
+// Planches précuites (scripts/precuire.js) : PLANCHES3D = { dir, v, items: { s0…s7, scat, "v|nom|arg": { f, n } } }.
+// Avec elles, la grille passe en 3D dès que les images sont là, sans attendre Three.js ni la cuisson.
+async function usePlanches(ART, P) {
+  const url = (it, k) => new URL(`${P.dir}${it.f}-${k}.webp?v=${P.v}`, location.href).href;
+  const all = Object.entries(P.items).map(([key, it]) => ({ key, b: { idle: url(it, 'idle'), win: url(it, 'win'), frames: it.n } }));
+  const load = src => new Promise((ok, ko) => { const im = new Image(); im.onload = ok; im.onerror = () => ko(new Error('planche introuvable : ' + src)); im.src = src; });
+  await Promise.race([Promise.all(all.flatMap(x => [load(x.b.idle), load(x.b.win)])), new Promise((_, ko) => setTimeout(() => ko(new Error('planches trop lentes')), 20000))]);
+  const get = k => all.find(x => x.key === k)?.b;
+  const syms = []; for (let i = 0; get('s' + i); i++) syms.push(S3D_HTML(get('s' + i)));
+  const scat = get('scat'); if (!syms.length || !scat) throw new Error('planches incomplètes');
+  const variants = {};
+  for (const x of all) { if (!x.key.startsWith('v|')) continue; const [, name, arg] = x.key.split('|'); (variants[name] ??= {})[arg] = S3D_HTML(x.b); }
+  ART.SYMS = syms; ART.SCAT = S3D_HTML(scat);
+  for (const [name, v] of Object.entries(variants)) { const old = ART[name]; ART[name] = (arg, ...rest) => v[arg] ?? old(arg, ...rest); }
+}
+function passe3d() {
+  window.ART3D_STATE = 'ok';
+  document.body.classList.add('art3d-in'); setTimeout(() => document.body.classList.remove('art3d-in'), 900); // fondu doux 2D → 3D
+  dispatchEvent(new Event('art3d'));
+}
 async function CHARGE3D(ART, MODELS, DECOR) {
+  // ?cuire : ignore les planches précuites (c'est ce que fait precuire.js pour les refaire)
+  const P = typeof PLANCHES3D !== 'undefined' && PLANCHES3D && !/[?&]cuire\b/.test(location.search) ? PLANCHES3D : null;
+  let pret = false;
+  if (P) { try { await usePlanches(ART, P); pret = true; passe3d(); } catch (e) { console.warn('planches précuites indisponibles, cuisson en direct :', e); } }
   try {
     const THREE = await import(THREE_URL);
     const K = KIT3D(THREE), M = MODELS(K), frame = () => new Promise(r => requestAnimationFrame(r));
     if (DECOR) { try { setupDecor(K, DECOR, M); } catch (e) { console.warn('décor 3D indisponible :', e); } await frame(); }
-    const syms = [];
-    for (const f of M.SYMS) { syms.push(K.html(await K.bake(f()))); await frame(); }
-    const scat = K.html(await K.bake(M.SCAT()));
+    if (pret) return;
+    const bakes = {}, syms = [];
+    for (const [i, f] of M.SYMS.entries()) { bakes['s' + i] = await K.bake(f()); syms.push(K.html(bakes['s' + i])); await frame(); }
+    bakes.scat = await K.bake(M.SCAT()); const scat = K.html(bakes.scat);
     const variants = {};
     for (const [name, table] of Object.entries(M.VARIANTES || {})) {
       variants[name] = {};
-      for (const [arg, f] of Object.entries(table)) { variants[name][arg] = K.html(await K.bake(f())); await frame(); }
+      for (const [arg, f] of Object.entries(table)) { const b = await K.bake(f()); bakes[`v|${name}|${arg}`] = b; variants[name][arg] = K.html(b); await frame(); }
     }
     K.endBake();
+    window.ART3D_BAKES = bakes; // lu par precuire.js
     ART.SYMS = syms; ART.SCAT = scat;
     for (const [name, v] of Object.entries(variants)) { const old = ART[name]; ART[name] = (arg, ...rest) => v[arg] ?? old(arg, ...rest); }
     // plus de ronde 3D autour de l'entrée du bonus ni des gros gains : trop chargé, l'écran reste lisible
-    window.ART3D_STATE = 'ok';
-    dispatchEvent(new Event('art3d'));
+    passe3d();
   } catch (e) {
+    if (pret) { console.warn('décor 3D indisponible (les symboles restent en 3D) :', e); return; }
     window.ART3D_STATE = 'erreur'; window.ART3D_ERROR = String(e && e.stack || e);
     console.warn('3D indisponible, la machine garde ses dessins 2D :', e);
   }
@@ -1531,6 +1560,8 @@ const DECOR3D = (K, M) => ({
   },
 });
 
+const ART3D_SIG = '4d989bce590b';
+const PLANCHES3D = {"dir":"planches/dead-city-3d/","v":"959c3259","items":{"s0":{"f":"s0","n":24},"s1":{"f":"s1","n":24},"s2":{"f":"s2","n":24},"s3":{"f":"s3","n":24},"s4":{"f":"s4","n":24},"s5":{"f":"s5","n":24},"s6":{"f":"s6","n":24},"s7":{"f":"s7","n":24},"scat":{"f":"scat","n":24},"v|wild|wild":{"f":"v-wild-wild","n":24},"v|wild|zero":{"f":"v-wild-zero","n":24}}};
 (() => {
 const E = ENGINE;
 const $ = id => document.getElementById(id);

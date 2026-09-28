@@ -53,6 +53,13 @@ files = ['./', 'index.html', 'manifest.webmanifest', 'app/icones/icone-192.png',
 for g in games:
     for k in ('page', 'lite', 'vignette'):
         if g.get(k): files.append(g[k])
+    # planches 3D précuites de la page (precuire.js), avec leur ?v= exact : la machine est en 3D même hors ligne
+    if g.get('page'):
+        pg = root / g['page']; pj = pg.parent / 'planches' / pg.stem / 'planches.json'
+        if pj.exists():
+            pl = json.loads(pj.read_text()); base = pathlib.PurePosixPath(g['page']).parent
+            for it in pl['items'].values():
+                for k in ('idle', 'win'): files.append(f"{base}/{pl['dir']}{it['f']}-{k}.webp?v={pl['v']}")
 sw = (root / 'sw.js').read_text()
 sw = re.sub(r"const VERSION = '[^']*';", f"const VERSION = 'promenade-{int(time.time())}';", sw)
 sw = re.sub(r"const FICHIERS = \[[^\]]*\];", 'const FICHIERS = [\n  ' + ',\n  '.join(json.dumps(x) for x in files) + ',\n];', sw, flags=re.S)

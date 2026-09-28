@@ -3,10 +3,14 @@
 
     python3 passer-en-3d.py jeux/constella.html kit/exemple-constella.js kit/decor-constella.js jeux/constella-3d.html "Constella 3D"
 
-Colle KIT3D, les modèles et le décor avant l'interface, ajoute le CSS des symboles 3D et du décor, branche la
+Colle KIT3D, les modèles et le décor avant l'interface, ajoute le CSS des symboles 3D et du décor,
 et lance CHARGE3D. La machine 2D doit suivre le gabarit de la skill.
+
+Planches précuites : si jeux/planches/<page>/planches.json existe (fait par precuire.js) et correspond aux
+modèles actuels, la page les utilise et passe en 3D sans cuisson. Sinon, relance ensuite :
+    node scripts/precuire.js jeux/constella-3d.html
 """
-import sys, pathlib
+import sys, pathlib, hashlib, json
 src_p, models_p, decor_p, out_p, title = sys.argv[1:6]
 here = pathlib.Path(__file__).resolve().parent.parent
 src = open(src_p).read()
@@ -28,6 +32,8 @@ CSS = '''/* ---------- symboles 3D : planches d'images cuites au chargement (voi
 @keyframes sheet{from{background-position-x:0%}to{background-position-x:100%}}
 .cell:nth-child(3n) .s3d b{animation-delay:-.7s} .cell:nth-child(5n+1) .s3d b{animation-delay:-1.4s} .cell:nth-child(7n+2) .s3d b{animation-delay:-.35s}
 .cell.pending .s3d{visibility:hidden}
+.art3d-in .s3d{animation:s3din .7s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes s3din{from{opacity:0; transform:scale(.8)}}
 .cell.drop .s3d{animation:drop .46s cubic-bezier(.3,1.55,.55,1) both}
 .cell.twinkle .s3d,.cell.popin .s3d{animation:pop .5s cubic-bezier(.3,1.6,.5,1) both}
 .cell.powhit .s3d{animation:pulse .45s ease-in-out 3}
@@ -50,7 +56,21 @@ body.decor3d .floor .credit{text-shadow:0 1px 3px rgba(0,0,0,.6)}
 @media (prefers-reduced-motion: reduce){ .s3d b{animation:none!important} }
 </style>'''
 rep('</style>', CSS)
-rep("(() => {\nconst E = ENGINE;", kit + "\n" + models + "\n" + decor + "\n(() => {\nconst E = ENGINE;")
+# signature des modèles : les planches précuites ne servent que si les modèles n'ont pas changé depuis
+sig = hashlib.sha1((kit + models).encode()).hexdigest()[:12]
+out = pathlib.Path(out_p)
+pj = out.parent / 'planches' / out.stem / 'planches.json'
+planches = 'null'
+if pj.exists():
+    pl = json.loads(pj.read_text())
+    if pl.get('sig') == sig:
+        planches = json.dumps(pl, ensure_ascii=False, separators=(',', ':'))
+    else:
+        print(f'attention : les modèles ont changé, planches périmées → node scripts/precuire.js {out_p}')
+else:
+    print(f'astuce : node scripts/precuire.js {out_p} pour que la 3D apparaisse sans attendre')
+head = f"const ART3D_SIG = '{sig}';\nconst PLANCHES3D = {planches};\n"
+rep("(() => {\nconst E = ENGINE;", kit + "\n" + models + "\n" + decor + "\n" + head + "(() => {\nconst E = ENGINE;")
 rep("setMoney(); showStatic(E.spinBase());\n})();\n</script>",
     "setMoney(); showStatic(E.spinBase());\n// passage en 3D dès que les planches sont prêtes (la grille affichée est redessinée si la machine est au repos)\naddEventListener('art3d', () => { if (!S.busy && !document.body.classList.contains('bonus')) showStatic(E.spinBase()); });\nCHARGE3D(ART, ART3D_MODELS, DECOR3D);\n})();\n</script>")
 open(out_p, 'w').write(src)

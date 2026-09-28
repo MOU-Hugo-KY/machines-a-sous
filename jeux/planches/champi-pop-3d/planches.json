@@ -1,0 +1,62 @@
+{
+ "dir": "planches/champi-pop-3d/",
+ "v": "ea903f42",
+ "items": {
+  "s0": {
+   "f": "s0",
+   "n": 24
+  },
+  "s1": {
+   "f": "s1",
+   "n": 24
+  },
+  "s2": {
+   "f": "s2",
+   "n": 24
+  },
+  "s3": {
+   "f": "s3",
+   "n": 24
+  },
+  "s4": {
+   "f": "s4",
+   "n": 24
+  },
+  "s5": {
+   "f": "s5",
+   "n": 24
+  },
+  "s6": {
+   "f": "s6",
+   "n": 24
+  },
+  "s7": {
+   "f": "s7",
+   "n": 24
+  },
+  "scat": {
+   "f": "scat",
+   "n": 24
+  },
+  "v|power|grow": {
+   "f": "v-power-grow",
+   "n": 24
+  },
+  "v|power|color": {
+   "f": "v-power-color",
+   "n": 24
+  },
+  "v|power|heal": {
+   "f": "v-power-heal",
+   "n": 24
+  },
+  "v|power|stack": {
+   "f": "v-power-stack",
+   "n": 24
+  },
+  "v|power|ring": {
+   "f": "v-power-ring",
+   "n": 24
+  }
+ }
+}
