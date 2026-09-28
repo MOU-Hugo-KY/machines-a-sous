@@ -1,11 +1,21 @@
 // Service worker de la Salle des machines : garde les pages et les ressources pour jouer hors ligne.
 // Pense à changer VERSION à chaque ajout de machine pour que les téléphones récupèrent la nouvelle liste.
-const VERSION = 'salle-v1';
+const VERSION = 'promenade-1790630623';
 const FICHIERS = [
-  './', 'index.html', 'manifest.webmanifest', 'app/icones/icone-192.png', 'app/icones/icone-512.png',
-  'jeux/dead-city-3d.html', 'jeux/dead-city.html', 'jeux/champi-pop-3d.html', 'jeux/champi-pop.html', 'jeux/constella-3d.html', 'jeux/constella.html',
-  'app/vignettes/dead-city-3d.jpg', 'app/vignettes/champi-pop-3d.jpg', 'app/vignettes/constella-3d.jpg',
-  'app/vignettes/dead-city-3d-large.jpg', 'app/vignettes/champi-pop-3d-large.jpg', 'app/vignettes/constella-3d-large.jpg',
+  "./",
+  "index.html",
+  "manifest.webmanifest",
+  "app/icones/icone-192.png",
+  "app/icones/icone-512.png",
+  "jeux/dead-city-3d.html",
+  "jeux/dead-city.html",
+  "app/vignettes/dead-city-3d.jpg",
+  "jeux/champi-pop-3d.html",
+  "jeux/champi-pop.html",
+  "app/vignettes/champi-pop-3d.jpg",
+  "jeux/constella-3d.html",
+  "jeux/constella.html",
+  "app/vignettes/constella-3d.jpg",
 ];
 self.addEventListener('install', e => e.waitUntil(caches.open(VERSION).then(c => c.addAll(FICHIERS)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())));

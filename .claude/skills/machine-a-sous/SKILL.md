@@ -42,7 +42,7 @@ Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va ju
    8. **`FX`** : particules au thème (feuilles, bulles, flocons, étincelles…) sur le même canevas, avec les mêmes fonctions (`burst`, `rain`, `firework`…).
    9. **`WORLD`** : les habitants du sol et leurs animations CSS (marche, clignement, queue…).
    10. **Interface** : textes et messages (`msg`, `toast`, entrée du bonus, fin du bonus, règles, offres d'achat, `WIN_TIERS`), le HUD du bonus et l'affichage de la mécanique.
-3. Tout le texte visible est **en français**, tutoiement, ton chaleureux. La mention « Crédits fictifs, aucun argent réel. RTP 98,5 %. » reste en bas de page et dans les règles.
+3. Tout le texte visible est **en français**, tutoiement, ton chaleureux. La mention « Crédits fictifs, aucun argent réel. RTP 98,5 %. » reste en bas de page et dans les règles (une fois branchée sur la Promenade, elle devient « Lucioles : monnaie fictive, aucun argent réel »).
 4. Un seul fichier autonome : scripts et styles en ligne, pas de `localStorage` nécessaire. Seules ressources externes : Google Fonts, et Three.js via jsDelivr pour la 3D (chargé par `CHARGE3D`, avec retour automatique à la 2D).
 
 ## 3. Calibrer le RTP
@@ -71,8 +71,11 @@ Pour une machine en 3D, installe d'abord Three.js en local une fois pour toutes 
 
 ## 5. Livrer
 
-0. Ajoute la machine au catalogue de la **Salle des machines** (`index.html`, tableau `GAMES`) avec sa vignette (capture 900×800 du jeu en 3D, dans `app/vignettes/`), ajoute ses fichiers à la liste de `sw.js` et change `VERSION`, puis republie la salle (artifact `index.html` avec les jeux et les vignettes en `files`).
-
+0. **Mets la machine sur la Promenade** (le lobby 3D, `index.html`) :
+   - branche-la sur le porte-monnaie commun et les stats : `python3 .claude/skills/machine-a-sous/scripts/brancher-salle.py jeux/<nom>.html <id>`, sur la version 2D **avant** `passer-en-3d.py`. La monnaie devient les **lucioles**, le solde est partagé entre toutes les machines, et spins, gains et bonus sont comptés. Pour un trophée propre à la machine, ajoute `SALLE.flag('clé')` ou `SALLE.compte('clé')` au bon endroit du code (exemples dans `EXTRAS` du script) ;
+   - ajoute son entrée dans `app/catalogue.json` (id, nom, sous-titre, pages 3D et 2D, vignette 900×800 dans `app/vignettes/`, fichier de modèles 3D, couleur du néon, description, tags, fréquence du bonus, grille, gain max, trophées) ;
+   - reconstruis la Promenade : `python3 .claude/skills/machine-a-sous/scripts/construire-salle.py`. Sa borne apparaît sur le boulevard, avec ses personnages 3D au pied et son scatter au-dessus, et `sw.js` est mis à jour ;
+   - republie la Promenade : artifact `index.html`, avec en `files` les pages des machines, les vignettes, les icônes et `manifest.webmanifest`. Ne modifie jamais `index.html` à la main : la page vient de `app/salle-modele.html`.
 1. Publie la page en artifact (`Artifact`, `file_path: jeux/<nom>.html`, `icon: "game"`, une phrase de description). Pour une nouvelle version, republie le même chemin.
 2. Ajoute la machine au tableau du `README.md` (nom, thème, mécanique du bonus).
 3. Commite et pousse (`jeux/<nom>.html`, README).

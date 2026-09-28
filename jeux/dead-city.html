@@ -261,6 +261,8 @@ body.bonus .deck .row button, body.bonus .bet .pm{visibility:hidden}
 .credit{position:absolute; left:0; right:0; bottom:6px; margin:0; text-align:center; font-size:.72rem; color:#D8B8A8; opacity:.9}
 @media (min-width:900px){ .floor{height:280px; --k:1.4} }
 @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} .horde{display:none} }
+/* la luciole devant le solde */
+.meter:first-child small::before{content:""; display:inline-block; width:7px; height:7px; margin-right:5px; vertical-align:1px; border-radius:50%; background:#FFF3A0; box-shadow:0 0 6px 2px rgba(255,236,120,.85)}
 </style>
 </head>
 <body>
@@ -336,7 +338,7 @@ body.bonus .deck .row button, body.bonus .bet .pm{visibility:hidden}
     <div class="msg" id="msg" aria-live="polite">Trois sirènes déclenchent l'épidémie.</div>
     <div class="deck">
       <div class="meters">
-        <div class="meter"><small>Crédits</small><b id="balance">5 000,00</b></div>
+        <div class="meter"><small>Lucioles</small><b id="balance">5 000,00</b></div>
         <div class="bet"><button class="pm" id="betDown" aria-label="Baisser la mise">−</button><div class="mid"><small>Mise</small><b id="bet">1,00</b></div><button class="pm" id="betUp" aria-label="Augmenter la mise">+</button></div>
         <div class="meter r"><small>Gain</small><b id="lastWin">0,00</b></div>
       </div>
@@ -357,7 +359,7 @@ body.bonus .deck .row button, body.bonus .bet .pm{visibility:hidden}
   <div class="deco" id="fBarrel"></div>
   <div class="deco" id="fSign"></div>
   <div id="walkers"></div>
-  <p class="credit">Crédits fictifs, aucun argent réel. RTP 98,5 %.</p>
+  <p class="credit">Lucioles : monnaie fictive, aucun argent réel. RTP 98,5 %.</p>
 </section>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="intro" id="intro"><div class="bigrays"></div></div>
@@ -909,6 +911,22 @@ const WORLD = (() => {
   }
   return { build, A };
 })();
+// ---------- la Promenade : porte-monnaie commun (lucioles) et statistiques, partagés entre toutes les machines ----------
+const SALLE = (() => {
+  const JEU = 'dead-city', P = 'promenade.';
+  const get = (k, d) => { try { const v = localStorage.getItem(P + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+  const set = (k, v) => { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} };
+  const up = f => { const all = get('stats', {}); const j = all[JEU] = all[JEU] || { spins: 0, meilleur: 0, meilleurX: 0, bonus: {}, achats: {}, flags: {}, compte: {} }; f(j); set('stats', all); };
+  return {
+    solde: d => { const v = get('lucioles', null); return typeof v === 'number' && isFinite(v) && v >= 0 ? v : d; },
+    garder: v => set('lucioles', Math.round(v * 100) / 100),
+    spin: () => up(j => { j.spins++; }),
+    gain: (v, mise) => { if (v > 0) up(j => { j.meilleur = Math.max(j.meilleur, v); j.meilleurX = Math.max(j.meilleurX, v / mise); }); return v; },
+    bonus: (tier, achete) => up(j => { j.bonus[tier] = (j.bonus[tier] || 0) + 1; if (achete) j.achats[tier] = (j.achats[tier] || 0) + 1; }),
+    flag: k => up(j => { j.flags[k] = true; }),
+    compte: (k, n = 1) => up(j => { j.compte[k] = (j.compte[k] || 0) + n; }),
+  };
+})();
 (() => {
 const E = ENGINE;
 const $ = id => document.getElementById(id);
@@ -916,7 +934,7 @@ const fmt = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFr
 const BETS = [0.2, 0.4, 0.6, 1, 2, 4, 10, 20];
 const TIER_NAME = { 3: 'The Outbreak', 4: 'Last Stand', 5: 'Extraction' };
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const S = { balance: 5000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false, st: E.newState() };
+const S = { balance: SALLE.solde(5000), betIdx: 3, busy: false, auto: 0, turbo: false, ante: false, st: E.newState() };
 const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 150) : (S.turbo ? ms * 0.4 : ms)));
 const bet = () => BETS[S.betIdx];
 const cost = () => bet() * (S.ante ? E.ANTE : 1);
@@ -928,7 +946,7 @@ const baseCell = x => (x === E.SCAT ? ART.SCAT : x === E.WILD ? ART.wild('wild')
 
 // ---------- affichage ----------
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('show'), 2200); }
-function setMoney() { $('balance').textContent = fmt(S.balance); $('bet').textContent = fmt(bet()); $('anteBtn').innerHTML = S.ante ? 'Chance<br>+25 %' : 'Chance<br>bonus'; }
+function setMoney() { SALLE.garder(S.balance); $('balance').textContent = fmt(S.balance); $('bet').textContent = fmt(bet()); $('anteBtn').innerHTML = S.ante ? 'Chance<br>+25 %' : 'Chance<br>bonus'; }
 function msg(t) { $('msg').textContent = t; }
 function floatText(t) { const f = document.createElement('div'); f.className = 'float'; f.textContent = t; $('gridwrap').appendChild(f); setTimeout(() => f.remove(), 1300); }
 function pow(t, where = $('gridwrap')) { const p = document.createElement('div'); p.className = 'pow'; p.textContent = t; where.appendChild(p); setTimeout(() => p.remove(), 1150); }
@@ -1105,7 +1123,7 @@ async function spin() {
   if (S.balance < cost() - 1e-9) { noCredits(); stopAuto(); return false; }
   S.busy = true; lockUI(true); Snd.start(); Snd.fx('click');
   const sb = $('spin'); sb.classList.remove('go'); void sb.offsetWidth; sb.classList.add('go');
-  S.balance -= cost(); setMoney(); msg('');
+  S.balance -= cost(); SALLE.spin(); setMoney(); msg('');
   const r = E.playBase(S.st, mode());
   if (r.inv) { msg('INVASION : les survivants sont devenus des zombies !'); Snd.fx('bite'); }
   const cells = await revealDrop(r.steps[0].g);
@@ -1115,10 +1133,10 @@ async function spin() {
     const mult = total / bet();
     msg(`Gain total : ${fmt(total)}`); mediumWin(mult);
     await bigWin(total, mult);
-    S.balance += total; $('lastWin').textContent = fmt(total); setMoney();
-  } else { $('lastWin').textContent = fmt(0); await sleep(200); }
+    S.balance += total; $('lastWin').textContent = fmt(SALLE.gain(total, bet())); setMoney();
+  } else { $('lastWin').textContent = fmt(SALLE.gain(0, bet())); await sleep(200); }
   setGauge(r.invasionStart ? 100 : r.gauge, r.invasionStart ? 0 : r.invasionLeft);
-  if (r.invasionStart) { await sleep(700); if (S.auto) stopAuto(); await cityFalls(); setGauge(0, S.st.invasion); }
+  if (r.invasionStart) { await sleep(700); if (S.auto) stopAuto(); SALLE.flag('ville'); await cityFalls(); setGauge(0, S.st.invasion); }
   let bonus = false;
   if (r.scats >= 3) {
     bonus = true;
@@ -1137,7 +1155,7 @@ function lockUI(on) {
   $('spin').disabled = on && !S.auto;
 }
 function noCredits() {
-  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 5 000').then(() => { S.balance += 5000; setMoney(); msg('5 000 crédits ajoutés.'); });
+  overlay(`<h2>Plus de lucioles</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des lucioles (monnaie fictive).</p>`, 'Recharger 5 000 lucioles').then(() => { S.balance += 5000; setMoney(); msg('5 000 lucioles ajoutées.'); });
 }
 
 // ---------- spins automatiques ----------
@@ -1274,7 +1292,7 @@ async function runExtraction(b, b0) {
       onWin: async s => { if (s.floor > fl) { fl = s.floor; $('tierInfo').textContent = `Étage ${fl}/${T.floors}`; for (let i = 0; i < T.floors; i++) $('fl' + i).classList.toggle('on', i < fl); Snd.fx('climb', fl); toast(fl >= T.floors ? 'Le toit ! L\'hélico descend…' : `Étage ${fl} atteint !`); } },
     });
     total = Math.min(T.cap * b0, b.total * b0); upd();
-    if (ev.roof) {
+    if (ev.roof) { SALLE.flag('extraction');
       $('heliIc').classList.add('go'); Snd.fx('heli'); pow('EXTRACTION !');
       const prize = 12 * b.mult * unit; floatText('+' + fmt(prize)); msg(`Extraction réussie : prime du toit ${fmt(prize)} !`);
       const [x, y] = FX.center($('gridwrap')); FX.burst('cash', x, y, 30, 10); FX.firework(x, y - 60);
@@ -1286,7 +1304,7 @@ async function runExtraction(b, b0) {
   return b.roof ? 'extraction réussie, tu es sur le toit !' : `bloqué à l'étage ${b.floor}, la horde envahit l'immeuble`;
 }
 async function runBonus(tier, bought, count) {
-  const b0 = bet();
+  const b0 = bet(); SALLE.bonus(tier, bought);
   await introBonus(tier, count, bought);
   document.body.classList.add('bonus'); Snd.setBonus(true); msg('');
   const b = E.newBonus(tier);
@@ -1295,7 +1313,7 @@ async function runBonus(tier, bought, count) {
   await sleep(500);
   if (b.capped) toast('Gain maximum atteint !');
   if (winTier(mult)) await bigWin(win, mult);
-  S.balance += win; setMoney(); $('lastWin').textContent = fmt(win);
+  S.balance += win; setMoney(); $('lastWin').textContent = fmt(SALLE.gain(win, bet()));
   await overlay(`<h2>${fmt(win)}</h2><p>${TIER_NAME[tier]} terminé : ${detail}. ×${mult.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} la mise${bought ? ` (acheté ${E.BUY[tier]}×)` : ''}.</p>`, 'Continuer');
   document.body.classList.remove('bonus'); Snd.setBonus(false);
   msg(`${TIER_NAME[tier]} : ${fmt(win)}`);
@@ -1308,7 +1326,7 @@ function openBuy() {
   const off = t => {
     const price = E.BUY[t] * bet(), ok = !S.ante && S.balance >= price - 1e-9;
     const d = t === 3 ? '8 free spins, les zombies restent sur la grille' : t === 4 ? 'Barricade : 3 portes par manche, fuis quand tu veux' : '5 tours pour grimper jusqu\'à l\'hélico, grosse prime sur le toit';
-    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} sirènes. ${d}<span class="price">${fmt(price)} crédits (${E.BUY[t].toLocaleString('fr-FR')}× la mise)</span></span></button>`;
+    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} sirènes. ${d}<span class="price">${fmt(price)} lucioles (${E.BUY[t].toLocaleString('fr-FR')}× la mise)</span></span></button>`;
   };
   $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}${off(5)}</div><button class="btn" id="ovBtn">Annuler</button>`;
   $('overlay').classList.add('show');
@@ -1359,7 +1377,7 @@ function showRules() {
   <li><b>5 sirènes ou plus, Extraction</b> (1 spin sur ${every(pn[5])}) : ${INTRO_TXT[5]} Atteindre le toit rapporte une grosse prime.</li></ul>
   <h3>Options</h3>
   <p>Acheter The Outbreak coûte ${E.BUY[3]} fois la mise, Last Stand ${E.BUY[4]} fois et Extraction ${E.BUY[5].toLocaleString('fr-FR')} fois. Chance bonus ajoute 25 % à la mise et fait passer les bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
-  <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Crédits fictifs, aucun argent réel.</p></div>
+  <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Lucioles : monnaie fictive, aucun argent réel.</p></div>
   <button class="btn" id="ovBtn">Fermer</button>`;
   $('overlay').classList.add('show'); $('ovBtn').onclick = () => $('overlay').classList.remove('show'); $('ovBtn').focus();
 }

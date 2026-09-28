@@ -384,6 +384,8 @@ body.bonus .animal.farmer{visibility:hidden}
 body.bonus .fmb, body.bonus .fmpicks{visibility:hidden}
 #fBush1{left:3%!important} #fLamp1{left:21%!important}
 @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} .leaf,.firefly,.runner,.flock{display:none} .myc path{stroke-dashoffset:0} .olids{transform:scaleY(0)} .sq{left:40%} .animal.farmer{left:40%; opacity:1} .animal.hedge{left:12%} .animal.rabbit{left:72%} .animal.snail{left:30%} }
+/* la luciole devant le solde */
+.meter:first-child small::before{content:""; display:inline-block; width:7px; height:7px; margin-right:5px; vertical-align:1px; border-radius:50%; background:#FFF3A0; box-shadow:0 0 6px 2px rgba(255,236,120,.85)}
 /* ---------- symboles 3D : planches d'images cuites au chargement (voir KIT3D) ---------- */
 .s3d{display:block; width:92%; height:92%; position:relative}
 .s3d b{display:block; width:100%; height:100%; background:var(--idle) 0 0 / calc(var(--n) * 100%) 100% no-repeat; animation:sheet 2.2s steps(var(--n), jump-none) infinite}
@@ -550,7 +552,7 @@ body.decor3d .floor .credit{text-shadow:0 1px 3px rgba(0,0,0,.6)}
     <div class="msg" id="msg" aria-live="polite">Trois scatters lancent le bonus.</div>
     <div class="deck">
       <div class="meters">
-        <div class="meter"><small>Crédits</small><b id="balance">5 000,00</b></div>
+        <div class="meter"><small>Lucioles</small><b id="balance">5 000,00</b></div>
         <div class="bet">
           <button class="pm" id="betDown" aria-label="Baisser la mise">−</button>
           <div class="mid"><small>Mise</small><b id="bet">1,00</b></div>
@@ -581,7 +583,7 @@ body.decor3d .floor .credit{text-shadow:0 1px 3px rgba(0,0,0,.6)}
   <div class="animal fox" id="aFox"></div>
   <div class="deco" id="fPump1"></div>
   <div class="deco" id="fPump2"></div>
-  <p class="credit">Crédits fictifs, aucun argent réel. RTP 98,5 %.</p>
+  <p class="credit">Lucioles : monnaie fictive, aucun argent réel. RTP 98,5 %.</p>
 </section>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="intro" id="intro"><div class="bigrays"></div></div>
@@ -1247,6 +1249,22 @@ const WORLD = (() => {
     f('aFox').innerHTML = A.fox; f('aSnail').innerHTML = `<div class="body">${A.snail}</div>`;
   }
   return { build, A };
+})();
+// ---------- la Promenade : porte-monnaie commun (lucioles) et statistiques, partagés entre toutes les machines ----------
+const SALLE = (() => {
+  const JEU = 'champi-pop', P = 'promenade.';
+  const get = (k, d) => { try { const v = localStorage.getItem(P + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+  const set = (k, v) => { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} };
+  const up = f => { const all = get('stats', {}); const j = all[JEU] = all[JEU] || { spins: 0, meilleur: 0, meilleurX: 0, bonus: {}, achats: {}, flags: {}, compte: {} }; f(j); set('stats', all); };
+  return {
+    solde: d => { const v = get('lucioles', null); return typeof v === 'number' && isFinite(v) && v >= 0 ? v : d; },
+    garder: v => set('lucioles', Math.round(v * 100) / 100),
+    spin: () => up(j => { j.spins++; }),
+    gain: (v, mise) => { if (v > 0) up(j => { j.meilleur = Math.max(j.meilleur, v); j.meilleurX = Math.max(j.meilleurX, v / mise); }); return v; },
+    bonus: (tier, achete) => up(j => { j.bonus[tier] = (j.bonus[tier] || 0) + 1; if (achete) j.achats[tier] = (j.achats[tier] || 0) + 1; }),
+    flag: k => up(j => { j.flags[k] = true; }),
+    compte: (k, n = 1) => up(j => { j.compte[k] = (j.compte[k] || 0) + n; }),
+  };
 })();
 // ---------- KIT 3D : personnages en 3D façon dessin animé (Three.js), cuits en planches animées ----------
 // À coller tel quel dans la machine, juste avant ART3D. Aucune dépendance autre que THREE (passé en paramètre).
@@ -1929,7 +1947,7 @@ const TIER_NAME = { 3: 'Bonus', 4: 'Super bonus', 5: 'Méga bonus' };
 const LV_NAME = ['énokis', 'champignons de Paris', 'shimejis', 'girolles', 'pleurotes', 'morilles', 'bolets', 'amanites'];
 const LV_COL = ['#F6EED0', '#FFF8EC', '#D9B48A', '#F2C14E', '#C9A27E', '#B8864E', '#E08A3A', '#E4502A'];
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const S = { balance: 5000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false };
+const S = { balance: SALLE.solde(5000), betIdx: 3, busy: false, auto: 0, turbo: false, ante: false };
 const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 150) : (S.turbo ? ms * 0.4 : ms)));
 const bet = () => BETS[S.betIdx];
 const cost = () => bet() * (S.ante ? E.ANTE : 1);
@@ -1982,7 +2000,7 @@ const baseCell = s => (s === -1 ? ART.SCAT : ART.SYMS[s]);
 
 // ---------- affichage ----------
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('show'), 1900); }
-function setMoney() { $('balance').textContent = fmt(S.balance); $('bet').textContent = fmt(bet()); $('anteBtn').innerHTML = S.ante ? 'Chance<br>+25 %' : 'Chance<br>bonus'; }
+function setMoney() { SALLE.garder(S.balance); $('balance').textContent = fmt(S.balance); $('bet').textContent = fmt(bet()); $('anteBtn').innerHTML = S.ante ? 'Chance<br>+25 %' : 'Chance<br>bonus'; }
 function msg(t) { $('msg').textContent = t; }
 function floatText(t) { const f = document.createElement('div'); f.className = 'float'; f.textContent = t; $('gridwrap').appendChild(f); setTimeout(() => f.remove(), 1300); }
 function shake() { const m = $('main'); m.classList.remove('shake'); void m.offsetWidth; m.classList.add('shake'); }
@@ -2091,7 +2109,7 @@ async function spin() {
   if (S.balance < cost() - 1e-9) { noCredits(); stopAuto(); return false; }
   S.busy = true; lockUI(true); Snd.start(); Snd.fx('click');
   const sb = $('spin'); sb.classList.remove('go'); void sb.offsetWidth; sb.classList.add('go');
-  S.balance -= cost(); setMoney(); msg('');
+  S.balance -= cost(); SALLE.spin(); setMoney(); msg('');
   const g = E.spinBase(mode()), res = E.evalBase(g, mode());
   const cells = await revealBase(g);
   const win = res.total * bet();
@@ -2103,9 +2121,9 @@ async function spin() {
     floatText('+' + fmt(win)); Snd.fx('win', mult >= 5 ? 2 : 1); mediumWin(mult);
     await sleep(winTier(mult) ? 700 : 1300);
     await bigWin(win, mult);
-    S.balance += win; $('lastWin').textContent = fmt(win); setMoney();
+    S.balance += win; $('lastWin').textContent = fmt(SALLE.gain(win, bet())); setMoney();
     if (!res.scats || res.scats < 3) await sleep(400);
-  } else { $('lastWin').textContent = fmt(0); await sleep(250); }
+  } else { $('lastWin').textContent = fmt(SALLE.gain(0, bet())); await sleep(250); }
   let bonus = false;
   if (res.scats >= 3) {
     bonus = true;
@@ -2124,7 +2142,7 @@ function lockUI(on) {
   $('spin').disabled = on && !S.auto;
 }
 function noCredits() {
-  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 5 000').then(() => { S.balance += 5000; setMoney(); msg('5 000 crédits ajoutés.'); });
+  overlay(`<h2>Plus de lucioles</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des lucioles (monnaie fictive).</p>`, 'Recharger 5 000 lucioles').then(() => { S.balance += 5000; setMoney(); msg('5 000 lucioles ajoutées.'); });
 }
 
 // ---------- spins automatiques ----------
@@ -2265,7 +2283,7 @@ async function animHeal(cell, onLand) {
   run.remove();
 }
 async function runBonus(tier, bought, count) {
-  const b0 = bet();
+  const b0 = bet(); SALLE.bonus(tier, bought);
   await introBonus(tier, count, bought);
   document.body.classList.add('bonus'); Snd.setBonus(true); msg('');
   const b = E.newBonus(tier), rad = E.TIER[tier].size > 6 ? 3 : 2;
@@ -2295,7 +2313,7 @@ async function runBonus(tier, bought, count) {
       await sleep(p.gift ? 700 : 450);
       if (p.type === 'grow') { await animGrow(cell, cells); st.rows++; hud(b, st); flashChip('chipRows'); }
       if (p.type === 'color') {
-        st.lv = Math.min(7, st.lv + 1); setMoon(st.lv); flyTo(cell, $('chipColor'), ART.power('color')); toast(`Lune rousse : place aux ${LV_NAME[st.lv]} !`);
+        st.lv = Math.min(7, st.lv + 1); if (st.lv === 7) SALLE.flag('amanites'); setMoon(st.lv); flyTo(cell, $('chipColor'), ART.power('color')); toast(`Lune rousse : place aux ${LV_NAME[st.lv]} !`);
         await sleep(650); hud(b, st); flashChip('chipColor');
         for (let r = 0; r < R; r++) for (let c = 0; c < W; c++) if (disp[r][c] && disp[r][c].n) { const d = cells[r][c]; setCell(d, disp[r][c], st.lv); d.classList.remove('drop', 'shimmer'); void d.offsetWidth; d.classList.add('shimmer'); }
         await sleep(900);
@@ -2346,7 +2364,7 @@ async function runBonus(tier, bought, count) {
   await sleep(600);
   if (b.capped) toast('Gain maximum atteint !');
   if (winTier(mult)) await bigWin(win, mult);
-  S.balance += win; setMoney(); $('lastWin').textContent = fmt(win);
+  S.balance += win; setMoney(); $('lastWin').textContent = fmt(SALLE.gain(win, bet()));
   await overlay(`<h2>${fmt(win)}</h2><p>${TIER_NAME[tier]} terminé : ×${mult.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} la mise${bought ? ` (acheté ${E.BUY[tier]}×)` : ''}.</p>`, 'Continuer');
   document.body.classList.remove('bonus'); Snd.setBonus(false); setMoon(null);
   msg(`${TIER_NAME[tier]} : ${fmt(win)}`);
@@ -2358,7 +2376,7 @@ function openBuy() {
   if (S.busy || S.auto) return;
   const off = t => {
     const price = E.BUY[t] * bet(), ok = !S.ante && S.balance >= price - 1e-9, T = E.TIER[t];
-    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} scatters, grille ${T.size}×${T.size}, ${T.spins} spins${T.gifts ? `, ${T.gifts} pouvoir${T.gifts > 1 ? 's' : ''} offert${T.gifts > 1 ? 's' : ''}` : ''}<span class="price">${fmt(price)} crédits (${E.BUY[t].toLocaleString('fr-FR')}× la mise)</span></span></button>`;
+    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} scatters, grille ${T.size}×${T.size}, ${T.spins} spins${T.gifts ? `, ${T.gifts} pouvoir${T.gifts > 1 ? 's' : ''} offert${T.gifts > 1 ? 's' : ''}` : ''}<span class="price">${fmt(price)} lucioles (${E.BUY[t].toLocaleString('fr-FR')}× la mise)</span></span></button>`;
   };
   $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}${off(5)}</div><button class="btn" id="ovBtn">Annuler</button>`;
   $('overlay').classList.add('show');
@@ -2411,7 +2429,7 @@ function showRules() {
   <p>Les pouvoirs offerts sont tirés parmi mycélium, lune rousse, écureuil et rond de sorcière. Le nuage de spores est plus rare en grande grille.</p>
   <h3>Options</h3>
   <p>Acheter le bonus coûte ${E.BUY[3]} fois la mise, le super bonus ${E.BUY[4]} fois et le méga bonus ${E.BUY[5].toLocaleString('fr-FR')} fois. Chance bonus ajoute 25 % à la mise et fait passer le bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
-  <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Crédits fictifs, aucun argent réel.</p></div>
+  <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Lucioles : monnaie fictive, aucun argent réel.</p></div>
   <button class="btn" id="ovBtn">Fermer</button>`;
   $('overlay').classList.add('show'); $('ovBtn').onclick = () => $('overlay').classList.remove('show'); $('ovBtn').focus();
 }

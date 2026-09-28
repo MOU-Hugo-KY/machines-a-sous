@@ -1,12 +1,16 @@
 # Machines à sous
 
-## La Salle des machines
+## La Promenade (le lobby)
 
-`index.html` est le lobby qui regroupe toutes les machines : recherche, filtres, favoris, puis la machine en plein écran avec un bouton pour revenir. C'est aussi une **appli installable** (PWA) qui marche hors ligne après la première visite.
+`index.html` est **la Promenade** : un boulevard de nuit en 3D sous la pluie, où chaque machine est une borne d'arcade avec son enseigne néon et son décor. Tu glisses pour te promener, et quand tu touches une borne, la caméra plonge dans son écran et la machine s'ouvre. Au bout du boulevard, **le Grand Levier** choisit une machine au hasard.
 
-Pour l'installer sur un téléphone, il faut que la salle soit en ligne en https, par exemple avec GitHub Pages (Settings → Pages → Deploy from a branch → `main`, dossier `/`). GitHub Pages est gratuit pour un dépôt public ; pour un dépôt privé, il faut un compte payant. Ouvre ensuite l'adresse dans Chrome sur Android, menu ⋮ → « Ajouter à l'écran d'accueil ». Pour ajouter une machine au lobby, ajoute une ligne au tableau `GAMES` de `index.html`, sa vignette dans `app/vignettes/`, et ses fichiers dans `sw.js` (et change `VERSION`).
+- **Lucioles** : la monnaie fictive de la Promenade, partagée entre toutes les machines (5 000 au départ).
+- **Coffre du jour** : des lucioles chaque jour, avec un bonus quand tu reviens plusieurs jours de suite (7 jours affichés).
+- **Records et trophées** : meilleurs gains, bonus déclenchés, et trophées généraux ou propres à chaque machine.
+- **Vue liste** (bouton en haut à droite), qui sert aussi de secours si la 3D ne se charge pas.
+- **Appli installable** (PWA, marche hors ligne). Il faut la mettre en ligne en https, par exemple avec GitHub Pages (Settings → Pages → `main`, dossier `/`), gratuit pour un dépôt public. Ensuite, dans Chrome sur Android : ⋮ → « Ajouter à l'écran d'accueil ».
 
-Des machines à sous thématiques, chacune dans un seul fichier HTML à ouvrir dans un navigateur. On joue avec des crédits fictifs, sans aucun argent réel.
+La page est générée : modifie `app/salle-modele.html` ou `app/catalogue.json`, puis lance `python3 .claude/skills/machine-a-sous/scripts/construire-salle.py`.
 
 | Machine | Thème | Bonus |
 |---|---|---|
