@@ -208,7 +208,7 @@ const KIT3D = THREE => {
 };
 
 // ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
-// MODELS(K) renvoie { SYMS: [8 fonctions], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
+// MODELS(K) renvoie { SYMS: [une fonction par symbole, ou null pour garder le dessin 2D], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
 // Exemple : VARIANTES: { star: { star: () => …, gold: () => … } } remplace ART.star('gold') par sa version 3D.
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
 const STAGE3D = { intro() {}, big() {}, stop() {} }; // restent vides exprès : pas de personnages 3D qui tournent autour des grands écrans
@@ -222,8 +222,9 @@ async function usePlanches(ART, P) {
   const load = src => new Promise((ok, ko) => { const im = new Image(); im.onload = ok; im.onerror = () => ko(new Error('planche introuvable : ' + src)); im.src = src; });
   await Promise.race([Promise.all(all.flatMap(x => [load(x.b.idle), load(x.b.win)])), new Promise((_, ko) => setTimeout(() => ko(new Error('planches trop lentes')), 20000))]);
   const get = k => all.find(x => x.key === k)?.b;
-  const syms = []; for (let i = 0; get('s' + i); i++) syms.push(S3D_HTML(get('s' + i)));
-  const scat = get('scat'); if (!syms.length || !scat) throw new Error('planches incomplètes');
+  // un symbole sans planche garde son dessin 2D (ART3D_MODELS.SYMS[i] = null : cartes gravées, lettres…)
+  const syms = ART.SYMS.map((s, i) => (get('s' + i) ? S3D_HTML(get('s' + i)) : s));
+  const scat = get('scat'); if (!all.some(x => /^s\d/.test(x.key)) || !scat) throw new Error('planches incomplètes');
   const variants = {};
   for (const x of all) { if (!x.key.startsWith('v|')) continue; const [, name, arg] = x.key.split('|'); (variants[name] ??= {})[arg] = S3D_HTML(x.b); }
   ART.SYMS = syms; ART.SCAT = S3D_HTML(scat);
@@ -245,7 +246,7 @@ async function CHARGE3D(ART, MODELS, DECOR) {
     if (DECOR) { try { setupDecor(K, DECOR, M); } catch (e) { console.warn('décor 3D indisponible :', e); } await frame(); }
     if (pret) return;
     const bakes = {}, syms = [];
-    for (const [i, f] of M.SYMS.entries()) { bakes['s' + i] = await K.bake(f()); syms.push(K.html(bakes['s' + i])); await frame(); }
+    for (const [i, f] of M.SYMS.entries()) { if (!f) { syms.push(ART.SYMS[i]); continue; } bakes['s' + i] = await K.bake(f()); syms.push(K.html(bakes['s' + i])); await frame(); }
     bakes.scat = await K.bake(M.SCAT()); const scat = K.html(bakes.scat);
     const variants = {};
     for (const [name, table] of Object.entries(M.VARIANTES || {})) {

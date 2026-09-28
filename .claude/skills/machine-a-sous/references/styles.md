@@ -58,9 +58,24 @@ Pour les thèmes rétro, synthwave, bonbons, fête foraine ou espace pop.
 - **Symboles** : fruits et 7 revisités en néon, ou personnages en pixel art (grilles de `rect` SVG). Surbrillance des gains : le néon passe à pleine intensité et clignote.
 - **3D** : émissif fort, contour néon (`inkMat` teinté de la couleur au lieu de l'encre), fond noir.
 
+## 5. Gravure baroque (Masquerade of Madness)
+
+Pour les thèmes de bal masqué, de vampires, d'opéra, de cour royale décadente ou de gothique : l'esthétique des gravures à l'eau-forte.
+
+- **Effet** : aucune couleur de casino. Noir presque absolu, ivoire et argent vieilli, et **un seul rouge carmin**, très intense, réservé à ce qui compte (le sang, les lèvres, les jokers rouges, le bouton de spin). Beaucoup de détails fins : hachures, dentelle, perles, filigranes. Une élégance qui devient inquiétante.
+- **Palette** : noir `#050407` / `#0A080C`, velours `#1E1A22`, ivoire `#EFE8DA`, argent `#B9B3A8` → `#6E6962`, carmin `#C8102E` / `#FF2340`, sang `#6A0010`.
+- **Polices** : Cinzel Decorative pour le logo et les titres, Cinzel pour les chiffres et les étiquettes (petites majuscules espacées), Cormorant Garamond (italique) pour le texte.
+- **Hachures** : en CSS, une trame `repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 1px, transparent 1px 4px)` sur les fonds ; en SVG, des `<pattern>` de traits fins (`mHatch`, `mHatchL`) posés en calque sur le côté ombré de chaque forme. C'est ce qui donne l'effet gravé.
+- **Cadre** : laque noire à liseré d'argent, montants gravés (dégradé cylindrique argent + rainures), chandelles allumées aux coins ; les colonnes de la grille sont des **miroirs baroques** (fond vitré sombre avec un reflet en biais, haut en arche).
+- **Tuiles** : style 2, mais en noir, ivoire, argent, carmin et sang. Les petits symboles sont des **lettres de cartes gravées** (10, J, Q, K, A) en Cinzel Decorative, remplies d'un dégradé argent ou carmin, avec leur enseigne au-dessus et un filigrane dessous.
+- **Symboles** : bustes de personnages masqués (loup vénitien, coiffe de bouffon à clochettes, tricorne, chignon à plumes), crâne couronné, rose qui saigne. Le joker est un **masque fendu en deux** ; le scatter, un masque moitié argent, moitié carmin.
+- **Décor vivant** : salle de bal (rideaux rouges, lustres, tableaux, statues, damier), invités masqués en silhouette. Une jauge qui descend change le décor par paliers (classes `s75`, `s50`, `s25`, `mad` sur `body`) : les invités bougent, les masques sourient, les tableaux regardent, les roses blanches rougissent, les bougies passent au rouge.
+- **Musique** : clavecin (corde pincée très brillante), basse continue, menuet à trois temps en mineur ; la valse du bonus avec cordes et timbales ; une boîte à musique désaccordée pour la folie, des rires lointains.
+- **3D** : toon à contour fin (0,03), ivoire, noir et carmin, argent en PBR, bougies émissives et lumières chaudes ponctuelles.
+
 ---
 
-## La barre de studio (styles 2 et 3)
+## La barre de studio (styles 2, 3 et 5)
 
 À la place du tableau de commande cartoon, garde les mêmes identifiants (`spin`, `betDown`, `betUp`, `bet`, `balance`, `lastWin`, `autoBtn`, `turboBtn`, `buyBtn`, `anteBtn`) : l'interface commune continue de marcher.
 

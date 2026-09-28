@@ -170,6 +170,45 @@ body.flat #listPanel .close{display:none}
 <script>
 const GAMES = [
  {
+  "id": "masquerade",
+  "nom": "Masquerade",
+  "sousTitre": "of Madness",
+  "page": "jeux/masquerade-3d.html",
+  "lite": "jeux/masquerade.html",
+  "vignette": "app/vignettes/masquerade-3d.jpg",
+  "couleur": "#FF2340",
+  "badge": "Nouveau",
+  "desc": "Le Bal des Fous. Gravure baroque, cascades, jauge de raison qui s'effondre, Fou Rouge et Fou Noir, dernière danse et masques à retirer.",
+  "tags": [
+   "3D",
+   "Baroque",
+   "Cascades"
+  ],
+  "bonus": "1 / 260",
+  "grille": "5×5 grappes",
+  "max": "50 000×",
+  "trophees": [
+   {
+    "id": "madness",
+    "flag": "madness",
+    "nom": "Perdre la raison",
+    "desc": "Faire tomber la jauge SANITY à 0 %."
+   },
+   {
+    "id": "masque-profond",
+    "flag": "masque-profond",
+    "nom": "Sous le troisième masque",
+    "desc": "Retirer au moins trois masques dans Remove the Mask."
+   },
+   {
+    "id": "bal-des-fous",
+    "flag": "bal-des-fous",
+    "nom": "Le Bal des Fous",
+    "desc": "Danser avec les deux Fous jusqu'au bout."
+   }
+  ]
+ },
+ {
   "id": "dead-city",
   "nom": "Dead City",
   "sousTitre": "Last Spin",
@@ -177,7 +216,7 @@ const GAMES = [
   "lite": "jeux/dead-city.html",
   "vignette": "app/vignettes/dead-city-3d.jpg",
   "couleur": "#FF5A3A",
-  "badge": "Nouveau",
+  "badge": "",
   "desc": "La ville est tombée. Cascades de zombies, jauge d'invasion, horde et patient zéro.",
   "tags": [
    "3D",
@@ -467,7 +506,7 @@ const KIT3D = THREE => {
 };
 
 // ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
-// MODELS(K) renvoie { SYMS: [8 fonctions], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
+// MODELS(K) renvoie { SYMS: [une fonction par symbole, ou null pour garder le dessin 2D], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
 // Exemple : VARIANTES: { star: { star: () => …, gold: () => … } } remplace ART.star('gold') par sa version 3D.
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
 const STAGE3D = { intro() {}, big() {}, stop() {} }; // restent vides exprès : pas de personnages 3D qui tournent autour des grands écrans
@@ -481,8 +520,9 @@ async function usePlanches(ART, P) {
   const load = src => new Promise((ok, ko) => { const im = new Image(); im.onload = ok; im.onerror = () => ko(new Error('planche introuvable : ' + src)); im.src = src; });
   await Promise.race([Promise.all(all.flatMap(x => [load(x.b.idle), load(x.b.win)])), new Promise((_, ko) => setTimeout(() => ko(new Error('planches trop lentes')), 20000))]);
   const get = k => all.find(x => x.key === k)?.b;
-  const syms = []; for (let i = 0; get('s' + i); i++) syms.push(S3D_HTML(get('s' + i)));
-  const scat = get('scat'); if (!syms.length || !scat) throw new Error('planches incomplètes');
+  // un symbole sans planche garde son dessin 2D (ART3D_MODELS.SYMS[i] = null : cartes gravées, lettres…)
+  const syms = ART.SYMS.map((s, i) => (get('s' + i) ? S3D_HTML(get('s' + i)) : s));
+  const scat = get('scat'); if (!all.some(x => /^s\d/.test(x.key)) || !scat) throw new Error('planches incomplètes');
   const variants = {};
   for (const x of all) { if (!x.key.startsWith('v|')) continue; const [, name, arg] = x.key.split('|'); (variants[name] ??= {})[arg] = S3D_HTML(x.b); }
   ART.SYMS = syms; ART.SCAT = S3D_HTML(scat);
@@ -504,7 +544,7 @@ async function CHARGE3D(ART, MODELS, DECOR) {
     if (DECOR) { try { setupDecor(K, DECOR, M); } catch (e) { console.warn('décor 3D indisponible :', e); } await frame(); }
     if (pret) return;
     const bakes = {}, syms = [];
-    for (const [i, f] of M.SYMS.entries()) { bakes['s' + i] = await K.bake(f()); syms.push(K.html(bakes['s' + i])); await frame(); }
+    for (const [i, f] of M.SYMS.entries()) { if (!f) { syms.push(ART.SYMS[i]); continue; } bakes['s' + i] = await K.bake(f()); syms.push(K.html(bakes['s' + i])); await frame(); }
     bakes.scat = await K.bake(M.SCAT()); const scat = K.html(bakes.scat);
     const variants = {};
     for (const [name, table] of Object.entries(M.VARIANTES || {})) {
@@ -592,6 +632,180 @@ function setupDecor(K, DECOR, M) {
   }
   requestAnimationFrame(frame);
 }
+
+// ---------- ART3D : les invités de Masquerade of Madness (construits avec KIT3D) ----------
+// Gravure baroque en 3D : ivoire, argent, noir velours et un seul rouge carmin, contour d'encre fin.
+// Les cinq cartes gravées (10, J, Q, K, A) gardent leur dessin 2D (null) : leurs lettres baroques rendent mieux à plat.
+MODELES["masquerade"] = K => {
+  const { THREE, part, G, mat, TAU } = K;
+  K.INK.color = 0x050407;
+  const grp = (...c) => { const g = new THREE.Group(); g.add(...c.flat()); return g; };
+  const IVORY = 0xEFE8DA, SKIN = 0xE6DDCC, SILVER = 0xB9B3A8, DARK = 0x1E1A22, BLACK = 0x0E0C10, RED = 0xC8102E, DEEP = 0x6A0010;
+  const ink = 0.035;
+  const silver = K.pbr ? K.pbr(0xD8D2C6, { metal: 0.9, rough: 0.28 }) : SILVER;
+  const tube = (pts, r = 0.1) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 24, r, 12, false);
+  const bell = (x, y, z, r = 0.13) => part(G.sphere(r), silver, { ink: 0.02, pos: [x, y, z] });
+  // collerette plissée : une couronne de petites boules ivoire
+  function ruff(y, R = 0.62, n = 16, r = 0.15) {
+    const g = new THREE.Group();
+    for (let i = 0; i < n; i++) { const a = i / n * TAU; g.add(part(G.sphere(r), IVORY, { ink: 0.02, pos: [Math.cos(a) * R, y + (i % 2) * 0.03, Math.sin(a) * R * 0.8], scale: [1, 0.75, 1] })); }
+    return g;
+  }
+  // loup vénitien : un bandeau bombé sur les yeux, deux trous sombres
+  function eyeMask(R, color, trim = SILVER, y = 0.12) {
+    const g = new THREE.Group();
+    g.add(part(new THREE.SphereGeometry(R * 1.035, 40, 20, Math.PI * 0.08, Math.PI * 0.84, Math.PI * 0.38, Math.PI * 0.16), color, { ink: 0.02, pos: [0, y - R * 0.05, 0] })); // bandeau sur l'avant (phi 0..π = côté +z)
+    for (const s of [-1, 1]) {
+      const e = part(G.sphere(R * 0.14), BLACK, { ink: 0, pos: [s * R * 0.34, y + R * 0.02, R * 0.96], scale: [1.35, 0.7, 0.4] }); g.add(e);
+      g.add(part(G.torus(R * 0.2, R * 0.03, Math.PI), trim, { ink: 0, pos: [s * R * 0.34, y + R * 0.1, R * 0.98], rot: [0, 0, 0] }));
+    }
+    const eyes = new THREE.Group(); eyes.name = 'eyes'; g.add(eyes);
+    return g;
+  }
+  const lips = (R, color = RED, y = -0.3) => part(G.sphere(R * 0.11), color, { ink: 0.015, pos: [0, y * R, R * 0.93], scale: [1.7, 0.55, 0.5] });
+
+  // ---------- la rose ensanglantée ----------
+  function rose() {
+    const g = new THREE.Group();
+    g.add(part(G.sphere(0.34), RED, { ink, pos: [0, 0.45, 0.05], scale: [1, 1.1, 1] }));
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; g.add(part(G.sphere(0.42), RED, { ink, pos: [Math.cos(a) * 0.3, 0.38, Math.sin(a) * 0.3], scale: [0.9, 0.95, 0.42], rot: [0, -a + Math.PI / 2, 0.35] })); }
+    for (let i = 0; i < 7; i++) { const a = i / 7 * TAU + 0.4; g.add(part(G.sphere(0.5), 0x9A0A22, { ink, pos: [Math.cos(a) * 0.52, 0.22, Math.sin(a) * 0.52], scale: [0.9, 0.75, 0.36], rot: [0.5, -a + Math.PI / 2, 0.55] })); }
+    g.add(part(G.cyl(0.07, 0.08, 1.4, 12), DARK, { ink: 0.02, pos: [0, -0.5, 0] }));
+    const leaf = new THREE.Shape(); leaf.moveTo(0, 0); leaf.bezierCurveTo(0.25, 0.1, 0.35, 0.35, 0, 0.6); leaf.bezierCurveTo(-0.35, 0.35, -0.25, 0.1, 0, 0);
+    [[-1, -0.55], [1, -0.85]].forEach(([s, y]) => g.add(part(G.extrude(leaf, 0.04, 0.02), DARK, { ink: 0.02, pos: [s * 0.3, y, 0], rot: [0, 0, -s * 1.1] })));
+    [[0.12, -0.3], [-0.1, -0.65]].forEach(([x, y]) => g.add(part(G.cone(0.04, 0.14, 8), SILVER, { ink: 0.01, pos: [x, y, 0], rot: [0, 0, x > 0 ? -1.3 : 1.3] })));
+    const drops = [[-0.35, -0.05], [0.4, -0.2]].map(([x, y]) => grp(part(G.sphere(0.08), RED, { ink: 0.015, pos: [x, y, 0.25] }), part(G.cone(0.08, 0.14, 12), RED, { ink: 0.015, pos: [x, y + 0.1, 0.25] })));
+    g.add(...drops);
+    g.rotation.x = 0.25; g.scale.setScalar(1.4); g.position.y = 0.12;
+    g.userData.anim = { idle(t) { drops.forEach((d, i) => { const k = (t * 2 + i * 0.5) % 1; d.position.y = -k * 0.35; d.scale.setScalar(1 - k * 0.6); }); } };
+    return g;
+  }
+  // ---------- le crâne couronné ----------
+  function crane() {
+    const g = new THREE.Group();
+    g.add(part(G.sphere(0.72), IVORY, { ink, pos: [0, 0.18, 0], scale: [1, 0.98, 0.95] }));
+    g.add(part(G.box(0.8, 0.42, 0.6, 0.16), IVORY, { ink, pos: [0, -0.42, 0.12] }));
+    const eyes = new THREE.Group(); eyes.name = 'eyes';
+    for (const s of [-1, 1]) g.add(part(G.sphere(0.2), BLACK, { ink: 0, pos: [s * 0.26, 0.1, 0.56], scale: [1, 1.1, 0.6] }));
+    for (const s of [-1, 1]) eyes.add(part(G.sphere(0.05), mat(RED, { emissive: RED, glow: 0.9 }), { ink: 0, pos: [s * 0.26, 0.1, 0.66] }));
+    g.add(eyes);
+    g.add(part(G.cone(0.09, 0.18, 3), BLACK, { ink: 0, pos: [0, -0.12, 0.66], rot: [Math.PI, 0, 0] }));
+    for (let i = 0; i < 6; i++) g.add(part(G.box(0.1, 0.16, 0.08, 0.02), IVORY, { ink: 0.012, pos: [-0.26 + i * 0.105, -0.46, 0.44] }));
+    const crown = new THREE.Group(); crown.position.set(0.05, 0.8, 0); crown.rotation.z = -0.18;
+    crown.add(part(G.cyl(0.46, 0.5, 0.26, 32), silver, { ink: 0.025 }));
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + 0.3; crown.add(part(G.cone(0.1, 0.3, 12), silver, { ink: 0.02, pos: [Math.cos(a) * 0.45, 0.26, Math.sin(a) * 0.45] })); crown.add(part(G.sphere(0.055), RED, { ink: 0.01, pos: [Math.cos(a) * 0.49, 0.02, Math.sin(a) * 0.49] })); }
+    g.add(crown);
+    g.scale.setScalar(1.25);
+    g.userData.anim = { idle(t) { eyes.children.forEach(e => e.scale.setScalar(0.8 + Math.max(0, Math.sin(t * TAU * 2)) * 0.5)); } };
+    return g;
+  }
+  // un buste : épaules, cou, tête
+  function bust(cloth, o = {}) {
+    const g = new THREE.Group();
+    g.add(part(G.sphere(0.9), cloth, { ink, scale: [1.08, 0.6, 0.72], pos: [0, -1.0, 0] }));
+    g.add(part(G.cyl(0.2, 0.24, 0.32, 16), o.skin ?? SKIN, { ink, pos: [0, -0.48, 0] }));
+    const head = new THREE.Group(); head.position.y = 0.08;
+    head.add(part(G.sphere(0.58), o.skin ?? SKIN, { ink, scale: [0.92, 1.05, 0.95] }));
+    g.add(head); g.userData.head = head;
+    return g;
+  }
+  // ---------- les Fous : coiffe à trois pointes et clochettes ----------
+  function jester(o) {
+    const g = bust(o.cloth), h = g.userData.head;
+    g.add(ruff(-0.5, 0.52, 16, 0.14));
+    // losanges d'arlequin sur le torse
+    g.add(part(G.box(0.34, 0.34, 0.08, 0.04), o.diamond, { ink: 0.015, pos: [0, -0.92, 0.66], rot: [0, 0, Math.PI / 4] }));
+    h.add(eyeMask(0.58, o.mask, o.trim));
+    h.add(lips(0.58, o.lips, -0.42));
+    if (o.tear) h.add(part(G.sphere(0.05), RED, { ink: 0.01, pos: [-0.2, -0.12, 0.54], scale: [0.8, 1.3, 0.5] }));
+    const cap = part(G.sphere(0.62), o.hatM, { ink, pos: [0, 0.2, -0.02], scale: [1, 0.62, 1] }); h.add(cap);
+    h.add(part(G.torus(0.56, 0.06), o.trim, { ink: 0.015, pos: [0, 0.22, 0], rot: [Math.PI / 2 - 0.1, 0, 0] }));
+    const horns = [
+      [tube([[-0.35, 0.3, 0], [-0.8, 0.55, 0], [-1.05, 0.2, 0.05]], 0.12), o.hatL, [-1.05, 0.12, 0.05]],
+      [tube([[0.35, 0.3, 0], [0.8, 0.55, 0], [1.05, 0.2, 0.05]], 0.12), o.hatR, [1.05, 0.12, 0.05]],
+      [tube([[0, 0.5, 0], [0.1, 1.0, -0.05], [0.35, 1.18, 0]], 0.12), o.hatM, [0.4, 1.12, 0]],
+    ];
+    const bells = [];
+    for (const [geo, col, bp] of horns) { h.add(part(geo, col, { ink: 0.025 })); const b = bell(...bp); h.add(b); bells.push(b); }
+    g.scale.setScalar(1.08); g.position.y = 0.05;
+    g.userData.anim = { idle(t) { bells.forEach((b, i) => { b.position.y += Math.sin(t * TAU * 4 + i) * 0.004; }); h.rotation.z = Math.sin(t * TAU) * 0.08; } };
+    return g;
+  }
+  const fouNoir = () => jester({ cloth: DARK, diamond: silver, mask: silver, trim: SILVER, lips: BLACK, hatL: BLACK, hatR: silver, hatM: BLACK });
+  const fouRouge = () => jester({ cloth: RED, diamond: BLACK, mask: IVORY, trim: IVORY, lips: RED, hatL: RED, hatR: BLACK, hatM: RED, tear: true });
+  // ---------- le Prince sans Visage : tricorne, plume, masque lisse ----------
+  function prince() {
+    const g = new THREE.Group();
+    g.add(part(G.sphere(0.9), RED, { ink, scale: [1.12, 0.62, 0.74], pos: [0, -1.0, 0] }));
+    for (const s of [-1, 1]) g.add(part(G.box(0.5, 0.72, 0.08, 0.06), DEEP, { ink: 0.02, pos: [s * 0.42, -0.42, -0.12], rot: [0.15, s * 0.5, s * -0.25] }));
+    g.add(part(G.torus(0.3, 0.035), silver, { ink: 0.01, pos: [0, -0.7, 0.42], rot: [0.9, 0, 0] }));
+    g.add(part(G.sphere(0.09), IVORY, { ink: 0.01, pos: [0, -0.82, 0.6] }));
+    const head = new THREE.Group(); head.position.y = 0.06; g.add(head);
+    head.add(part(G.sphere(0.56), IVORY, { ink, scale: [0.88, 1.08, 0.92] })); // aucun trait : ni yeux, ni bouche
+    head.add(part(G.sphere(0.07), 0xFFFFFF, { ink: 0, pos: [-0.18, 0.22, 0.46], scale: [1, 1.6, 0.4] }));
+    const hat = new THREE.Group(); hat.position.y = 0.46; head.add(hat);
+    hat.add(part(G.cyl(0.78, 0.78, 0.07, 3), BLACK, { ink: 0.025, rot: [0, Math.PI / 6, 0] }));
+    hat.add(part(G.sphere(0.5), BLACK, { ink: 0.025, pos: [0, 0.12, 0], scale: [1, 0.78, 1] }));
+    for (let i = 0; i < 3; i++) { const a = i / 3 * TAU + Math.PI / 2; hat.add(part(G.box(0.95, 0.42, 0.05, 0.02), BLACK, { ink: 0.02, pos: [Math.cos(a) * 0.42, 0.12, Math.sin(a) * 0.42], rot: [0, -a + Math.PI / 2, 0] })); }
+    hat.add(part(G.torus(0.52, 0.025), silver, { ink: 0, pos: [0, 0.05, 0], rot: [Math.PI / 2, 0, 0] }));
+    const plume = part(tube([[0.3, 0.1, 0.1], [0.6, 0.5, 0.05], [0.95, 0.55, 0], [1.1, 0.3, 0]], 0.1), IVORY, { ink: 0.02 }); hat.add(plume);
+    g.scale.setScalar(1.1); g.position.y = 0.0;
+    g.userData.anim = { idle(t) { plume.rotation.z = Math.sin(t * TAU) * 0.1; } };
+    return g;
+  }
+  // ---------- la Dame au Masque : chignon, loup noir, plumes rouges, perles ----------
+  function dame() {
+    const g = bust(RED), h = g.userData.head;
+    for (let i = 0; i < 11; i++) { const a = Math.PI * (0.15 + 0.7 * i / 10); g.add(part(G.sphere(0.055), IVORY, { ink: 0.01, pos: [Math.cos(a) * 0.3, -0.62 - Math.sin(a) * 0.12, Math.sin(a) * 0.26 + 0.08] })); }
+    h.add(part(G.sphere(0.6), BLACK, { ink, pos: [0, 0.2, -0.26], scale: [1.02, 0.95, 0.8] }));
+    h.add(part(G.sphere(0.34), BLACK, { ink, pos: [0, 0.7, -0.22] }));
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; h.add(part(G.sphere(0.045), IVORY, { ink: 0.01, pos: [Math.cos(a) * 0.3, 0.7 + Math.sin(a) * 0.3, -0.05] })); }
+    const face = part(G.sphere(0.52), SKIN, { ink: 0.025, pos: [0, -0.06, 0.16], scale: [0.88, 1.06, 0.88] }); h.add(face);
+    const m = eyeMask(0.47, BLACK, SILVER, 0.04); m.position.set(0, -0.04, 0.16); h.add(m);
+    h.add(part(G.sphere(0.055), RED, { ink: 0.01, pos: [0, -0.3, 0.6], scale: [1.7, 0.55, 0.5] }));
+    for (const s of [-1, 1]) h.add(part(G.sphere(0.06), IVORY, { ink: 0.01, pos: [s * 0.46, -0.26, 0.14] }));
+    const plumes = [0, 1, 2].map(i => part(tube([[0.35, 0.3, 0], [0.6 + i * 0.1, 0.8 + i * 0.1, -0.05], [0.8 + i * 0.12, 1.1 + i * 0.08, -0.15]], 0.07), RED, { ink: 0.02 }));
+    plumes.forEach(p => h.add(p));
+    g.scale.setScalar(1.1); g.position.y = 0.0;
+    g.userData.anim = { idle(t) { plumes.forEach((p, i) => { p.rotation.z = Math.sin(t * TAU + i) * 0.06; }); } };
+    return g;
+  }
+  // ---------- le joker : masque vénitien blanc fendu en deux, sourire rouge ----------
+  function volto(face, smile) {
+    const g = new THREE.Group();
+    for (const s of [-1, 1]) { // la coque avant, fendue en deux (gauche : phi 0..π/2, droite : π/2..π), un peu décalée
+      const half = part(new THREE.SphereGeometry(0.72, 40, 28, s < 0 ? 0 : Math.PI / 2, Math.PI / 2), face, { ink: 0.03, scale: [0.8, 1.12, 0.55] });
+      half.position.set(s * 0.05, s * 0.05, 0); half.rotation.z = s * -0.06; g.add(half);
+    }
+    for (const s of [-1, 1]) g.add(part(G.sphere(0.12), BLACK, { ink: 0, pos: [s * 0.23, 0.18, 0.36], scale: [1.4, 0.8, 0.5] }));
+    g.add(part(G.torus(0.24, 0.05, Math.PI), smile, { ink: 0.015, pos: [0, -0.34, 0.3], rot: [0.25, 0, Math.PI] }));
+    const eyes = new THREE.Group(); eyes.name = 'eyes'; g.add(eyes);
+    g.add(part(G.torus(0.5, 0.03, Math.PI), silver, { ink: 0, pos: [0, 0.42, 0.18], rot: [0.5, 0, 0] }));
+    g.scale.setScalar(1.5); g.position.y = 0.05;
+    return g;
+  }
+  // ---------- le masque du Fou (scatter) : moitié argent, moitié carmin, clochettes ----------
+  function foolMask() {
+    const g = new THREE.Group();
+    const halo = part(G.cyl(1.35, 1.35, 0.02, 48), mat(RED, { emissive: RED, glow: 1, opacity: 0.35 }), { ink: 0, pos: [0, 0, -0.5], rot: [Math.PI / 2, 0, 0] }); g.add(halo);
+    const cols = [silver, RED];
+    [0, 1].forEach(i => g.add(part(new THREE.SphereGeometry(0.68, 40, 28, i * Math.PI / 2, Math.PI / 2), cols[i], { ink: 0.03, scale: [0.95, 1.0, 0.55] }))); // moitié argent à gauche, carmin à droite
+    for (const s of [-1, 1]) g.add(part(G.sphere(0.13), BLACK, { ink: 0, pos: [s * 0.26, 0.05, 0.34], scale: [1.4, 0.75, 0.5] }));
+    g.add(part(G.box(0.12, 0.12, 0.05, 0.02), RED, { ink: 0.01, pos: [-0.26, -0.2, 0.33], rot: [0, 0, Math.PI / 4] }), part(G.box(0.12, 0.12, 0.05, 0.02), IVORY, { ink: 0.01, pos: [0.26, -0.2, 0.33], rot: [0, 0, Math.PI / 4] }));
+    const bells = [];
+    [[tube([[-0.4, 0.3, 0], [-0.85, 0.6, 0], [-1.1, 0.3, 0.05]], 0.11), silver, [-1.1, 0.22, 0.05]], [tube([[0.4, 0.3, 0], [0.85, 0.6, 0], [1.1, 0.3, 0.05]], 0.11), RED, [1.1, 0.22, 0.05]], [tube([[0, 0.5, 0], [0.1, 0.95, -0.05], [0.35, 1.1, 0]], 0.11), BLACK, [0.4, 1.05, 0]]]
+      .forEach(([geo, col, bp]) => { g.add(part(geo, col, { ink: 0.025 })); const b = bell(...bp, 0.14); g.add(b); bells.push(b); });
+    g.scale.setScalar(1.2);
+    g.userData.anim = { idle(t) { halo.scale.setScalar(1 + Math.sin(t * TAU * 2) * 0.06); bells.forEach((b, i) => { b.rotation.z = Math.sin(t * TAU * 3 + i) * 0.5; }); } };
+    return g;
+  }
+  return {
+    SYMS: [null, null, null, null, null, rose, crane, fouNoir, fouRouge, prince, dame],
+    SCAT: foolMask,
+    VARIANTES: { wild: { wild: () => volto(IVORY, RED), red: () => volto(RED, BLACK) } },
+    shroom: fouRouge, // le personnage vedette (utilisé par la Promenade et le décor)
+  };
+};
 
 // ---------- ART3D : les personnages de Dead City (construits avec KIT3D) ----------
 MODELES["dead-city"] = K => {
@@ -995,6 +1209,141 @@ MODELES["constella"] = K => {
 };
 
 const DECORS = {};
+// ---------- DECOR3D : la salle de bal de Masquerade of Madness ; pendant le bonus, les bougies rougissent et la valse s'emballe ----------
+DECORS["masquerade"] = (K, M) => ({
+  build(scene, cam) {
+    const { THREE, part, G, TAU, sky, dots } = K;
+    const C = c => new THREE.Color(c), lerp = (a, b, t) => C(a).lerp(C(b), t);
+    const grad = K.mat(0xffffff).gradientMap;
+    const toon = (c, o = {}) => { const m = new THREE.MeshToonMaterial({ color: c, gradientMap: grad }); if (o.emissive) { m.emissive = C(o.emissive); m.emissiveIntensity = o.glow ?? 1; } if (o.map) m.map = o.map; return m; };
+    const P = (geo, m, o = {}) => part(geo, m instanceof THREE.Material ? m : toon(m, o), { ink: 0.03, ...o });
+    const grp = (...c) => { const g = new THREE.Group(); g.add(...c.flat()); return g; };
+    const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+    const rnd = (() => { let s = 31; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+    const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.5)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+    const halo = (col, size, op = 1) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.scale.setScalar(size); return s; };
+    const canvasTex = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...rep); } return t; };
+    const silver = K.pbr ? K.pbr(0xD8D2C6, { metal: 0.9, rough: 0.3 }) : 0xB9B3A8;
+    const N = { top: 0x040305, mid: 0x220610, bot: 0x0A0406, fog: 0x14060C, flame: 0xFFC870, light: 0xFFB060 }, B = { top: 0x0A0002, mid: 0x4A0010, bot: 0x1A0006, fog: 0x3A0010, flame: 0xFF3A4A, light: 0xFF2A3A };
+
+    cam.position.set(0, 3.4, 15); cam.userData.target.set(0, 4, 0);
+    scene.fog = new THREE.Fog(N.fog, 22, 80);
+    const skyM = sky(N.top, N.mid, N.bot); scene.add(skyM);
+    const hemi = new THREE.HemisphereLight(0xFFD8B0, 0x1A0610, 1.0); scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xFFE0C0, 0.9); key.position.set(-6, 12, 10); scene.add(key);
+
+    // parquet en damier de marbre, luisant
+    const checker = canvasTex(256, 256, (x, w, h) => {
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { x.fillStyle = (i + j) % 2 ? '#0C0A0E' : '#6E675E'; x.fillRect(i * 128, j * 128, 128, 128); }
+      x.strokeStyle = 'rgba(255,255,255,.08)'; x.lineWidth = 2; for (let k = 0; k < 6; k++) { x.beginPath(); x.moveTo(rnd() * w, 0); x.bezierCurveTo(rnd() * w, h * .3, rnd() * w, h * .7, rnd() * w, h); x.stroke(); }
+    }, [28, 28]);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), new THREE.MeshStandardMaterial({ map: checker, roughness: 0.28, metalness: 0.15 }));
+    floor.rotation.x = -Math.PI / 2; scene.add(floor);
+    // mur du fond : damas sombre, pilastres d'argent, tableaux masqués
+    const damask = canvasTex(128, 160, (x, w, h) => {
+      x.fillStyle = '#1A0610'; x.fillRect(0, 0, w, h); x.fillStyle = '#2A0A16';
+      const fleur = (cx, cy, s) => { x.beginPath(); x.moveTo(cx, cy - 30 * s); x.bezierCurveTo(cx + 22 * s, cy - 6 * s, cx + 16 * s, cy + 14 * s, cx, cy + 30 * s); x.bezierCurveTo(cx - 16 * s, cy + 14 * s, cx - 22 * s, cy - 6 * s, cx, cy - 30 * s); x.fill(); };
+      fleur(64, 80, 1.4); fleur(0, 0, 1); fleur(128, 0, 1); fleur(0, 160, 1); fleur(128, 160, 1);
+    }, [16, 4]);
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(90, 32), toon(0xffffff, { map: damask })); at(wall, 0, 16, -28); scene.add(wall);
+    for (let i = -4; i <= 4; i++) { const x = i * 9; scene.add(P(G.box(1.2, 22, 0.8, 0.1), 0x2A2630, { pos: [x, 11, -27.4], ink: 0.02 })); scene.add(P(G.box(1.7, 0.8, 1.1, 0.1), silver, { pos: [x, 22.2, -27.2], ink: 0.02 })); scene.add(P(G.box(1.7, 0.8, 1.1, 0.1), silver, { pos: [x, 0.4, -27.2], ink: 0.02 })); }
+    scene.add(P(G.box(90, 1, 1.4, 0.2), silver, { pos: [0, 23, -27.2], ink: 0.02 }));
+    const portraitTex = (bg, maskCol, lip) => canvasTex(128, 170, (x, w, h) => {
+      x.fillStyle = bg; x.fillRect(0, 0, w, h); x.fillStyle = '#0A080C'; x.beginPath(); x.ellipse(64, 180, 60, 70, 0, 0, TAU); x.fill();
+      x.fillStyle = '#CFC6B4'; x.beginPath(); x.ellipse(64, 78, 30, 40, 0, 0, TAU); x.fill();
+      x.fillStyle = maskCol; x.beginPath(); x.moveTo(30, 70); x.bezierCurveTo(44, 54, 84, 54, 98, 70); x.bezierCurveTo(90, 86, 74, 86, 64, 78); x.bezierCurveTo(54, 86, 38, 86, 30, 70); x.fill();
+      x.fillStyle = '#000'; x.beginPath(); x.ellipse(50, 71, 6, 3, 0, 0, TAU); x.ellipse(78, 71, 6, 3, 0, 0, TAU); x.fill();
+      x.strokeStyle = lip; x.lineWidth = 4; x.beginPath(); x.moveTo(52, 100); x.quadraticCurveTo(64, 108, 76, 100); x.stroke();
+    });
+    const portraits = [[-18, '#3A0008', '#15121A', '#C8102E'], [-7, '#15121A', '#EFE8DA', '#6A0010'], [7, '#1E1A22', '#C8102E', '#C8102E'], [18, '#3A0008', '#EFE8DA', '#15121A']].map(([x, bg, mk, lp]) => {
+      const g = grp(P(G.box(4.4, 5.6, 0.3, 0.15), silver, { ink: 0.02 }), at(new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.8), toon(0xffffff, { map: portraitTex(bg, mk, lp) })), 0, 0, 0.17));
+      at(g, x, 11, -27); scene.add(g); return g;
+    });
+    // lustres : couronnes d'argent, bougies, flammes, lumière chaude
+    const flames = [], chandeliers = [], lights = [];
+    [[-9, 14, -12, 0.9], [0, 15.5, -16, 1.2], [9, 14, -12, 0.9]].forEach(([x, y, z, s], ci) => {
+      const g = new THREE.Group();
+      g.add(at(P(G.cyl(0.05, 0.05, 6, 8), 0x3A3733, { ink: 0 }), 0, 3, 0));
+      g.add(P(G.torus(2.2, 0.12), silver, { rot: [Math.PI / 2, 0, 0], ink: 0.02 }), at(P(G.torus(1.3, 0.1), silver, { rot: [Math.PI / 2, 0, 0], ink: 0.02 }), 0, 0.9, 0));
+      g.add(at(P(G.sphere(0.45), silver, { ink: 0.02 }), 0, -0.3, 0), at(P(G.cone(0.3, 0.8, 16), silver, { ink: 0.02, rot: [Math.PI, 0, 0] }), 0, -0.9, 0));
+      for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, r = i % 2 ? 1.3 : 2.2, yy = i % 2 ? 0.9 : 0; g.add(at(P(G.cyl(0.09, 0.09, 0.5, 10), 0xEFE8DA, { ink: 0.01 }), Math.cos(a) * r, yy + 0.3, Math.sin(a) * r));
+        const f = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.32, 10), new THREE.MeshBasicMaterial({ color: N.flame })); at(f, Math.cos(a) * r, yy + 0.72, Math.sin(a) * r); g.add(f); flames.push(f); }
+      g.add(at(halo(N.light, 9, 0.5), 0, 0.5, 0));
+      const l = new THREE.PointLight(N.light, 28, 26, 1.6); l.position.set(0, -0.5, 0); g.add(l); lights.push(l);
+      g.scale.setScalar(s); at(g, x, y, z); g.userData.ph = ci * 2; scene.add(g); chandeliers.push(g);
+    });
+    // rideaux rouges de chaque côté (plis ondulés)
+    const curtM = toon(0x8A0A1E);
+    const curtain = s => { const geo = new THREE.PlaneGeometry(7, 26, 40, 1), p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 2.4) * 0.35); geo.computeVertexNormals(); const m = new THREE.Mesh(geo, curtM); m.material.side = THREE.DoubleSide; at(m, s * 14.5, 13, -4); m.rotation.y = -s * 0.35; scene.add(m); return m; };
+    const curtains = [curtain(-1), curtain(1)];
+    scene.add(P(G.box(40, 2.4, 1, 0.2), 0x5A0010, { pos: [0, 25, -4] }));
+    // les invités qui valsent au fond : des couples masqués qui tournent sur eux-mêmes
+    const guest = (dress, mask, hat) => grp(
+      P(G.cone(0.75, 2.1, 20), dress, { pos: [0, 1.05, 0] }), P(G.capsule(0.28, 0.5), dress, { pos: [0, 2.2, 0] }),
+      P(G.sphere(0.3), 0xE6DDCC, { pos: [0, 2.85, 0] }), P(G.box(0.46, 0.14, 0.12, 0.05), mask, { pos: [0, 2.9, 0.26], ink: 0.015 }),
+      hat ? P(G.cone(0.32, 0.55, 12), hat, { pos: [0, 3.25, 0] }) : P(G.sphere(0.32), 0x15121A, { pos: [0, 3.0, -0.08], scale: [1, 0.8, 1] }));
+    const couples = [];
+    [[-10, -10], [-5.5, -16], [5.5, -15], [10.5, -9.5], [-14, -18], [14, -19], [0, -21]].forEach(([x, z], i) => {
+      const a = guest(i % 2 ? 0x8A0A1E : 0x1E1A22, 0xEFE8DA, i % 3 === 0 ? 0x6A0010 : null), b = guest(0x15121A, i % 2 ? 0xC8102E : 0xB9B3A8, 0x15121A);
+      at(a, -0.42, 0, 0); a.rotation.y = Math.PI / 2; at(b, 0.42, 0, 0); b.rotation.y = -Math.PI / 2;
+      const c = grp(a, b); at(c, x, 0, z); c.userData = { x, z, ph: rnd() * TAU, sp: 0.5 + rnd() * 0.4, r: 0.8 + rnd() * 1.2 }; scene.add(c); couples.push(c);
+    });
+    // statues sur socle et vases de roses blanches (elles rougissent pendant le bonus)
+    const roseM = toon(0xEFE8DA);
+    [-1, 1].forEach(s => {
+      const st = grp(P(G.box(1.8, 1.4, 1.8, 0.1), 0x2A2724, { pos: [0, 0.7, 0] }), P(G.cone(0.6, 2.6, 16), 0x9A9284, { pos: [0, 2.7, 0] }), P(G.sphere(0.42), 0x9A9284, { pos: [0, 4.3, 0] }), P(G.box(0.7, 0.16, 0.14, 0.05), 0x2A2724, { pos: [0, 4.35, 0.36], ink: 0.01 }));
+      at(st, s * 7.5, 0, -5); st.rotation.y = -s * 0.4; scene.add(st);
+      const v = grp(P(G.cyl(0.35, 0.5, 1.1, 16), 0x2A2724, { pos: [0, 0.55, 0] }), ...[[-0.25, 1.4], [0.2, 1.5], [0, 1.75], [0.3, 1.25], [-0.3, 1.2]].map(([x, y]) => P(G.sphere(0.2), roseM, { pos: [x, y, 0], ink: 0.015 })));
+      at(v, s * 6, 0, -2.2); scene.add(v);
+    });
+    // candélabres au sol, près de la machine
+    const candel = () => { const g = grp(P(G.cyl(0.08, 0.1, 3.4, 10), silver, { pos: [0, 1.7, 0], ink: 0.015 }), P(G.cyl(0.5, 0.6, 0.12, 16), silver, { pos: [0, 0.06, 0], ink: 0.015 }), P(G.torus(0.6, 0.05, Math.PI), silver, { pos: [0, 3.3, 0], ink: 0.01 }));
+      [-0.6, 0, 0.6].forEach(x => { g.add(P(G.cyl(0.07, 0.07, 0.45, 10), 0xEFE8DA, { pos: [x, 3.55 + (x ? 0 : 0.2), 0], ink: 0.01 })); const f = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.26, 10), new THREE.MeshBasicMaterial({ color: N.flame })); at(f, x, 3.92 + (x ? 0 : 0.2), 0); g.add(f, at(halo(N.light, 1.4, 0.8), x, 3.95 + (x ? 0 : 0.2), 0)); flames.push(f); });
+      return g; };
+    [-1, 1].forEach(s => { const c = candel(); at(c, s * 4.6, 0, 1.5); scene.add(c); });
+    // masques qui flottent dans les airs
+    const floaters = [];
+    if (M) [[-6, 8.5, -8, 'wild'], [6.5, 9.5, -9, 'scat'], [-12, 11, -14, 'scat'], [12, 7.5, -12, 'wild'], [0, 11.5, -12, 'red']].forEach(([x, y, z, k], i) => {
+      const m = k === 'scat' ? M.SCAT() : M.VARIANTES.wild[k === 'red' ? 'red' : 'wild'](); const w = grp(m); w.scale.setScalar(0.9); at(w, x, y, z); w.userData = { y, ph: i * 1.3 }; scene.add(w); floaters.push(w);
+    });
+    // premier plan pour le téléphone : deux candélabres et un Fou juste sous la machine
+    const front = new THREE.Group(); scene.add(front);
+    [-1, 1].forEach(s => { const c = candel(); c.scale.setScalar(0.6); at(c, s * 1.7, 0, 9.2); front.add(c); });
+    if (M && M.shroom) { const f = M.shroom(); const w = grp(f); f.position.y = 1.4; w.scale.setScalar(0.5); at(w, 1.2, 0, 10); w.rotation.y = -0.4; front.add(w); }
+    // pétales qui tombent, poussière dorée
+    const NP = 90, petals = dots(NP, () => [(rnd() - 0.5) * 36, rnd() * 18, 6 - rnd() * 30], () => (rnd() < 0.7 ? 0xC8102E : 0xFF4A5E), { size: 9, twinkle: 1, additive: false });
+    scene.add(petals); const pB = Array.from(petals.geometry.attributes.position.array);
+    const dust = dots(160, () => [(rnd() - 0.5) * 40, rnd() * 16, 4 - rnd() * 30], () => (rnd() < 0.6 ? 0xFFD8A0 : 0xFFF3D0), { size: 5, twinkle: 3, opacity: 0.6 });
+    scene.add(dust);
+
+    return {
+      camFor(aspect) {
+        const narrow = aspect < 0.8; front.visible = narrow;
+        return narrow ? { pos: new THREE.Vector3(0, 3.0, 20), target: new THREE.Vector3(0, 3.4, 0) } : { pos: new THREE.Vector3(0, 3.4, 15), target: new THREE.Vector3(0, 4.2, 0) };
+      },
+      update(t, dt, s) {
+        const b = s.bonus;
+        const u = skyM.userData.u; u.top.value = lerp(N.top, B.top, b); u.mid.value = lerp(N.mid, B.mid, b); u.bottom.value = lerp(N.bot, B.bot, b);
+        scene.fog.color = lerp(N.fog, B.fog, b); hemi.color = lerp(0xFFD8B0, 0xFF8A9A, b);
+        const fc = lerp(N.flame, B.flame, b), lc = lerp(N.light, B.light, b);
+        flames.forEach((f, i) => { f.material.color = fc; f.scale.set(1 + Math.sin(t * 17 + i) * 0.12, 1 + Math.sin(t * 11 + i * 2) * 0.25, 1); });
+        lights.forEach((l, i) => { l.color = lc; l.intensity = 26 + Math.sin(t * 9 + i) * 2 + Math.sin(t * 13 + i) * 1.5; });
+        chandeliers.forEach(g => { g.rotation.z = Math.sin(t * 0.5 + g.userData.ph) * (0.02 + b * 0.08); g.rotation.y = t * 0.05; });
+        const speed = 1 + b * 1.4;
+        couples.forEach(c => { const d = c.userData, a = t * 0.25 * speed + d.ph; c.position.set(d.x + Math.cos(a) * d.r, Math.abs(Math.sin(t * 3 * speed + d.ph)) * 0.06, d.z + Math.sin(a) * d.r * 0.5); c.rotation.y = t * d.sp * 2.2 * speed + d.ph; });
+        floaters.forEach(w => { const d = w.userData; w.position.y = d.y + Math.sin(t * 0.7 + d.ph) * 0.5; w.rotation.y = Math.sin(t * 0.4 + d.ph) * 0.6; w.rotation.z = Math.sin(t * 0.5 + d.ph) * 0.1; });
+        curtains.forEach((c, i) => { c.rotation.y = (i ? -1 : 1) * (0.35 + Math.sin(t * 0.3 + i) * 0.04); });
+        roseM.color = lerp(0xEFE8DA, 0xC8102E, b);
+        portraits.forEach((p, i) => { p.rotation.y = b * Math.sin(t * 0.8 + i) * 0.08; });
+        const pp = petals.geometry.attributes.position;
+        for (let i = 0; i < NP; i++) { const k = ((pB[i * 3 + 1] / 18) - t * 0.04 * (1 + b) + 10) % 1; pp.setXYZ(i, pB[i * 3] + Math.sin(t * 0.8 + i) * 1.2, k * 18, pB[i * 3 + 2]); }
+        pp.needsUpdate = true; petals.userData.u.uTime.value = t; petals.userData.u.uOpacity.value = 0.5 + b * 0.5;
+        dust.userData.u.uTime.value = t;
+      },
+    };
+  },
+});
+
 // ---------- DECOR3D : la ville évacuée de Dead City, nuit rouge ; pendant le bonus, le nuage toxique monte et la horde envahit la rue ----------
 DECORS["dead-city"] = (K, M) => ({
   build(scene, cam) {
@@ -1734,7 +2083,7 @@ async function world() {
     if (MODELES[g.id]) { try {
       const M = MODELES[g.id](KIT3D(THREE));
       const add = (m, x, y, z, s, spin) => { if (!m) return; const w = new THREE.Group(); w.add(m); w.position.set(x, y, z); w.scale.setScalar(s); w.userData.spin = spin; w.userData.y0 = y; grp.add(w); deco.push(w); };
-      add(M.SYMS[7] && M.SYMS[7](), -1.75, .5, .9, .5, 0); add(M.SYMS[4] && M.SYMS[4](), 1.75, .5, .9, .5, 0); add(M.SCAT && M.SCAT(), 0, 4.55, .3, .42, 1);
+      const hs = M.SYMS.filter(Boolean); add(hs.at(-1) && hs.at(-1)(), -1.75, .5, .9, .5, 0); add(hs[Math.max(0, hs.length - 4)] && hs[Math.max(0, hs.length - 4)](), 1.75, .5, .9, .5, 0); add(M.SCAT && M.SCAT(), 0, 4.55, .3, .42, 1);
     } catch (e) { console.warn('décor de borne', g.id, e); } }
     scene.add(grp); cabs.push({ grp, screen, bulbs, btns, light, hit, deco, sign });
   }

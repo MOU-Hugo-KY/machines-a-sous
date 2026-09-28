@@ -2,6 +2,47 @@
   "_lisezmoi": "Catalogue de la Promenade. Une entrée par machine, dans l'ordre du boulevard. Après modification : python3 .claude/skills/machine-a-sous/scripts/construire-salle.py",
   "machines": [
     {
+      "id": "masquerade",
+      "nom": "Masquerade",
+      "sousTitre": "of Madness",
+      "page": "jeux/masquerade-3d.html",
+      "lite": "jeux/masquerade.html",
+      "vignette": "app/vignettes/masquerade-3d.jpg",
+      "modeles": ".claude/skills/machine-a-sous/kit/exemple-masquerade.js",
+      "couleur": "#FF2340",
+      "badge": "Nouveau",
+      "desc": "Le Bal des Fous. Gravure baroque, cascades, jauge de raison qui s'effondre, Fou Rouge et Fou Noir, dernière danse et masques à retirer.",
+      "tags": [
+        "3D",
+        "Baroque",
+        "Cascades"
+      ],
+      "bonus": "1 / 260",
+      "grille": "5×5 grappes",
+      "max": "50 000×",
+      "trophees": [
+        {
+          "id": "madness",
+          "flag": "madness",
+          "nom": "Perdre la raison",
+          "desc": "Faire tomber la jauge SANITY à 0 %."
+        },
+        {
+          "id": "masque-profond",
+          "flag": "masque-profond",
+          "nom": "Sous le troisième masque",
+          "desc": "Retirer au moins trois masques dans Remove the Mask."
+        },
+        {
+          "id": "bal-des-fous",
+          "flag": "bal-des-fous",
+          "nom": "Le Bal des Fous",
+          "desc": "Danser avec les deux Fous jusqu'au bout."
+        }
+      ],
+      "decor": ".claude/skills/machine-a-sous/kit/decor-masquerade.js"
+    },
+    {
       "id": "dead-city",
       "nom": "Dead City",
       "sousTitre": "Last Spin",
@@ -10,7 +51,7 @@
       "vignette": "app/vignettes/dead-city-3d.jpg",
       "modeles": ".claude/skills/machine-a-sous/kit/exemple-dead-city.js",
       "couleur": "#FF5A3A",
-      "badge": "Nouveau",
+      "badge": "",
       "desc": "La ville est tombée. Cascades de zombies, jauge d'invasion, horde et patient zéro.",
       "tags": [
         "3D",

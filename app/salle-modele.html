@@ -426,7 +426,7 @@ async function world() {
     if (MODELES[g.id]) { try {
       const M = MODELES[g.id](KIT3D(THREE));
       const add = (m, x, y, z, s, spin) => { if (!m) return; const w = new THREE.Group(); w.add(m); w.position.set(x, y, z); w.scale.setScalar(s); w.userData.spin = spin; w.userData.y0 = y; grp.add(w); deco.push(w); };
-      add(M.SYMS[7] && M.SYMS[7](), -1.75, .5, .9, .5, 0); add(M.SYMS[4] && M.SYMS[4](), 1.75, .5, .9, .5, 0); add(M.SCAT && M.SCAT(), 0, 4.55, .3, .42, 1);
+      const hs = M.SYMS.filter(Boolean); add(hs.at(-1) && hs.at(-1)(), -1.75, .5, .9, .5, 0); add(hs[Math.max(0, hs.length - 4)] && hs[Math.max(0, hs.length - 4)](), 1.75, .5, .9, .5, 0); add(M.SCAT && M.SCAT(), 0, 4.55, .3, .42, 1);
     } catch (e) { console.warn('décor de borne', g.id, e); } }
     scene.add(grp); cabs.push({ grp, screen, bulbs, btns, light, hit, deco, sign });
   }

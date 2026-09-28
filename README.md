@@ -2,7 +2,7 @@
 
 ## La Promenade (le lobby)
 
-`index.html` est **la Promenade** : une allée de bornes d'arcade en 3D, chacune avec son enseigne néon et ses personnages. Derrière la borne que tu regardes s'ouvre le monde de sa machine : la ville détruite en feu et ses zombies pour Dead City, la forêt d'automne et ses animaux pour Champi Pop, l'espace avec le soleil, la lune et les étoiles pour Constella. Tu glisses pour te promener, et quand tu touches une borne, la caméra plonge dans son écran et la machine s'ouvre. Au bout du boulevard, **le Grand Levier** choisit une machine au hasard.
+`index.html` est **la Promenade** : une allée de bornes d'arcade en 3D, chacune avec son enseigne néon et ses personnages. Derrière la borne que tu regardes s'ouvre le monde de sa machine : la salle de bal aux lustres et aux masques qui flottent pour Masquerade, la ville détruite en feu et ses zombies pour Dead City, la forêt d'automne et ses animaux pour Champi Pop, l'espace avec le soleil, la lune et les étoiles pour Constella. Tu glisses pour te promener, et quand tu touches une borne, la caméra plonge dans son écran et la machine s'ouvre. Au bout du boulevard, **le Grand Levier** choisit une machine au hasard.
 
 - **Lucioles** : la monnaie fictive de la Promenade, partagée entre toutes les machines (5 000 au départ).
 - **Coffre du jour** : des lucioles chaque jour, avec un bonus quand tu reviens plusieurs jours de suite (7 jours affichés).
@@ -17,6 +17,7 @@ La page est générée : modifie `app/salle-modele.html` ou `app/catalogue.json`
 | [Champi Pop](jeux/champi-pop.html) | Forêt d'automne, machine en bois sous un toit-champignon | Tours gratuits : les champignons paient en chemins, avec des pouvoirs (mycélium, lune rousse, écureuil, spores, rond de sorcière) |
 | [Constella](jeux/constella.html) | Observatoire sur une colline, la nuit | Les étoiles restent au ciel et dessinent des constellations qui paient et déclenchent un pouvoir |
 | [Champi Pop 3D](jeux/champi-pop-3d.html) | Champi Pop en 3D, dans une forêt d'automne 3D vivante qui passe à la nuit pendant le bonus | Le même, avec une ronde 3D à l'entrée du bonus et sur les gros gains |
+| [Masquerade of Madness 3D](jeux/masquerade-3d.html) ([2D](jeux/masquerade.html)) | Bal masqué décadent dans un palais baroque, gravure noir, ivoire et carmin, en 3D | Grille 5×5 en grappes avec cascades, Fou Rouge (chaîne de jokers et rire ×2 à ×25) et Fou Noir (chasse les petites cartes), jauge SANITY qui mène au MADNESS MODE ; The Masquerade (dernière danse : 3 partenaires, même gain moyen, risque différent), Remove the Mask (masques sous les masques), Le Bal des Fous (les deux Fous, multiplicateur sans fin) |
 | [Dead City 3D](jeux/dead-city-3d.html) ([2D](jeux/dead-city.html)) | Ville évacuée pendant une invasion zombie, nuit rouge, en 3D | Grille 5×5 en grappes avec cascades, jauge d'invasion, horde et patient zéro ; The Outbreak (zombies collants), Last Stand (portes à choisir, fuite avec le butin), Extraction (grimper jusqu'à l'hélico) |
 | [Constella 3D](jeux/constella-3d.html) | Constella en 3D, sur une colline étoilée 3D (aurores, lune, planètes, village, feu de camp) | Le même, avec une ronde 3D à l'entrée du bonus et sur les gros gains |
 
