@@ -118,10 +118,10 @@ const KIT3D = THREE => {
       o.scale.set(1 + s * 0.02, 1 - s * 0.02, 1 + s * 0.02);
       blink(o, t > 0.78 && t < 0.84);
     },
-    win(t, o) { // accroupi, saut avec tour complet, réception écrasée
+    win(t, o) { // accroupi, saut joyeux avec un petit dandinement, réception écrasée ; le personnage reste de face
       let y = 0, sy = 1, ry = 0;
       if (t < 0.18) { sy = 1 - 0.18 * ease.out(t / 0.18); }
-      else if (t < 0.7) { const k = (t - 0.18) / 0.52; y = Math.sin(k * Math.PI) * 0.42; sy = 1 + 0.12 * Math.sin(k * Math.PI); ry = ease.inOut(k) * TAU; }
+      else if (t < 0.7) { const k = (t - 0.18) / 0.52; y = Math.sin(k * Math.PI) * 0.36; sy = 1 + 0.1 * Math.sin(k * Math.PI); ry = Math.sin(k * TAU) * 0.3; }
       else { const k = (t - 0.7) / 0.3; sy = 1 - 0.15 * Math.sin(k * Math.PI) * (1 - k); }
       o.position.y = y - 0.12; o.rotation.set(0, ry, 0); const sc = 0.9; o.scale.set(sc * (1 + (1 - sy) * 0.6), sc * sy, sc * (1 + (1 - sy) * 0.6)); // un peu plus petit pour que le saut tienne dans la case
       blink(o, false);
@@ -153,10 +153,11 @@ const KIT3D = THREE => {
     ANIM.idle(0, pivot);
     return { ...out, frames: N, model };
   }
-  // HTML d'un symbole cuit : les deux planches ; le CSS choisit laquelle jouer (.cell.win -> victoire)
-  const html = (b, cls = '') => `<i class="s3d ${cls}" style="--n:${b.frames}"><img class="idle" src="${b.idle}" alt=""><img class="win" src="${b.win}" alt=""></i>`;
+  // HTML d'un symbole cuit : la planche défile en arrière-plan (background-position), sans calque graphique par case,
+  // ce qui reste léger même avec 144 cases ; le CSS choisit la planche (.cell.win -> victoire)
+  const html = (b, cls = '') => `<i class="s3d ${cls}" style="--n:${b.frames}; --idle:url(${b.idle}); --win:url(${b.win})"><b></b></i>`;
 
-  // ---------- scène en direct : entrée du bonus, gros gains ----------
+  // ---------- scène en direct : entrée du bonus ----------
   // const st = K.live(canvas); st.set([modèles]); st.play((t, objs) => {...}); st.stop();
   function live(canvas) {
     const r = renderer(canvas.clientWidth || innerWidth, canvas.clientHeight || innerHeight, canvas);
@@ -199,14 +200,15 @@ const KIT3D = THREE => {
     return pts;
   }
   const lerpColor = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
-  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, html, live, INK, sky, dots, lerpColor };
+  const endBake = () => { if (bakeR) { bakeR.dispose(); bakeR.forceContextLoss(); bakeR = null; } };
+  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, endBake, html, live, INK, sky, dots, lerpColor };
 };
 
 // ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
 // MODELS(K) renvoie { SYMS: [8 fonctions], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
 // Exemple : VARIANTES: { star: { star: () => …, gold: () => … } } remplace ART.star('gold') par sa version 3D.
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
-const STAGE3D = { intro() {}, big() {}, stop() {} }; // sans 3D, ces appels ne font rien
+const STAGE3D = { intro() {}, big() {}, stop() {} }; // sans 3D, ces appels ne font rien ; big() reste vide exprès (gros gains sans ronde, plus lisible)
 window.ART3D_STATE = 'chargement';
 // DECOR (facultatif) : décor 3D en fond d'écran, voir setupDecor
 async function CHARGE3D(ART, MODELS, DECOR) {
@@ -222,6 +224,7 @@ async function CHARGE3D(ART, MODELS, DECOR) {
       variants[name] = {};
       for (const [arg, f] of Object.entries(table)) { variants[name][arg] = K.html(await K.bake(f())); await frame(); }
     }
+    K.endBake();
     ART.SYMS = syms; ART.SCAT = scat;
     for (const [name, v] of Object.entries(variants)) { const old = ART[name]; ART[name] = (arg, ...rest) => v[arg] ?? old(arg, ...rest); }
     setupStage(K, M);
@@ -232,7 +235,7 @@ async function CHARGE3D(ART, MODELS, DECOR) {
     console.warn('3D indisponible, la machine garde ses dessins 2D :', e);
   }
 }
-// scène en direct : les personnages tournent en ronde autour du texte (entrée du bonus, gros gains)
+// scène en direct : les personnages tournent en ronde autour du texte (entrée du bonus)
 function setupStage(K, M) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const { THREE, TAU, ANIM, ease } = K;
@@ -256,7 +259,6 @@ function setupStage(K, M) {
     });
   }
   STAGE3D.intro = n => ring(Array.from({ length: Math.min(n, 6) }, () => M.SCAT()), false);
-  STAGE3D.big = tier => ring(M.SYMS.slice(tier >= 4 ? 0 : 4).map(f => f()), true);
   STAGE3D.stop = () => st.stop();
 }
 
@@ -285,7 +287,8 @@ function setupDecor(K, DECOR, M) {
   addEventListener('deviceorientation', e => { if (e.gamma != null) { tx = Math.max(-1, Math.min(1, e.gamma / 30)); ty = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); } }, { passive: true });
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (!document.hidden) {
+    const covered = document.querySelector('.bigwin.show, .intro.show');
+    if (!document.hidden && !(covered && shown)) {
       t += dt;
       const target = document.body.classList.contains('bonus') ? 1 : 0;
       s.bonus += (target - s.bonus) * (reduce ? 1 : Math.min(1, dt * 1.2));
