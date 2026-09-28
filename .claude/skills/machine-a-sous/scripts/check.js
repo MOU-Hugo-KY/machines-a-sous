@@ -26,14 +26,15 @@ const errors = [];
 const exe = ['/opt/pw-browsers/chromium', process.env.CHROMIUM_PATH].filter(p => p && fs.existsSync(p) && fs.statSync(p).isFile())[0];
 
 (async () => {
-  const browser = await chromium.launch(exe ? { executablePath: exe } : {});
+  // WebGL logiciel (SwiftShader) pour les machines en 3D, même sans carte graphique
+  const browser = await chromium.launch({ ...(exe ? { executablePath: exe } : {}), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const url = 'file://' + path.resolve(file);
 
   // 1. rendu réel (animations) à largeur de téléphone, puis sur ordinateur
   for (const [name, vp] of [['telephone', { width: 390, height: 844 }], ['ordinateur', { width: 1280, height: 900 }]]) {
     const page = await browser.newPage({ viewport: vp });
-    watch(page, name);
-    await page.goto(url); await page.waitForTimeout(1500);
+    await watch(page, name);
+    await page.goto(url); await page.waitForTimeout(1500); await wait3d(page, name);
     await page.screenshot({ path: `${OUT}/${name}-accueil.png` });
     if (name === 'telephone') {
       const sw = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -44,8 +45,8 @@ const exe = ['/opt/pw-browsers/chromium', process.env.CHROMIUM_PATH].filter(p =>
 
   // 2. partie accélérée (mouvements réduits + turbo) : spins puis achat des deux bonus
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
-  watch(page, 'partie');
-  await page.goto(url); await page.waitForTimeout(500);
+  await watch(page, 'partie');
+  await page.goto(url); await page.waitForTimeout(500); await wait3d(page, 'partie');
   await page.click('#turboBtn');
   const b0 = await balance(page);
   for (let i = 0; i < SPINS; i++) { await page.click('#spin'); await settle(page, `spin ${i + 1}`); }
@@ -71,7 +72,27 @@ const exe = ['/opt/pw-browsers/chromium', process.env.CHROMIUM_PATH].filter(p =>
   console.log('OK : aucune erreur.');
 })().catch(e => { console.error(e); process.exit(1); });
 
-function watch(page, tag) {
+// Three.js : servi depuis une copie locale (npm i --prefix <dossier scripts>) quand le CDN est inaccessible
+const THREE_DIR = [__dirname, process.cwd()].map(b => path.join(b, 'node_modules', 'three')).find(d => fs.existsSync(path.join(d, 'build'))) || null;
+async function withThree(page) {
+  if (!THREE_DIR) return;
+  await page.route(/cdn\.jsdelivr\.net\/npm\/three@[^/]+\/(.+)$/, route => {
+    const rel = route.request().url().match(/three@[^/]+\/(.+)$/)[1], f = path.join(THREE_DIR, rel);
+    fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'text/javascript', headers: { 'Access-Control-Allow-Origin': '*' } }) : route.continue();
+  });
+}
+// Machine en 3D : attend la fin de la cuisson des modèles (window.ART3D_STATE), échoue si elle a raté
+async function wait3d(page, tag) {
+  const has = await page.evaluate(() => 'ART3D_STATE' in window);
+  if (!has) return;
+  await page.waitForFunction(() => window.ART3D_STATE !== 'chargement', null, { timeout: 180000 }).catch(() => {});
+  const st = await page.evaluate(() => [window.ART3D_STATE, window.ART3D_ERROR]);
+  if (st[0] !== 'ok') errors.push(`[${tag}] 3D : ${st[0]} ${st[1] || ''}`.trim());
+  else if (tag === 'telephone') console.log('3D : modèles cuits');
+  await page.waitForTimeout(400);
+}
+async function watch(page, tag) {
+  await withThree(page);
   page.on('pageerror', e => errors.push(`[${tag}] erreur JS : ${e.message}`));
   // les ressources manquantes sont signalées par requestfailed (avec leur adresse) ; Google Fonts est facultatif
   page.on('console', m => { if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) errors.push(`[${tag}] console : ${m.text()}`); });
@@ -93,7 +114,7 @@ async function settle(page, what, bonus = false, shot = null) {
     if (st.inBonus) sawBonus = true;
     if (shot && st.inBonus && !shotMid && Date.now() - t0 > 6000) { await page.screenshot({ path: `${shot}-en-cours.png` }); shotMid = true; }
     if (st.intro) { if (shot) await page.screenshot({ path: `${shot}-entree.png` }); await page.click('#introBtn'); continue; }
-    if (st.big) { await page.click('#bwLayer'); continue; }
+    if (st.big) { await page.evaluate(() => document.getElementById('bwLayer').click()); await page.waitForTimeout(400); continue; } // clic direct : le calque peut être en train de se refermer
     if (st.over) { if (shot && sawBonus) await page.screenshot({ path: `${shot}-fin.png` }); await page.click('#ovBtn'); continue; }
     if (st.free && !st.inBonus && (!bonus || sawBonus)) return;
   }

@@ -1,0 +1,234 @@
+// ---------- KIT 3D : personnages en 3D façon dessin animé (Three.js), cuits en planches animées ----------
+// À coller tel quel dans la machine, juste avant ART3D. Aucune dépendance autre que THREE (passé en paramètre).
+// Voir .claude/skills/machine-a-sous/references/3d.md
+const KIT3D = THREE => {
+  const TAU = Math.PI * 2;
+  // dégradé en 4 paliers : l'ombrage « cel » des dessins animés
+  const grad = (() => { const d = new Uint8Array([70, 70, 70, 255, 150, 150, 150, 255, 215, 215, 215, 255, 255, 255, 255, 255]); const t = new THREE.DataTexture(d, 4, 1); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+  const INK = { color: 0x2B2350 };
+  const cache = new Map();
+
+  // matériau toon ; opts : { emissive, glow, opacity }
+  function mat(color, o = {}) {
+    const key = color + JSON.stringify(o);
+    if (cache.has(key)) return cache.get(key);
+    const m = new THREE.MeshToonMaterial({ color, gradientMap: grad, transparent: o.opacity != null && o.opacity < 1, opacity: o.opacity ?? 1 });
+    if (o.emissive) { m.emissive = new THREE.Color(o.emissive); m.emissiveIntensity = o.glow ?? 0.6; }
+    cache.set(key, m); return m;
+  }
+  // contour noir par « coque inversée » : la face arrière, gonflée le long des normales
+  function inkMat(w) {
+    const key = 'ink' + w;
+    if (cache.has(key)) return cache.get(key);
+    const m = new THREE.MeshBasicMaterial({ color: INK.color, side: THREE.BackSide });
+    m.onBeforeCompile = s => { s.vertexShader = s.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + normal * ${w.toFixed(4)};`); };
+    cache.set(key, m); return m;
+  }
+  // une pièce : géométrie + couleur, avec contour (o.ink = épaisseur, 0 pour aucun)
+  function part(geo, color, o = {}) {
+    const g = new THREE.Group();
+    const m = new THREE.Mesh(geo, color instanceof THREE.Material ? color : mat(color, o));
+    g.add(m);
+    const w = o.ink ?? 0.05;
+    if (w > 0) { const e = new THREE.Mesh(geo, inkMat(w)); e.renderOrder = -1; g.add(e); }
+    if (o.pos) g.position.set(...o.pos);
+    if (o.rot) g.rotation.set(...o.rot);
+    if (o.scale) typeof o.scale === 'number' ? g.scale.setScalar(o.scale) : g.scale.set(...o.scale);
+    g.userData.mesh = m;
+    return g;
+  }
+  // raccourcis de géométries (segments assez nombreux pour que le contour reste lisse)
+  const G = {
+    sphere: (r = 1) => new THREE.SphereGeometry(r, 40, 28),
+    box: (w, h, d, r = 0.12) => roundedBox(w, h, d, r),
+    cyl: (rt, rb, h, s = 32) => new THREE.CylinderGeometry(rt, rb, h, s),
+    cone: (r, h, s = 32) => new THREE.ConeGeometry(r, h, s),
+    torus: (R, r, arc = TAU) => new THREE.TorusGeometry(R, r, 20, 64, arc),
+    capsule: (r, len) => new THREE.CapsuleGeometry(r, len, 12, 24),
+    lathe: (pts, s = 48) => new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), s),
+    // extrusion d'une forme 2D (étoile, cœur, lune…) avec bords arrondis
+    extrude: (shape, depth = 0.3, bevel = 0.08) => { const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 6, curveSegments: 32 }); g.center(); g.computeVertexNormals(); return g; },
+    star: (R = 1, r = 0.45, n = 5) => { const s = new THREE.Shape(); for (let i = 0; i < n * 2; i++) { const a = Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r : R; i ? s.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : s.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } return s; },
+    // bosselle une sphère (rochers, nuages, buissons) ; graine fixe pour garder la même forme
+    lumpy: (r = 1, amp = 0.12, seed = 1) => { const g = new THREE.IcosahedronGeometry(r, 5), p = g.attributes.position, v = new THREE.Vector3(); for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = Math.sin(v.x * 3.1 + seed) * Math.sin(v.y * 2.7 + seed * 2) * Math.sin(v.z * 3.3 + seed * 3); v.multiplyScalar(1 + n * amp); p.setXYZ(i, v.x, v.y, v.z); } g.computeVertexNormals(); return g; },
+  };
+  function roundedBox(w, h, d, r) {
+    const s = new THREE.Shape(), x = w / 2 - r, y = h / 2 - r;
+    s.moveTo(-x, -h / 2); s.lineTo(x, -h / 2); s.quadraticCurveTo(w / 2, -h / 2, w / 2, -y); s.lineTo(w / 2, y); s.quadraticCurveTo(w / 2, h / 2, x, h / 2);
+    s.lineTo(-x, h / 2); s.quadraticCurveTo(-w / 2, h / 2, -w / 2, y); s.lineTo(-w / 2, -y); s.quadraticCurveTo(-w / 2, -h / 2, -x, -h / 2);
+    return G.extrude(s, Math.max(0.01, d - 2 * r), r);
+  }
+  // visage posé à la surface d'une tête de rayon R (centre 0,0,0), regard vers +z
+  // kind : 'smile' | 'happy' | 'sleep' | 'o' ; o : { y, spread, size, blush, z }
+  function face(R, kind = 'smile', o = {}) {
+    const f = new THREE.Group(), s = o.size ?? R * 0.16, y = o.y ?? R * 0.1, sp = o.spread ?? R * 0.36;
+    const onSurf = (x, yy, lift = 0) => { const z = (o.z != null ? o.z : Math.sqrt(Math.max(0, R * R - x * x - yy * yy))) + lift; return [x, yy, z]; }; // o.z : visage posé sur une face plate
+    const out = p => o.z != null ? new THREE.Vector3(p[0], p[1], p[2] + 1) : new THREE.Vector3(p[0] * 2, p[1] * 2, p[2] * 2);
+    const eyes = new THREE.Group(); eyes.name = 'eyes';
+    for (const sx of [-1, 1]) {
+      const p = onSurf(sx * sp, y, -s * 0.25);
+      if (kind === 'happy' || kind === 'sleep') {
+        const arc = part(G.torus(s * 0.9, s * 0.22, Math.PI), INK.color, { ink: 0, pos: p });
+        arc.lookAt(out(p)); // l'arc (∩) regarde vers l'extérieur
+        if (kind === 'sleep') arc.rotateZ(Math.PI); // paupières closes (∪)
+        eyes.add(arc);
+      } else {
+        const e = part(new THREE.SphereGeometry(s, 24, 16), INK.color, { ink: 0, pos: p, scale: [1, 1.18, 0.6] });
+        const hi = part(new THREE.SphereGeometry(s * 0.34, 12, 8), 0xffffff, { ink: 0, pos: [p[0] + s * 0.35, p[1] + s * 0.4, p[2] + s * 0.45] });
+        hi.children[0].material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        eyes.add(e, hi);
+      }
+    }
+    f.add(eyes);
+    if (o.blush !== false) for (const sx of [-1, 1]) {
+      const p = onSurf(sx * sp * 1.45, y - s * 1.5, -s * 0.2);
+      const b = part(new THREE.SphereGeometry(s * 0.9, 20, 12), 0xFF9EC7, { ink: 0, pos: p, scale: [1.3, 0.7, 0.35], opacity: 0.8 });
+      b.lookAt(out(p)); f.add(b);
+    }
+    const mp = onSurf(0, y - s * 2.1, -s * 0.2);
+    let mouth;
+    if (kind === 'o') mouth = part(new THREE.SphereGeometry(s * 0.55, 16, 12), INK.color, { ink: 0, pos: mp, scale: [0.9, 1.1, 0.5] });
+    else { mouth = part(G.torus(s * 0.75, s * 0.18, Math.PI), INK.color, { ink: 0, pos: mp }); mouth.lookAt(out(mp)); mouth.rotateZ(Math.PI); }
+    f.add(mouth);
+    return f;
+  }
+
+  // ---------- studio : lumières et caméra communes aux planches et à la scène en direct ----------
+  function studio(opt = {}) {
+    const scene = new THREE.Scene();
+    scene.add(new THREE.HemisphereLight(opt.sky ?? 0xffffff, opt.ground ?? 0x8a7fd0, 1.6));
+    const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(-2.5, 4, 5); scene.add(key);
+    const rim = new THREE.DirectionalLight(opt.rim ?? 0x9fe8ff, 2.4); rim.position.set(3, 2, -4); scene.add(rim);
+    const cam = new THREE.PerspectiveCamera(opt.fov ?? 26, opt.aspect ?? 1, 0.1, 100); cam.position.set(0, 0.35, opt.dist ?? 7.8); cam.lookAt(0, 0, 0);
+    return { scene, cam, key, rim };
+  }
+  const renderer = (w, h, canvas) => {
+    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: !canvas });
+    r.setPixelRatio(1); r.setSize(w, h, false); r.setClearColor(0x000000, 0); r.outputColorSpace = THREE.SRGBColorSpace;
+    return r;
+  };
+
+  // ---------- animations en boucle (t de 0 à 1, la fin rejoint le début) ----------
+  // Chaque modèle peut avoir userData.anim = { idle(t, obj), win(t, obj) } pour remplacer ou compléter celles-ci.
+  const ease = { inOut: x => x < .5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2, out: x => 1 - (1 - x) ** 3 };
+  const ANIM = {
+    idle(t, o) { // respiration, léger balancement, clignement vers 80 %
+      const s = Math.sin(t * TAU);
+      o.position.y = s * 0.06; o.rotation.y = Math.sin(t * TAU + 1) * 0.22; o.rotation.z = Math.sin(t * TAU) * 0.04;
+      o.scale.set(1 + s * 0.02, 1 - s * 0.02, 1 + s * 0.02);
+      blink(o, t > 0.78 && t < 0.84);
+    },
+    win(t, o) { // accroupi, saut avec tour complet, réception écrasée
+      let y = 0, sy = 1, ry = 0;
+      if (t < 0.18) { sy = 1 - 0.18 * ease.out(t / 0.18); }
+      else if (t < 0.7) { const k = (t - 0.18) / 0.52; y = Math.sin(k * Math.PI) * 0.42; sy = 1 + 0.12 * Math.sin(k * Math.PI); ry = ease.inOut(k) * TAU; }
+      else { const k = (t - 0.7) / 0.3; sy = 1 - 0.15 * Math.sin(k * Math.PI) * (1 - k); }
+      o.position.y = y - 0.12; o.rotation.set(0, ry, 0); const sc = 0.9; o.scale.set(sc * (1 + (1 - sy) * 0.6), sc * sy, sc * (1 + (1 - sy) * 0.6)); // un peu plus petit pour que le saut tienne dans la case
+      blink(o, false);
+    },
+  };
+  function blink(o, closed) { o.traverse(c => { if (c.name === 'eyes') c.scale.y = closed ? 0.12 : 1; }); }
+
+  // ---------- cuisson : un modèle -> deux planches d'images (repos, victoire) en URL blob ----------
+  // opts : { size: 192, frames: 24, dist, fov, sky, ground, rim }
+  let bakeR = null;
+  async function bake(model, o = {}) {
+    const size = o.size ?? 192, N = o.frames ?? 24;
+    if (!bakeR) bakeR = renderer(size, size);
+    bakeR.setSize(size, size, false);
+    const st = studio(o), pivot = new THREE.Group(); pivot.add(model); st.scene.add(pivot);
+    const sheet = document.createElement('canvas'); sheet.width = size * N; sheet.height = size;
+    const cx = sheet.getContext('2d'), out = {};
+    for (const name of ['idle', 'win']) {
+      cx.clearRect(0, 0, sheet.width, size);
+      for (let i = 0; i < N; i++) {
+        const t = i / N;
+        ANIM[name](t, pivot);
+        if (model.userData.anim?.[name]) model.userData.anim[name](t, model);
+        bakeR.render(st.scene, st.cam);
+        cx.drawImage(bakeR.domElement, i * size, 0);
+      }
+      out[name] = URL.createObjectURL(await new Promise(r => sheet.toBlob(r, 'image/png')));
+    }
+    ANIM.idle(0, pivot);
+    return { ...out, frames: N, model };
+  }
+  // HTML d'un symbole cuit : les deux planches ; le CSS choisit laquelle jouer (.cell.win -> victoire)
+  const html = (b, cls = '') => `<i class="s3d ${cls}" style="--n:${b.frames}"><img class="idle" src="${b.idle}" alt=""><img class="win" src="${b.win}" alt=""></i>`;
+
+  // ---------- scène en direct : entrée du bonus, gros gains ----------
+  // const st = K.live(canvas); st.set([modèles]); st.play((t, objs) => {...}); st.stop();
+  function live(canvas) {
+    const r = renderer(canvas.clientWidth || innerWidth, canvas.clientHeight || innerHeight, canvas);
+    r.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    const st = studio({ aspect: innerWidth / innerHeight, dist: 12, fov: 32 });
+    const root = new THREE.Group(); st.scene.add(root);
+    let raf = 0, fn = null, t0 = 0;
+    const size = () => { const w = innerWidth, h = innerHeight; r.setSize(w, h, false); st.cam.aspect = w / h; st.cam.updateProjectionMatrix(); };
+    addEventListener('resize', size); size();
+    const loop = now => { const t = (now - t0) / 1000; fn && fn(t, root.children, st); r.render(st.scene, st.cam); raf = requestAnimationFrame(loop); };
+    return {
+      THREE, scene: st.scene, cam: st.cam, root,
+      set(objs) { root.clear(); for (const o of objs) root.add(o); },
+      play(f) { fn = f; cancelAnimationFrame(raf); t0 = performance.now(); canvas.style.display = 'block'; raf = requestAnimationFrame(loop); },
+      stop() { cancelAnimationFrame(raf); fn = null; canvas.style.display = 'none'; root.clear(); },
+    };
+  }
+  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, html, live, INK };
+};
+
+// ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
+// MODELS(K) renvoie { SYMS: [8 fonctions], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
+// Exemple : VARIANTES: { star: { star: () => …, gold: () => … } } remplace ART.star('gold') par sa version 3D.
+const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
+const STAGE3D = { intro() {}, big() {}, stop() {} }; // sans 3D, ces appels ne font rien
+window.ART3D_STATE = 'chargement';
+async function CHARGE3D(ART, MODELS) {
+  try {
+    const THREE = await import(THREE_URL);
+    const K = KIT3D(THREE), M = MODELS(K), frame = () => new Promise(r => requestAnimationFrame(r));
+    const syms = [];
+    for (const f of M.SYMS) { syms.push(K.html(await K.bake(f()))); await frame(); }
+    const scat = K.html(await K.bake(M.SCAT()));
+    const variants = {};
+    for (const [name, table] of Object.entries(M.VARIANTES || {})) {
+      variants[name] = {};
+      for (const [arg, f] of Object.entries(table)) { variants[name][arg] = K.html(await K.bake(f())); await frame(); }
+    }
+    ART.SYMS = syms; ART.SCAT = scat;
+    for (const [name, v] of Object.entries(variants)) { const old = ART[name]; ART[name] = (arg, ...rest) => v[arg] ?? old(arg, ...rest); }
+    setupStage(K, M);
+    window.ART3D_STATE = 'ok';
+    dispatchEvent(new Event('art3d'));
+  } catch (e) {
+    window.ART3D_STATE = 'erreur'; window.ART3D_ERROR = String(e && e.stack || e);
+    console.warn('3D indisponible, la machine garde ses dessins 2D :', e);
+  }
+}
+// scène en direct : les personnages tournent en ronde autour du texte (entrée du bonus, gros gains)
+function setupStage(K, M) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const { THREE, TAU, ANIM, ease } = K;
+  const cv = document.createElement('canvas'); cv.id = 'stage3d'; cv.setAttribute('aria-hidden', 'true');
+  const fx = document.getElementById('fx'); fx ? fx.before(cv) : document.body.appendChild(cv);
+  const st = K.live(cv);
+  const wrap = model => { const p = new THREE.Group(), pivot = new THREE.Group(); pivot.add(model); p.add(pivot); p.userData = { pivot, model }; return p; };
+  function ring(models, win) {
+    st.set(models.map(wrap));
+    st.play((t, kids) => {
+      const asp = innerWidth / innerHeight, halfH = Math.tan(16 * Math.PI / 180) * 12;
+      const rx = Math.min(halfH * asp * 0.74, 4.6), ry = halfH * 0.74, sc = Math.min(1, halfH * asp / 2.4) * 0.6;
+      kids.forEach((p, i) => {
+        const n = kids.length, a = Math.PI / 2 + i / n * TAU + t * 0.3, k = ease.out(Math.min(1, Math.max(0, (t - i * 0.1) / 0.9)));
+        p.position.set(Math.cos(a) * rx * k, Math.sin(a) * ry * k - (1 - k) * 7, -1 + Math.sin(a) * 0.6);
+        p.scale.setScalar(sc * (0.4 + 0.6 * k));
+        const ph = (t * (win ? 0.85 : 0.45) + i / n) % 1, { pivot, model } = p.userData;
+        ANIM[win ? 'win' : 'idle'](ph, pivot);
+        model.userData.anim?.[win ? 'win' : 'idle']?.(ph, model);
+      });
+    });
+  }
+  STAGE3D.intro = n => ring(Array.from({ length: Math.min(n, 6) }, () => M.SCAT()), false);
+  STAGE3D.big = tier => ring(M.SYMS.slice(tier >= 4 ? 0 : 4).map(f => f()), true);
+  STAGE3D.stop = () => st.stop();
+}

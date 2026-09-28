@@ -6,6 +6,7 @@ Des machines à sous thématiques, chacune dans un seul fichier HTML à ouvrir d
 |---|---|---|
 | [Champi Pop](jeux/champi-pop.html) | Forêt d'automne, machine en bois sous un toit-champignon | Tours gratuits : les champignons paient en chemins, avec des pouvoirs (mycélium, lune rousse, écureuil, spores, rond de sorcière) |
 | [Constella](jeux/constella.html) | Observatoire sur une colline, la nuit | Les étoiles restent au ciel et dessinent des constellations qui paient et déclenchent un pouvoir |
+| [Constella 3D](jeux/constella-3d.html) | Constella avec des personnages modélisés en 3D (Three.js) | Le même, avec une ronde 3D en direct à l'entrée du bonus et sur les gros gains |
 
 Toutes partagent le même cœur : une grille 6×6 qui paie en chemins, un bonus à 3 niveaux, l'achat du bonus, la Chance bonus, les spins auto, le turbo, et un RTP de 98,5 %.
 
@@ -15,7 +16,7 @@ Le dépôt contient une skill Claude Code, dans `.claude/skills/machine-a-sous/`
 
 > Fais-moi une machine à sous sur le thème des pirates, avec un bonus où on déterre des trésors.
 
-Claude rédige un court cahier des charges (nom, symboles, bonus, décor, musique), construit la machine à partir des modèles, calibre le RTP, la teste dans un navigateur, puis la publie.
+Claude rédige un court cahier des charges (nom, symboles, bonus, décor, musique, rendu 2D ou 3D), construit la machine à partir des modèles, calibre le RTP, la teste dans un navigateur, puis la publie.
 
 ### Outils
 
@@ -25,5 +26,6 @@ node .claude/skills/machine-a-sous/scripts/rtp.js jeux/constella.html
 node .claude/skills/machine-a-sous/scripts/rtp.js jeux/ma-machine.html --calibre
 
 # Essai dans Chromium (Playwright) : spins, achat des bonus, captures dans jeux/captures/
+# (machines 3D : npm i --prefix .claude/skills/machine-a-sous/scripts, une fois)
 node .claude/skills/machine-a-sous/scripts/check.js jeux/ma-machine.html
 ```

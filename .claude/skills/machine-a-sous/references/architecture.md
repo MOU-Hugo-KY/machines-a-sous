@@ -83,6 +83,10 @@ const svg = inner => `<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="3
 
 Style : contour de la couleur d'encre du thème (`K`) d'environ 2,2 px, remplissage en dégradé radial (défini dans `<defs>`), un reflet blanc semi-transparent, un visage (`face(cx, cy, kind)` : smile/happy/sleep/o) avec des joues roses. Les 4 gros symboles sont plus riches et plus colorés que les 4 petits.
 
+### `ART3D_MODELS`, `KIT3D`, `CHARGE3D`, `STAGE3D` (machines en 3D)
+
+Voir `references/3d.md`. Ils remplacent le contenu d'`ART` une fois les planches cuites (`ART.SYMS`, `ART.SCAT` et les `VARIANTES` deviennent des `<i class="s3d">` avec deux planches d'images). Toute chaîne d'`ART` doit donc pouvoir être soit un `<svg>`, soit un `.s3d` : ne suppose jamais qu'elle commence par `<svg`, sauf pour un `.replace('<svg', …)` purement décoratif.
+
 ### `FX` (canevas `#fx`)
 
 `burst(type, x, y, n, vitesse)`, `rain(type, durée, densité)`, `stopRain()`, `firework(x, y)`, `center(el) -> [x, y]`, `W()`, `H()`. Les types de particules sont au thème (`star`, `spark`, `dust`, `shoot` ; `leaf`, `acorn`, `spore`…). Ne rien faire si `prefers-reduced-motion`.

@@ -1,0 +1,8 @@
+{
+  "name": "machine-a-sous-outils",
+  "private": true,
+  "description": "Dépendances des scripts de test : npm i --prefix .claude/skills/machine-a-sous/scripts",
+  "dependencies": {
+    "three": "0.170.0"
+  }
+}
