@@ -523,7 +523,7 @@ body.bonus .fmb, body.bonus .fmpicks{visibility:hidden}
     <div class="msg" id="msg" aria-live="polite">Trois scatters lancent le bonus.</div>
     <div class="deck">
       <div class="meters">
-        <div class="meter"><small>Crédits</small><b id="balance">1 000,00</b></div>
+        <div class="meter"><small>Crédits</small><b id="balance">5 000,00</b></div>
         <div class="bet">
           <button class="pm" id="betDown" aria-label="Baisser la mise">−</button>
           <div class="mid"><small>Mise</small><b id="bet">1,00</b></div>
@@ -754,13 +754,13 @@ const ENGINE = (() => {
   const SYM_W = SYMS.reduce((a, s) => a + s.w, 0);
   let SCAT_W = { normal: 8.059789917528096, ante: 9.528642782040478 }; // poids du scatter (calibrés : RTP 98,5 % dans les deux modes)
   let BASE_SCALE = { normal: 0.7662866778138974, ante: 0.7662866778138974 }; // même table de gains dans les deux modes
-  let BONUS_K = { 3: 0.0007452616882047265, 4: 1.1874569404979021e-7, 5: 1.4374655384105826e-9 }; // bonus moyens 98,5 / 394 / 2 000 x mise
+  let BONUS_K = { 3: 0.0007452616882047265, 4: 1.1874569404979021e-7, 5: 1.4159035553344238e-09 }; // bonus moyens 98,5 / 394 / 1 970 x mise (98,5 % des prix d'achat)
   const TIER = {
     3: { size: 6,  spins: 8,  gifts: 0, dens: 0.45, powScale: 0.7,    stackScale: 0.25,   cap: 10000 },
     4: { size: 10, spins: 10, gifts: 1, dens: 0.40, powScale: 0.2, stackScale: 0.05, cap: 25000 },
     5: { size: 12, spins: 12, gifts: 3, dens: 0.38, powScale: 0.12, stackScale: 0.03, cap: 50000 },
   };
-  const BUY = { 3: 100, 4: 400 }; // RTP des achats : 98,5 %
+  const BUY = { 3: 100, 4: 400, 5: 2000 }; // RTP des achats : 98,5 %
   const ANTE = 1.25;
   const POW_P = { grow: 0.005, color: 0.008, heal: 0.0035, stack: 0.0012, ring: 0.002 };
   const GIFT_TYPES = ['grow', 'color', 'heal', 'ring'];
@@ -1230,7 +1230,7 @@ const TIER_NAME = { 3: 'Bonus', 4: 'Super bonus', 5: 'Méga bonus' };
 const LV_NAME = ['énokis', 'champignons de Paris', 'shimejis', 'girolles', 'pleurotes', 'morilles', 'bolets', 'amanites'];
 const LV_COL = ['#F6EED0', '#FFF8EC', '#D9B48A', '#F2C14E', '#C9A27E', '#B8864E', '#E08A3A', '#E4502A'];
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const S = { balance: 1000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false };
+const S = { balance: 5000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false };
 const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 150) : (S.turbo ? ms * 0.4 : ms)));
 const bet = () => BETS[S.betIdx];
 const cost = () => bet() * (S.ante ? E.ANTE : 1);
@@ -1425,7 +1425,7 @@ function lockUI(on) {
   $('spin').disabled = on && !S.auto;
 }
 function noCredits() {
-  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 1 000').then(() => { S.balance += 1000; setMoney(); msg('1 000 crédits ajoutés.'); });
+  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 5 000').then(() => { S.balance += 5000; setMoney(); msg('5 000 crédits ajoutés.'); });
 }
 
 // ---------- spins automatiques ----------
@@ -1659,9 +1659,9 @@ function openBuy() {
   if (S.busy || S.auto) return;
   const off = t => {
     const price = E.BUY[t] * bet(), ok = !S.ante && S.balance >= price - 1e-9, T = E.TIER[t];
-    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} scatters, grille ${T.size}×${T.size}, ${T.spins} spins${T.gifts ? `, ${T.gifts} pouvoir offert` : ''}<span class="price">${fmt(price)} crédits (${E.BUY[t]}× la mise)</span></span></button>`;
+    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} scatters, grille ${T.size}×${T.size}, ${T.spins} spins${T.gifts ? `, ${T.gifts} pouvoir${T.gifts > 1 ? 's' : ''} offert${T.gifts > 1 ? 's' : ''}` : ''}<span class="price">${fmt(price)} crédits (${E.BUY[t].toLocaleString('fr-FR')}× la mise)</span></span></button>`;
   };
-  $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}</div><button class="btn" id="ovBtn">Annuler</button>`;
+  $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}${off(5)}</div><button class="btn" id="ovBtn">Annuler</button>`;
   $('overlay').classList.add('show');
   $('ovBtn').onclick = () => $('overlay').classList.remove('show');
   $('card').querySelectorAll('.offer').forEach(o => o.onclick = () => { $('overlay').classList.remove('show'); buy(+o.dataset.t); });
@@ -1711,7 +1711,7 @@ function showRules() {
   </ul>
   <p>Les pouvoirs offerts sont tirés parmi mycélium, lune rousse, écureuil et rond de sorcière. Le nuage de spores est plus rare en grande grille.</p>
   <h3>Options</h3>
-  <p>Acheter le bonus coûte ${E.BUY[3]} fois la mise, le super bonus ${E.BUY[4]} fois. Chance bonus ajoute 25 % à la mise et fait passer le bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
+  <p>Acheter le bonus coûte ${E.BUY[3]} fois la mise, le super bonus ${E.BUY[4]} fois et le méga bonus ${E.BUY[5].toLocaleString('fr-FR')} fois. Chance bonus ajoute 25 % à la mise et fait passer le bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
   <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Crédits fictifs, aucun argent réel.</p></div>
   <button class="btn" id="ovBtn">Fermer</button>`;
   $('overlay').classList.add('show'); $('ovBtn').onclick = () => $('overlay').classList.remove('show'); $('ovBtn').focus();

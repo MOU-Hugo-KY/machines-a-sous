@@ -55,8 +55,9 @@ const exe = ['/opt/pw-browsers/chromium', process.env.CHROMIUM_PATH].filter(p =>
   if (!(b1 !== b0)) errors.push('le solde ne bouge pas après les spins');
   await page.screenshot({ path: `${OUT}/partie-apres-spins.png` });
 
-  for (const t of [3, 4]) {
+  for (const t of [3, 4, 5]) {
     await page.click('#buyBtn');
+    if (!(await page.$(`.offer[data-t="${t}"]`))) { await page.click('#ovBtn'); continue; } // méga bonus pas à vendre sur cette machine
     await page.waitForSelector(`.offer[data-t="${t}"]:not([disabled])`, { timeout: 5000 });
     await page.click(`.offer[data-t="${t}"]`);
     await settle(page, `bonus ${t}`, true, `${OUT}/bonus-${t}`);

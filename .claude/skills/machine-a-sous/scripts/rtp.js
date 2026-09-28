@@ -6,7 +6,7 @@
 //
 // Options : --rtp 0.985  --n 20000 (bonus simulés par niveau)  --spins 300000 (spins de base simulés)
 //           --freq 150 (avec --calibre : bonus un spin sur 150 en jeu normal, et BASE_SCALE ajusté pour le reste du RTP)
-//           --mega 2000 (gain moyen visé du méga bonus, en fois la mise)  --graine 1
+//           --mega 2000 (gain moyen visé du méga bonus s'il ne s'achète pas ; s'il s'achète : 98,5 % de BUY[5])  --graine 1
 //
 // Le script lit le bloc `const ENGINE = (() => { ... })();` du fichier HTML et l'exécute dans Node.
 // Contrat attendu (voir references/architecture.md) : SYMS, TIER[t].cap, BUY, ANTE, spinBase, evalBase,
@@ -97,7 +97,7 @@ console.log(`\n${file}\n`);
 console.log(`Simulation de ${N.toLocaleString('fr-FR')} bonus par niveau…`);
 const RAW = {}; for (const t of tiers) RAW[t] = simRaw(t, N);
 
-let target = { 3: RTP * E.BUY[3], 4: RTP * E.BUY[4], 5: MEGA };
+let target = { 3: RTP * E.BUY[3], 4: RTP * E.BUY[4], 5: E.BUY[5] ? RTP * E.BUY[5] : MEGA }; // méga bonus : 98,5 % de son prix s'il s'achète
 if (flag('calibre')) {
   // E.EXACT_K : coefficient connu exactement (bonus dont le gain moyen se calcule), prioritaire sur la simulation
   const K = {}; for (const t of tiers) K[t] = E.EXACT_K?.[t] ?? solveK(RAW[t], target[t], E.TIER[t].cap);
@@ -130,7 +130,7 @@ const names = { 3: 'Bonus', 4: 'Super bonus', 5: 'Méga bonus' };
 console.log('\nBonus (en fois la mise)');
 console.log('  niveau          moyenne    médiane       p10       p90       p99         max  plafonné  écart-type');
 for (const t of tiers) { const s = S[t]; console.log(`  ${names[t].padEnd(12)}${fmt(s.mean).padStart(11)}${fmt(s.med).padStart(11)}${fmt(s.p10).padStart(10)}${fmt(s.p90).padStart(10)}${fmt(s.p99).padStart(10)}${fmt(s.max).padStart(12)}${pct(s.capRate).padStart(10)}${fmt(s.sd).padStart(12)}`); }
-const cible = t => t === 5 ? MEGA : RTP * E.BUY[t];
+const cible = t => t === 5 && !E.BUY[5] ? MEGA : RTP * E.BUY[t];
 for (const t of tiers) { const err = S[t].mean / cible(t) - 1; if (Math.abs(err) > 0.03) console.log(`  ! ${names[t]} : moyenne ${fmt(S[t].mean)} au lieu de ${fmt(cible(t))} visés (${err > 0 ? '+' : ''}${pct(err)}) -> relance avec --calibre`); }
 
 console.log('\nRTP');
@@ -144,5 +144,5 @@ for (const mode of ['normal', 'ante']) {
   console.log(`                base simulée sur ${SPINS.toLocaleString('fr-FR')} spins : ${pct(sim.rtp / cost)} (écart normal de quelques dixièmes)`);
   if (Math.abs(total - RTP) > 0.005) console.log(`  ! RTP ${mode} loin de ${pct(RTP)} -> relance avec --calibre`);
 }
-for (const t of [3, 4]) console.log(`  Achat ${names[t].toLowerCase().padEnd(12)} ${pct(S[t].mean / E.BUY[t])}  (${E.BUY[t]}× la mise)`);
+for (const t of tiers) if (E.BUY[t]) console.log(`  Achat ${names[t].toLowerCase().padEnd(12)} ${pct(S[t].mean / E.BUY[t])}  (${E.BUY[t].toLocaleString('fr-FR')}× la mise)`);
 console.log('');
