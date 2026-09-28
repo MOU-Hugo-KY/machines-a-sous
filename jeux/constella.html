@@ -575,9 +575,9 @@ const ENGINE = (() => {
     { id: 'h4', w: 80.5, pay: [0.2, 0.5, 1.25, 3.0] },
   ];
   const SYM_W = SYMS.reduce((a, s) => a + s.w, 0);
-  let SCAT_W = { normal: 8.059789917528096, ante: 9.528642782040478 }; // poids du scatter (calibrés : RTP 98,5 % dans les deux modes)
+  let SCAT_W = { normal: 8.062047564942155, ante: 9.532161678272292 }; // poids du scatter (calibrés : RTP 98,5 % dans les deux modes)
   let BASE_SCALE = { normal: 0.7662866778138974, ante: 0.7662866778138974 }; // même table de gains dans les deux modes
-  let BONUS_K = { 3: 4.811884611229653, 4: 11.308143151615871, 5: 9.797514849312016 }; // bonus moyens 98,5 / 394 / 1 970 x mise (98,5 % des prix d'achat)
+  let BONUS_K = { 3: 4.819112060256302, 4: 11.273314417465233, 5: 9.805821612251528 }; // bonus moyens 98,5 / 394 / 1 970 x mise (98,5 % des prix d'achat)
   // taille du ciel, spins, multiplicateur de départ, étoiles offertes au premier spin, chance d'étoile par case vide
   const TIER = {
     3: { size: 6, spins: 8,  mult0: 1, gift: 0, p: 0.13, gold: 0.06, cap: 10000 },

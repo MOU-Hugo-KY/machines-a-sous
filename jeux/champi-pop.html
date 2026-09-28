@@ -752,9 +752,9 @@ const ENGINE = (() => {
     { id: 'h4', w: 80.5, pay: [0.2, 0.5, 1.25, 3.0] },
   ];
   const SYM_W = SYMS.reduce((a, s) => a + s.w, 0);
-  let SCAT_W = { normal: 8.059789917528096, ante: 9.528642782040478 }; // poids du scatter (calibrés : RTP 98,5 % dans les deux modes)
+  let SCAT_W = { normal: 8.062047564942155, ante: 9.532161678272292 }; // poids du scatter (calibrés : RTP 98,5 % dans les deux modes)
   let BASE_SCALE = { normal: 0.7662866778138974, ante: 0.7662866778138974 }; // même table de gains dans les deux modes
-  let BONUS_K = { 3: 0.0007452616882047265, 4: 1.1874569404979021e-7, 5: 1.4159035553344238e-09 }; // bonus moyens 98,5 / 394 / 1 970 x mise (98,5 % des prix d'achat)
+  let BONUS_K = { 3: 0.0007504177630579174, 4: 1.2142855810624573e-7, 5: 1.389681550077179e-9 }; // bonus moyens 98,5 / 394 / 1 970 x mise (98,5 % des prix d'achat)
   const TIER = {
     3: { size: 6,  spins: 8,  gifts: 0, dens: 0.45, powScale: 0.7,    stackScale: 0.25,   cap: 10000 },
     4: { size: 10, spins: 10, gifts: 1, dens: 0.40, powScale: 0.2, stackScale: 0.05, cap: 25000 },

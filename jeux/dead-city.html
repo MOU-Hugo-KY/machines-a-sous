@@ -578,8 +578,8 @@ const ENGINE = (() => {
   const MIN = 5, SIZE_F = [0, 0, 0, 0, 0, 1, 1.5, 2, 3, 4, 6, 8, 10, 14, 18, 25]; // au-delà de 15 cases : 25
   const SYM_W = SYMS.reduce((a, s) => a + s.w, 0), WILD_W = 8;
   let SCAT_W = { normal: 11.044623416835572, ante: 12.658349999999999 }; // poids de la sirène (calibrés par rtp.js)
-  let BASE_SCALE = { normal: 1.4981933188477496, ante: 1.4981933188477496 }; // échelle des gains du jeu de base (calibrée par rtp.js --calibre-base)
-  let BONUS_K = { 3: 0.13856523284726557, 4: 394, 5: 313.2566185896232 };
+  let BASE_SCALE = { normal: 1.4992427159023827, ante: 1.4992427159023827 }; // échelle des gains du jeu de base (calibrée par rtp.js --calibre-base)
+  let BONUS_K = { 3: 0.13860402283415074, 4: 394, 5: 307.5131641634649 };
   const TIER = {
     3: { name: 'THE OUTBREAK', spins: 8, cap: 10000, maxZ: 11 },
     4: { name: 'LAST STAND', rounds: 8, cap: 25000 },

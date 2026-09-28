@@ -363,7 +363,7 @@ body.decor3d .floor .credit{text-shadow:0 1px 3px rgba(0,0,0,.6)}
     <div class="msg" id="msg" aria-live="polite">Trois sirènes déclenchent l'épidémie.</div>
     <div class="deck">
       <div class="meters">
-        <div class="meter"><small>Crédits</small><b id="balance">1 000,00</b></div>
+        <div class="meter"><small>Crédits</small><b id="balance">5 000,00</b></div>
         <div class="bet"><button class="pm" id="betDown" aria-label="Baisser la mise">−</button><div class="mid"><small>Mise</small><b id="bet">1,00</b></div><button class="pm" id="betUp" aria-label="Augmenter la mise">+</button></div>
         <div class="meter r"><small>Gain</small><b id="lastWin">0,00</b></div>
       </div>
@@ -605,14 +605,14 @@ const ENGINE = (() => {
   const MIN = 5, SIZE_F = [0, 0, 0, 0, 0, 1, 1.5, 2, 3, 4, 6, 8, 10, 14, 18, 25]; // au-delà de 15 cases : 25
   const SYM_W = SYMS.reduce((a, s) => a + s.w, 0), WILD_W = 8;
   let SCAT_W = { normal: 11.044623416835572, ante: 12.658349999999999 }; // poids de la sirène (calibrés par rtp.js)
-  let BASE_SCALE = { normal: 1.4981933188477496, ante: 1.4981933188477496 }; // échelle des gains du jeu de base (calibrée par rtp.js --calibre-base)
-  let BONUS_K = { 3: 0.13856523284726557, 4: 394, 5: 318.027023948856 };
+  let BASE_SCALE = { normal: 1.4992427159023827, ante: 1.4992427159023827 }; // échelle des gains du jeu de base (calibrée par rtp.js --calibre-base)
+  let BONUS_K = { 3: 0.13860402283415074, 4: 394, 5: 307.5131641634649 };
   const TIER = {
     3: { name: 'THE OUTBREAK', spins: 8, cap: 10000, maxZ: 11 },
     4: { name: 'LAST STAND', rounds: 8, cap: 25000 },
     5: { name: 'EXTRACTION', spins: 5, floors: 5, cap: 50000 },
   };
-  const BUY = { 3: 100, 4: 400 };
+  const BUY = { 3: 100, 4: 400, 5: 2000 }; // RTP des achats : 98,5 %
   const EXACT_K = { 4: 0.985 * 400 }; // Last Stand est un pari équitable : gain brut moyen = mise de départ moyenne = 1, donc K exact (rtp.js le respecte)
   const ANTE = 1.25;
   const FEAT = { horde: 1 / 45, zero: 1 / 110 }; // chances par spin de base
@@ -1518,7 +1518,7 @@ const fmt = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFr
 const BETS = [0.2, 0.4, 0.6, 1, 2, 4, 10, 20];
 const TIER_NAME = { 3: 'The Outbreak', 4: 'Last Stand', 5: 'Extraction' };
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const S = { balance: 1000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false, st: E.newState() };
+const S = { balance: 5000, betIdx: 3, busy: false, auto: 0, turbo: false, ante: false, st: E.newState() };
 const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 150) : (S.turbo ? ms * 0.4 : ms)));
 const bet = () => BETS[S.betIdx];
 const cost = () => bet() * (S.ante ? E.ANTE : 1);
@@ -1739,7 +1739,7 @@ function lockUI(on) {
   $('spin').disabled = on && !S.auto;
 }
 function noCredits() {
-  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 1 000').then(() => { S.balance += 1000; setMoney(); msg('1 000 crédits ajoutés.'); });
+  overlay(`<h2>Plus de crédits</h2><p>Le solde ne couvre plus la mise. Tu peux baisser la mise ou recharger des crédits fictifs.</p>`, 'Recharger 5 000').then(() => { S.balance += 5000; setMoney(); msg('5 000 crédits ajoutés.'); });
 }
 
 // ---------- spins automatiques ----------
@@ -1909,10 +1909,10 @@ function openBuy() {
   if (S.busy || S.auto) return;
   const off = t => {
     const price = E.BUY[t] * bet(), ok = !S.ante && S.balance >= price - 1e-9;
-    const d = t === 3 ? '8 free spins, les zombies restent sur la grille' : 'Barricade : 3 portes par manche, fuis quand tu veux';
-    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} sirènes. ${d}<span class="price">${fmt(price)} crédits (${E.BUY[t]}× la mise)</span></span></button>`;
+    const d = t === 3 ? '8 free spins, les zombies restent sur la grille' : t === 4 ? 'Barricade : 3 portes par manche, fuis quand tu veux' : '5 tours pour grimper jusqu\'à l\'hélico, grosse prime sur le toit';
+    return `<button class="offer" data-t="${t}" ${ok ? '' : 'disabled'}>${ART.SCAT}<span><strong>${TIER_NAME[t]}</strong>${t} sirènes. ${d}<span class="price">${fmt(price)} crédits (${E.BUY[t].toLocaleString('fr-FR')}× la mise)</span></span></button>`;
   };
-  $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}</div><button class="btn" id="ovBtn">Annuler</button>`;
+  $('card').innerHTML = `<h2>Acheter un bonus</h2><p>${S.ante ? 'Désactive Chance bonus pour acheter.' : 'Le prix dépend de la mise en cours.'}</p><div class="offers">${off(3)}${off(4)}${off(5)}</div><button class="btn" id="ovBtn">Annuler</button>`;
   $('overlay').classList.add('show');
   $('ovBtn').onclick = () => $('overlay').classList.remove('show');
   $('card').querySelectorAll('.offer').forEach(o => o.onclick = () => { $('overlay').classList.remove('show'); buy(+o.dataset.t); });
@@ -1960,7 +1960,7 @@ function showRules() {
   <li><b>4 sirènes, Last Stand</b> (1 spin sur ${every(pn[4])}) : ${INTRO_TXT[4]} C'est un pari équitable : en moyenne, fuir ou continuer rapporte la même chose. À toi de choisir ton risque. Au bout de ${E.TIER[4].rounds} manches tenues, les secours arrivent.</li>
   <li><b>5 sirènes ou plus, Extraction</b> (1 spin sur ${every(pn[5])}) : ${INTRO_TXT[5]} Atteindre le toit rapporte une grosse prime.</li></ul>
   <h3>Options</h3>
-  <p>Acheter The Outbreak coûte ${E.BUY[3]} fois la mise, Last Stand ${E.BUY[4]} fois. Chance bonus ajoute 25 % à la mise et fait passer les bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
+  <p>Acheter The Outbreak coûte ${E.BUY[3]} fois la mise, Last Stand ${E.BUY[4]} fois et Extraction ${E.BUY[5].toLocaleString('fr-FR')} fois. Chance bonus ajoute 25 % à la mise et fait passer les bonus d'un spin sur ${every(pn[3] + pn[4] + pn[5])} à un sur ${every(pa[3] + pa[4] + pa[5])} ; l'achat est alors indisponible. Turbo accélère les animations. Espace lance un spin.</p>
   <p>RTP : 98,5 % en jeu normal, avec Chance bonus et pour chaque achat. Gain maximum : ${E.TIER[3].cap.toLocaleString('fr-FR')}, ${E.TIER[4].cap.toLocaleString('fr-FR')} et ${E.TIER[5].cap.toLocaleString('fr-FR')} fois la mise selon le bonus. Crédits fictifs, aucun argent réel.</p></div>
   <button class="btn" id="ovBtn">Fermer</button>`;
   $('overlay').classList.add('show'); $('ovBtn').onclick = () => $('overlay').classList.remove('show'); $('ovBtn').focus();
