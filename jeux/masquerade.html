@@ -317,6 +317,87 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
 @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} .drapes,.jester{display:none} }
 /* la luciole devant le solde */
 #balLbl::before{content:""; display:inline-block; width:6px; height:6px; margin-right:4px; vertical-align:1px; border-radius:50%; background:#FFF3A0; box-shadow:0 0 6px 2px rgba(255,236,120,.85)}
+
+/* ================= DESIGN : perspective, théâtre baroque, profondeur ================= */
+.scene svg.pl{inset:-4%; width:108%; height:108%; transform:translate3d(calc(var(--px,0) * var(--k) * -1px), calc(var(--py,0) * var(--k) * -.6px), 0)}
+.scene svg.back{--k:14} .scene svg.mid{--k:30} .scene svg.front{--k:60; inset:-8%; width:116%; height:116%}
+.spot{position:absolute; top:-10%; width:70vmax; height:130%; mix-blend-mode:screen; pointer-events:none; transform-origin:50% 0; opacity:.9;
+  background:conic-gradient(from 180deg at 50% 0%, transparent 168deg, rgba(255,236,210,.07) 173deg, rgba(255,236,210,.13) 180deg, rgba(255,236,210,.07) 187deg, transparent 192deg)}
+.spot.s1{left:calc(50% - 35vmax - 18vmax); animation:sweep 11s ease-in-out infinite alternate} .spot.s2{left:calc(50% - 35vmax + 18vmax); animation:sweep 13s ease-in-out infinite alternate-reverse}
+body.mad .spot{background:conic-gradient(from 180deg at 50% 0%, transparent 168deg, rgba(255,35,64,.1) 173deg, rgba(255,35,64,.2) 180deg, rgba(255,35,64,.1) 187deg, transparent 192deg)}
+@keyframes sweep{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+.fog{position:absolute; left:-10%; right:-10%; bottom:0; height:34%; background:radial-gradient(ellipse at 30% 100%, rgba(120,90,110,.16), transparent 60%), radial-gradient(ellipse at 75% 100%, rgba(120,60,80,.14), transparent 55%); animation:fog 18s ease-in-out infinite alternate}
+@keyframes fog{to{transform:translateX(6%)}}
+.dust i{position:absolute; width:3px; height:3px; border-radius:50%; background:#FFE9C8; box-shadow:0 0 6px 2px rgba(255,220,170,.5); opacity:0; animation:mote var(--d) linear infinite; animation-delay:var(--dl)}
+@keyframes mote{0%{opacity:0; transform:translate(0,0)}15%{opacity:.8}85%{opacity:.6}100%{opacity:0; transform:translate(var(--dx), -38vh)}}
+main{perspective:1400px; perspective-origin:50% 35%}
+.rig{transform-style:preserve-3d; transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)); will-change:transform}
+.topper{height:176px; margin:0 -6px -20px; transform:translateZ(46px); transform-style:preserve-3d}
+.logo{top:57px}
+.logo b{position:relative; display:inline-block; background:none; filter:none; -webkit-text-fill-color:initial; font-size:clamp(1.9rem, 8.8vw, 2.6rem); letter-spacing:.07em}
+.logo b .fa{position:relative; display:block; background:linear-gradient(180deg, #FFFFFF 0%, #F4EEE2 40%, #8E887E 50%, #E8E0D0 64%, #FFFFFF 78%, #7A746A 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 8px rgba(255,35,64,.35))}
+.logo b .ex{position:absolute; inset:0; color:#2A2724; -webkit-text-fill-color:#2A2724; text-shadow:0 1px 0 #D8D0C2, 0 2px 0 #A8A094, 0 3px 0 #7A746A, 0 4px 0 #57524C, 0 5px 0 #3A3733, 0 6px 0 #1E1C1A, 0 7px 0 #0A0908, 0 12px 16px rgba(0,0,0,.9), 0 0 30px rgba(200,16,46,.5)}
+.hbtns{bottom:44px; transform:translateZ(10px)}
+.cabinet{transform-style:preserve-3d; padding:22px 24px 0; border-radius:10px 10px 12px 12px;
+  background:radial-gradient(ellipse at 50% 0%, rgba(200,16,46,.16), transparent 55%), var(--hatch), linear-gradient(180deg, #18141C, #070608);
+  border:none; box-shadow:0 0 0 1px #000, 0 0 0 3px #D8D0C2, 0 0 0 4px #57524C, 0 0 0 6px #1A1816, 0 0 0 8px #9A948A, 0 0 0 9px #000, 0 0 0 12px #2A2622, 0 0 0 13px #000,
+    inset 0 0 0 1px rgba(255,255,255,.08), inset 0 30px 60px rgba(0,0,0,.6), 0 40px 80px rgba(0,0,0,.9), 0 0 90px rgba(200,16,46,.28)}
+.pillar{transform:translateZ(30px); top:50px; bottom:128px; width:16px}
+.candle{transform:translateZ(36px); top:14px}
+.orn{position:absolute; width:58px; height:58px; z-index:5; pointer-events:none; transform:translateZ(26px); filter:drop-shadow(0 3px 3px rgba(0,0,0,.8))}
+.orn svg{width:100%; height:100%; display:block}
+.orn.tl{left:-16px; top:-16px; transform:translateZ(26px) scaleY(-1)} .orn.tr{right:-16px; top:-16px; transform:translateZ(26px) scale(-1,-1)}
+.orn.bl{left:-16px; bottom:-16px} .orn.br{right:-16px; bottom:-16px; transform:translateZ(26px) scaleX(-1)}
+.keystone{position:absolute; left:50%; top:-24px; width:70px; margin-left:-35px; z-index:6; transform:translateZ(34px); filter:drop-shadow(0 4px 4px rgba(0,0,0,.8))}
+.keystone svg{width:100%; display:block}
+.sanity{transform:translateZ(14px); margin:4px 24px 10px}
+.screen{transform-style:preserve-3d; padding:28px 7px 6px; border-radius:6px 6px 4px 4px; background:radial-gradient(ellipse at 50% 30%, #1A1018, #030204 75%);
+  box-shadow:0 0 0 1px #9A948A, 0 0 0 3px #000, 0 0 0 4px #3A3733, inset 0 0 40px rgba(0,0,0,.95), inset 0 -30px 40px rgba(106,0,16,.18)}
+.swag{position:absolute; left:-8px; right:-8px; top:-6px; height:38px; z-index:8; pointer-events:none; transform:translateZ(22px); filter:drop-shadow(0 6px 6px rgba(0,0,0,.7))}
+.swag svg{width:100%; height:100%; display:block}
+.swag i{position:absolute; top:6px; width:10px; height:30px; margin-left:-5px; transform-origin:50% 0; animation:tassel 3s ease-in-out infinite alternate;
+  background:radial-gradient(circle at 50% 18%, #EFE8DA 0 3px, transparent 3.5px), linear-gradient(90deg, #6E6962, #EFE8DA 50%, #6E6962) 50% 6px/2px 10px no-repeat, radial-gradient(ellipse at 50% 80%, #C8102E 0 5px, #6A0010 5.5px, transparent 6px)}
+.swag i:nth-child(3){animation-delay:-1s} .swag i:nth-child(4){animation-delay:-2s} .swag i:nth-child(5){animation-delay:-.5s}
+@keyframes tassel{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+body.bonus .screen{padding-top:34px}
+.hud{transform:translateZ(8px)}
+.gridwrap{transform-style:preserve-3d; transform:scale(.95)} /* rien ne recule derrière le fond de l'écran : en 3D partagée, il le cacherait */
+.grid,.mirrors{perspective:760px; perspective-origin:50% 45%}
+.grid{transform-style:preserve-3d; padding:18px 0 2px}
+.mirrors{transform-style:preserve-3d; inset:-2px -2px 30px}
+.cell,.mirrors i{--ry:0deg; --tz:0px; transform-origin:50% 50%}
+.cell{transform:rotateY(var(--ry)) translateZ(calc(var(--tz) + 10px))} .mirrors i{transform:rotateY(var(--ry)) translateZ(calc(var(--tz) + 3px))}
+.cell:nth-child(5n+1),.mirrors i:nth-child(1){--ry:17deg; --tz:26px} .cell:nth-child(5n+2),.mirrors i:nth-child(2){--ry:8deg; --tz:7px}
+.cell:nth-child(5n+4),.mirrors i:nth-child(4){--ry:-8deg; --tz:7px} .cell:nth-child(5n+5),.mirrors i:nth-child(5){--ry:-17deg; --tz:26px}
+.cell.win{transform:rotateY(var(--ry)) translateZ(calc(var(--tz) + 28px))}
+.mirrors i{border-radius:44px 44px 6px 6px; background:linear-gradient(112deg, rgba(255,255,255,.07) 0 16%, transparent 16% 30%, rgba(255,255,255,.04) 30% 35%, transparent 35%), radial-gradient(ellipse at 50% 20%, #221A24, #07060A 80%);
+  box-shadow:0 0 0 1px #000, 0 0 0 3px #B9B3A8, 0 0 0 4px #3A3733, 0 0 0 5px #000, inset 0 0 22px rgba(0,0,0,.95), 0 10px 20px rgba(0,0,0,.7)}
+.mirrors i::before{content:""; position:absolute; left:50%; top:-9px; width:18px; height:14px; margin-left:-9px; border-radius:50% 50% 30% 30%; background:radial-gradient(circle at 50% 40%, #FF2340 0 2.5px, transparent 3px), linear-gradient(#EFE8DA,#6E6962); box-shadow:0 0 0 1px #000}
+.mirrors i{position:relative}
+:root{--studs:radial-gradient(circle at 6px 6px, rgba(255,255,255,.3) 0 1.2px, transparent 1.8px), radial-gradient(circle at calc(100% - 6px) 6px, rgba(255,255,255,.3) 0 1.2px, transparent 1.8px), radial-gradient(circle at 6px calc(100% - 6px), rgba(255,255,255,.22) 0 1.2px, transparent 1.8px), radial-gradient(circle at calc(100% - 6px) calc(100% - 6px), rgba(255,255,255,.22) 0 1.2px, transparent 1.8px)}
+.cell{border-radius:6px; box-shadow:inset 0 1px 0 rgba(255,255,255,.2), inset 0 0 0 3px rgba(0,0,0,.4), inset 0 0 0 4px rgba(255,255,255,.07), inset 0 -12px 18px rgba(0,0,0,.5), 0 4px 0 #000, 0 9px 14px rgba(0,0,0,.65);
+  background:var(--studs), var(--hatch), radial-gradient(circle at 50% 30%, #332C38, #0A080C 85%)}
+.cell.t-ivoire{background:var(--studs), var(--hatch), radial-gradient(circle at 50% 30%, #FFFBF2, #A49C8E 90%)} .cell.t-argent{background:var(--studs), var(--hatch), radial-gradient(circle at 50% 30%, #E4DED2, #5E5A54 90%)}
+.cell.t-noir{background:var(--studs), var(--hatch), radial-gradient(circle at 50% 30%, #463E4C, #07060A 90%)} .cell.t-carmin{background:var(--studs), var(--hatch), radial-gradient(circle at 50% 30%, #B8142E, #2A0005 90%)}
+.cell.t-sang{background:var(--studs), var(--hatch), radial-gradient(circle at 50% 30%, #F0304A, #500010 90%)} .cell.t-wild{background:var(--studs), radial-gradient(circle at 50% 30%, #FFFFFF, #B8B0A0 90%); box-shadow:inset 0 0 0 2px #9A948A, inset 0 0 0 4px #FFF, 0 4px 0 #000, 0 0 16px rgba(255,255,255,.35)}
+.cell.t-scat{background:radial-gradient(circle at 50% 45%, #6A0014, #0A0204 85%); box-shadow:inset 0 0 0 1px var(--carmin2), inset 0 0 18px rgba(255,35,64,.6), 0 4px 0 #000, 0 0 16px rgba(255,35,64,.45)}
+.cell.t-red{background:radial-gradient(circle at 50% 30%, #FF5A6E, #5A000E 90%); box-shadow:inset 0 0 0 2px #FFB0B8, 0 4px 0 #000, 0 0 18px rgba(255,35,64,.8)}
+.cell.win{box-shadow:0 0 0 2px var(--ivoire), 0 0 0 4px rgba(255,35,64,.7), 0 0 24px rgba(255,35,64,.9), 0 14px 18px rgba(0,0,0,.6)}
+.apron{height:40px; margin:-2px -10px -8px; position:relative; transform-origin:50% 0; transform:perspective(260px) rotateX(62deg);
+  background:linear-gradient(rgba(0,0,0,.2), rgba(0,0,0,.85)), repeating-conic-gradient(#0C0A0E 0 25%, #6E675E 0 50%) 0 0/24px 24px;
+  -webkit-mask-image:linear-gradient(#000 20%, transparent); mask-image:linear-gradient(#000 20%, transparent); box-shadow:inset 0 2px 0 #9A948A}
+.msgrow{transform:translateZ(44px); margin:8px -30px 2px; position:relative; z-index:7}
+.badge{transform:translateZ(8px); background:radial-gradient(circle at 38% 28%, #6E6962, #1A171E 60%, #050407); border:none;
+  box-shadow:0 0 0 2px #000, 0 0 0 5px #B9B3A8, 0 0 0 6px #3A3733, 0 0 0 7px #000, 0 8px 16px rgba(0,0,0,.8), inset 0 2px 3px rgba(255,255,255,.25)}
+.badge.on{box-shadow:0 0 0 2px #000, 0 0 0 5px var(--carmin2), 0 0 0 7px #000, 0 0 20px rgba(255,35,64,.8)}
+.studio{transform:translateZ(22px); margin:8px -24px 0; border-radius:0 0 12px 12px; padding:8px 12px 10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.07), transparent 30%), var(--hatch), linear-gradient(#1C1820,#050407); border-top:none;
+  box-shadow:inset 0 1px 0 #9A948A, inset 0 2px 0 #000, inset 0 3px 0 #3A3733, 0 -10px 20px rgba(0,0,0,.5)}
+.studio .spin{background:radial-gradient(circle at 38% 28%, #FF5A6E, #C8102E 38%, #3A0008 78%); box-shadow:0 0 0 3px #000, 0 0 0 6px #CFC6B4, 0 0 0 7px #57524C, 0 0 0 8px #000, 0 10px 18px rgba(0,0,0,.8), 0 0 30px rgba(255,35,64,.55), inset 0 3px 4px rgba(255,255,255,.35)}
+.floor{margin-top:-10px}
+@media (max-width:420px){ .msgrow{margin:6px -20px 2px} .pillar{bottom:156px} }
+@media (prefers-reduced-motion: reduce){ .rig{transform:none} .spot,.dust{display:none} }
 </style>
 </head>
 <body>
@@ -337,7 +418,7 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
   </defs>
 </svg>
 <div class="scene" aria-hidden="true">
-  <svg viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
+  <svg class="pl back" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
     <defs>
       <pattern id="sDamask" width="90" height="120" patternUnits="userSpaceOnUse"><rect width="90" height="120" fill="#0B090D"/>
         <path d="M45 10 C60 30 70 40 45 60 C20 40 30 30 45 10 Z M45 60 C62 70 66 90 45 110 C24 90 28 70 45 60 Z M10 60 C18 50 28 52 30 60 C28 68 18 70 10 60 Z M80 60 C72 50 62 52 60 60 C62 68 72 70 80 60 Z" fill="#141118"/></pattern>
@@ -382,6 +463,8 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
       <g fill="#EFE8DA"><rect x="-74" y="92" width="8" height="18"/><rect x="66" y="92" width="8" height="18"/><rect x="-4" y="78" width="8" height="18"/></g>
       <g fill="#FFD27A" class="flame"><path d="M-70 92 C-76 82 -70 76 -70 70 C-64 78 -64 84 -70 92 Z"/><path d="M70 92 C64 82 70 76 70 70 C76 78 76 84 70 92 Z"/><path d="M0 78 C-6 68 0 62 0 56 C6 64 6 70 0 78 Z"/></g>
       <circle cx="0" cy="90" r="120" fill="url(#mCandle)" opacity=".7"/></g>
+  </svg>
+  <svg class="pl mid" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
     <!-- statues et roses blanches (elles rougissent quand tout bascule) -->
     <g transform="translate(160 820)"><rect x="-50" y="-60" width="100" height="60" fill="#2A2724" stroke="#6E6962" stroke-width="3"/>
       <path d="M-26 -60 C-30 -120 -20 -170 0 -176 C20 -170 30 -120 26 -60 Z" fill="#8A847A"/><circle cx="0" cy="-196" r="22" fill="#9A9284"/><path d="M-16 -200 C-6 -206 6 -206 16 -200 C12 -192 4 -192 0 -196 C-4 -192 -12 -192 -16 -200 Z" fill="#2A2724"/>
@@ -400,6 +483,9 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
     <rect y="830" width="1600" height="170" fill="url(#sFloor)"/>
     <g stroke="#3A3733" stroke-width="2" opacity=".7"><path d="M0 850 H1600 M0 880 H1600 M0 920 H1600 M0 970 H1600"/>
       <path d="M800 830 L800 1000 M700 830 L520 1000 M600 830 L240 1000 M500 830 L-40 1000 M900 830 L1080 1000 M1000 830 L1360 1000 M1100 830 L1640 1000 M400 830 L-320 1000 M1200 830 L1920 1000"/></g>
+  </svg>
+  <div class="spot s1"></div><div class="spot s2"></div><div class="fog"></div><div class="dust" id="dust"></div>
+  <svg class="pl front" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
     <!-- rideaux rouges -->
     <path class="curtain" d="M0 0 H300 C260 120 280 260 230 400 C200 520 240 700 170 1000 H0 Z" fill="url(#sCurt)"/>
     <path class="curtain r" d="M1600 0 H1300 C1340 120 1320 260 1370 400 C1400 520 1360 700 1430 1000 H1600 Z" fill="url(#sCurt)"/>
@@ -408,14 +494,30 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
   </svg>
 </div>
 <main id="main">
+ <div class="rig" id="rig">
   <div class="topper">
-    <svg class="sign" viewBox="0 0 480 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <path d="M40 60 C40 44 70 44 90 50 C120 40 160 40 190 46 L240 30 L290 46 C320 40 360 40 390 50 C410 44 440 44 440 60 L452 90 C440 112 426 128 404 134 H76 C54 128 40 112 28 90 Z" fill="#08070A" stroke="#8A847A" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M52 66 C60 56 80 58 96 62 C126 52 162 52 192 58 L240 44 L288 58 C318 52 354 52 384 62 C400 58 420 56 428 66 L436 90 C428 106 414 118 398 122 H82 C66 118 52 106 44 90 Z" fill="none" stroke="#3A3733" stroke-width="2"/>
-      <path d="M28 90 C10 86 4 70 16 62 C24 58 32 64 28 72 M452 90 C470 86 476 70 464 62 C456 58 448 64 452 72" fill="none" stroke="#B9B3A8" stroke-width="3" stroke-linecap="round"/>
-      <path d="M150 134 C170 146 190 142 200 136 M330 134 C310 146 290 142 280 136" fill="none" stroke="#B9B3A8" stroke-width="2.5" stroke-linecap="round"/>
+    <svg class="sign" viewBox="0 0 480 170" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <linearGradient id="tRib" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF4A5E"/><stop offset=".45" stop-color="#C8102E"/><stop offset="1" stop-color="#4A000C"/></linearGradient>
+        <linearGradient id="tRibD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A0A1E"/><stop offset="1" stop-color="#2A0006"/></linearGradient>
+        <path id="tRibPath" d="M96 139 C180 161 300 161 384 139"/>
+      </defs>
+      <circle cx="240" cy="38" r="70" fill="url(#mHalo)" opacity=".55"/>
+      <g stroke="#FF2340" stroke-width="1" opacity=".25"><path d="M240 38 L335 38"/><path d="M240 38 L322 85"/><path d="M240 38 L288 120"/><path d="M240 38 L240 133"/><path d="M240 38 L193 120"/><path d="M240 38 L158 86"/><path d="M240 38 L145 38"/><path d="M240 38 L158 -9"/><path d="M240 38 L192 -44"/><path d="M240 38 L240 -57"/><path d="M240 38 L287 -44"/><path d="M240 38 L322 -10"/></g>
+      <path d="M58 72 C58 52 88 48 108 54 C138 42 188 40 210 48 L240 30 L270 48 C292 40 342 42 372 54 C392 48 422 52 422 72 C442 76 454 92 446 106 C438 120 422 124 410 130 C382 142 98 142 70 130 C58 124 42 120 34 106 C26 92 38 76 58 72 Z" fill="#070609" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M58 72 C58 52 88 48 108 54 C138 42 188 40 210 48 L240 30 L270 48 C292 40 342 42 372 54 C392 48 422 52 422 72 C442 76 454 92 446 106 C438 120 422 124 410 130 C382 142 98 142 70 130 C58 124 42 120 34 106 C26 92 38 76 58 72 Z" fill="url(#mCross)" opacity=".35" stroke="url(#mSilver)" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M68 78 C70 62 94 60 110 64 C140 52 186 50 212 58 L240 42 L268 58 C294 50 340 52 370 64 C386 60 410 62 412 78 C428 82 438 94 432 104 C426 114 414 118 402 122 C376 132 104 132 78 122 C66 118 54 114 48 104 C42 94 52 82 68 78 Z" fill="none" stroke="#4A4640" stroke-width="1.5"/>
+      <g transform="translate(34 98) scale(1 1)"><path d="M0 0 C-14 -4 -22 -16 -16 -28 C-10 -38 4 -36 6 -26 C8 -18 0 -14 -4 -18" fill="none" stroke="url(#mSilver)" stroke-width="4" stroke-linecap="round"/><path d="M0 0 C-8 10 -20 12 -28 6 C-20 4 -14 -2 -12 -8" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><circle cx="-4" cy="-18" r="2.6" fill="#C8102E" stroke="#000" stroke-width=".8"/></g><g transform="translate(446 98) scale(-1 1)"><path d="M0 0 C-14 -4 -22 -16 -16 -28 C-10 -38 4 -36 6 -26 C8 -18 0 -14 -4 -18" fill="none" stroke="url(#mSilver)" stroke-width="4" stroke-linecap="round"/><path d="M0 0 C-8 10 -20 12 -28 6 C-20 4 -14 -2 -12 -8" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><circle cx="-4" cy="-18" r="2.6" fill="#C8102E" stroke="#000" stroke-width=".8"/></g>
+      <g fill="url(#mSilver)" stroke="#000" stroke-width="1"><path d="M150 50 C160 36 176 34 186 42 C176 42 168 46 164 54 Z"/><path d="M330 50 C320 36 304 34 294 42 C304 42 312 46 316 54 Z"/></g>
+      <!-- deux masques de part et d'autre -->
+      <g transform="translate(26 50) rotate(-16)"><path d="M0 -16 C-10 -16 -16 -12 -16 -6 C-17 8 -10 18 0 22 C10 18 17 8 16 -6 C16 -12 10 -16 0 -16 Z" fill="url(#mIvory)" stroke="#000" stroke-width="1.6"/><path d="M-10 -4 C-8 -7 -3 -7 -2 -4 C-4 -1 -8 -1 -10 -4 Z M2 -4 C3 -7 8 -7 10 -4 C8 -1 4 -1 2 -4 Z" fill="#000"/><path d="M-6 9 C-2 13 2 13 6 9" stroke="#C8102E" stroke-width="2" fill="none"/><path d="M-16 -8 C-24 -14 -26 -24 -18 -30" stroke="#B9B3A8" stroke-width="2" fill="none"/></g>
+      <g transform="translate(454 50) rotate(16)"><path d="M0 -12 C-12 -12 -20 -8 -20 -2 C-18 8 -8 10 0 4 C8 10 18 8 20 -2 C20 -8 12 -12 0 -12 Z" fill="url(#mRed)" stroke="#000" stroke-width="1.6"/><path d="M-13 -2 C-11 -5 -6 -5 -5 -2 C-7 1 -11 1 -13 -2 Z M5 -2 C6 -5 11 -5 13 -2 C11 1 7 1 5 -2 Z" fill="#000"/><path d="M20 -2 C26 -8 26 -18 20 -24" stroke="#C8102E" stroke-width="2" fill="none"/><circle cx="20" cy="-24" r="2.5" fill="url(#mSilver)" stroke="#000" stroke-width=".8"/></g>
+      <!-- ruban courbe -->
+      <path d="M96 139 L72 132 L80 146 L70 158 L104 152 Z" fill="url(#tRibD)" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/><path d="M384 139 L408 132 L400 146 L410 158 L376 152 Z" fill="url(#tRibD)" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/>
+      <use href="#tRibPath" fill="none" stroke="#000" stroke-width="27"/><use href="#tRibPath" fill="none" stroke="url(#tRib)" stroke-width="24"/><use href="#tRibPath" fill="none" stroke="#FFB0B8" stroke-width="24" stroke-dasharray="1 5" opacity=".08"/>
+      <text font-family="Cinzel, Georgia, serif" font-weight="900" font-size="12.5" letter-spacing="7" fill="#EFE8DA" dy="4.5"><textPath href="#tRibPath" startOffset="50%" text-anchor="middle">OF MADNESS</textPath></text>
       <!-- le Fou emblème, au-dessus de l'enseigne -->
-      <g transform="translate(240 30)">
+      <g transform="translate(240 34) scale(1.18)">
         <path d="M-6 -2 C-26 -8 -40 -20 -46 -8 C-38 -8 -30 -4 -20 4 Z" fill="#C8102E" stroke="#000" stroke-width="1.6"/><path d="M6 -2 C26 -8 40 -20 46 -8 C38 -8 30 -4 20 4 Z" fill="#15121A" stroke="#B9B3A8" stroke-width="1.6"/>
         <path d="M-10 -2 C-8 -22 0 -30 0 -30 C0 -30 8 -22 10 -2 Z" fill="#6A0010" stroke="#000" stroke-width="1.6"/>
         <circle cx="-46" cy="-8" r="4" fill="url(#mSilver)" stroke="#000" stroke-width="1.2"/><circle cx="46" cy="-8" r="4" fill="url(#mSilver)" stroke="#000" stroke-width="1.2"/><circle cx="0" cy="-30" r="4" fill="url(#mSilver)" stroke="#000" stroke-width="1.2"/>
@@ -424,7 +526,7 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
         <path d="M-5 20 C-2 23 2 23 5 20" stroke="#C8102E" stroke-width="2.4" fill="none" stroke-linecap="round"/>
       </g>
     </svg>
-    <h1 class="logo" aria-label="Masquerade of Madness"><b>MASQUERADE</b><i>OF MADNESS</i></h1>
+    <h1 class="logo" aria-label="Masquerade of Madness"><b><span class="ex" aria-hidden="true">MASQUERADE</span><span class="fa">MASQUERADE</span></b></h1>
     <div class="hbtns">
       <button class="ico" id="musicBtn" aria-label="Couper la musique" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="#EFE8DA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="3" fill="#EFE8DA"/><circle cx="17.5" cy="16" r="3" fill="#EFE8DA"/></svg></button>
       <button class="ico" id="sfxBtn" aria-label="Couper les effets sonores" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#EFE8DA"/><path d="M16 9c1.3 1.6 1.3 4.4 0 6M18.5 6.5c2.8 3 2.8 8 0 11" fill="none" stroke="#EFE8DA" stroke-width="2" stroke-linecap="round"/></svg></button>
@@ -434,11 +536,17 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
   <div class="cabinet">
     <span class="pillar l" aria-hidden="true"></span><span class="pillar r" aria-hidden="true"></span>
     <span class="candle l" aria-hidden="true"></span><span class="candle r" aria-hidden="true"></span>
+    <span class="orn tl" aria-hidden="true"><svg viewBox="0 0 60 60"><path d="M4 56 C4 30 16 12 42 6 C32 14 28 22 30 30 C32 38 42 38 44 30 C45 24 40 20 36 24" fill="none" stroke="url(#mSilver)" stroke-width="3.4" stroke-linecap="round"/><path d="M4 56 C4 44 14 38 24 42 C18 45 14 50 16 56 Z" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><path d="M42 6 C48 4 54 6 56 10 C50 10 46 12 44 16" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><circle cx="36" cy="24" r="2.6" fill="#C8102E" stroke="#000" stroke-width=".8"/><path d="M10 40 C14 30 20 24 28 20" fill="none" stroke="#4A4640" stroke-width="1.2"/></svg></span>
+    <span class="orn tr" aria-hidden="true"><svg viewBox="0 0 60 60"><path d="M4 56 C4 30 16 12 42 6 C32 14 28 22 30 30 C32 38 42 38 44 30 C45 24 40 20 36 24" fill="none" stroke="url(#mSilver)" stroke-width="3.4" stroke-linecap="round"/><path d="M4 56 C4 44 14 38 24 42 C18 45 14 50 16 56 Z" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><path d="M42 6 C48 4 54 6 56 10 C50 10 46 12 44 16" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><circle cx="36" cy="24" r="2.6" fill="#C8102E" stroke="#000" stroke-width=".8"/><path d="M10 40 C14 30 20 24 28 20" fill="none" stroke="#4A4640" stroke-width="1.2"/></svg></span>
+    <span class="orn bl" aria-hidden="true"><svg viewBox="0 0 60 60"><path d="M4 56 C4 30 16 12 42 6 C32 14 28 22 30 30 C32 38 42 38 44 30 C45 24 40 20 36 24" fill="none" stroke="url(#mSilver)" stroke-width="3.4" stroke-linecap="round"/><path d="M4 56 C4 44 14 38 24 42 C18 45 14 50 16 56 Z" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><path d="M42 6 C48 4 54 6 56 10 C50 10 46 12 44 16" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><circle cx="36" cy="24" r="2.6" fill="#C8102E" stroke="#000" stroke-width=".8"/><path d="M10 40 C14 30 20 24 28 20" fill="none" stroke="#4A4640" stroke-width="1.2"/></svg></span>
+    <span class="orn br" aria-hidden="true"><svg viewBox="0 0 60 60"><path d="M4 56 C4 30 16 12 42 6 C32 14 28 22 30 30 C32 38 42 38 44 30 C45 24 40 20 36 24" fill="none" stroke="url(#mSilver)" stroke-width="3.4" stroke-linecap="round"/><path d="M4 56 C4 44 14 38 24 42 C18 45 14 50 16 56 Z" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><path d="M42 6 C48 4 54 6 56 10 C50 10 46 12 44 16" fill="url(#mSilver)" stroke="#000" stroke-width="1"/><circle cx="36" cy="24" r="2.6" fill="#C8102E" stroke="#000" stroke-width=".8"/><path d="M10 40 C14 30 20 24 28 20" fill="none" stroke="#4A4640" stroke-width="1.2"/></svg></span>
+    <span class="keystone" aria-hidden="true"><svg viewBox="0 0 70 46"><path d="M8 4 H62 L54 40 H16 Z" fill="#0A080C" stroke="url(#mSilver)" stroke-width="2.4"/><path d="M35 10 C27 10 20 12 20 17 C19 27 26 34 35 37 C44 34 51 27 50 17 C50 12 43 10 35 10 Z" fill="url(#mIvory)" stroke="#000" stroke-width="1.4"/><path d="M26 20 C28 18 31 18 32 20 C31 22 28 22 26 20 Z M38 20 C39 18 42 18 44 20 C42 22 39 22 38 20 Z" fill="#000"/><path d="M29 28 C33 31 37 31 41 28" stroke="#C8102E" stroke-width="2" fill="none"/></svg></span>
     <div class="sanity" id="sanity" role="meter" aria-label="Jauge de raison" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
       <span class="lbl">SANITY</span>
       <div class="sbar"><div class="sfill" id="sfill"></div><div class="stxt" id="stxt">100 %</div></div>
     </div>
     <div class="screen">
+      <div class="swag" aria-hidden="true"><svg viewBox="0 0 400 44" preserveAspectRatio="none"><defs><linearGradient id="swg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A000C"/><stop offset=".55" stop-color="#A0122A"/><stop offset="1" stop-color="#3A0008"/></linearGradient></defs><path d="M0 0 H400 V10 C360 38 300 40 266 14 C232 40 168 40 134 14 C100 40 40 38 0 10 Z" fill="url(#swg)" stroke="#000" stroke-width="1.5"/><path d="M0 8 C40 32 100 34 134 12 C168 34 232 34 266 12 C300 34 360 32 400 8" fill="none" stroke="#B9B3A8" stroke-width="1.6" opacity=".8"/><path d="M20 4 C40 18 60 20 80 14 M150 6 C180 18 220 18 250 6 M320 14 C340 20 360 18 380 4" stroke="#000" stroke-width="1" fill="none" opacity=".35"/></svg><i style="left:0%"></i><i style="left:33.5%"></i><i style="left:66.5%"></i><i style="left:100%"></i></div>
       <div class="hud" id="hud">
         <div class="tier"><span id="tierName">Bonus</span><span id="tierInfo"></span></div>
         <div class="chip" id="chipSpins">SPINS <b id="spinsLeft">8</b></div>
@@ -446,7 +554,7 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
         <div class="chip" id="chipTotal">TOTAL <b id="bonusTotal">0,00</b></div>
         <div class="fous" id="fous"></div>
       </div>
-      <div class="gridwrap" id="gridwrap"><div class="mirrors" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="grid" id="grid"></div></div>
+      <div class="gridwrap" id="gridwrap"><div class="mirrors" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="grid" id="grid"></div><div class="apron" aria-hidden="true"></div></div>
       <div class="stage" id="stage"></div>
     </div>
     <div class="msgrow">
@@ -464,6 +572,7 @@ body.bonus .studio .sb, body.bonus .badge{visibility:hidden}
       <div class="sval"><b id="balance">5 000,00</b><small id="balLbl">LUCIOLES</small></div>
     </div>
   </div>
+ </div>
 </main>
 <section class="floor" aria-hidden="true">
   <svg class="ground" viewBox="0 0 1200 210" preserveAspectRatio="none"><rect y="30" width="1200" height="180" fill="#0C0A0E"/>
@@ -1702,6 +1811,21 @@ document.addEventListener('keydown', e => {
   if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
   e.preventDefault(); if (!S.auto) spin();
 });
+(function depth() {
+  const dust = $('dust');
+  for (let i = 0; i < 18; i++) { const d = document.createElement('i'); d.style.left = (10 + Math.random() * 80) + '%'; d.style.top = (40 + Math.random() * 55) + '%'; d.style.setProperty('--d', (9 + Math.random() * 9) + 's'); d.style.setProperty('--dl', (-Math.random() * 18) + 's'); d.style.setProperty('--dx', ((Math.random() - .5) * 80) + 'px'); dust.appendChild(d); }
+  if (reduce) return;
+  const rig = $('rig'), sc = document.querySelector('.scene'); let tx = 0, ty = 0, cx = 0, cy = 0, lastIn = -1e9;
+  addEventListener('pointermove', e => { tx = (e.clientX / innerWidth - .5) * 2; ty = (e.clientY / innerHeight - .5) * 2; lastIn = performance.now(); }, { passive: true });
+  addEventListener('deviceorientation', e => { if (e.gamma == null) return; tx = Math.max(-1, Math.min(1, e.gamma / 25)); ty = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); lastIn = performance.now(); });
+  (function loop(now) {
+    if (now - lastIn > 3000) { tx = Math.sin(now / 3200) * .45; ty = Math.sin(now / 4100) * .25; } // au repos, la machine respire
+    cx += (tx - cx) * .05; cy += (ty - cy) * .05;
+    rig.style.setProperty('--rx', (-cy * 4).toFixed(2) + 'deg'); rig.style.setProperty('--ry', (cx * 6).toFixed(2) + 'deg');
+    sc.style.setProperty('--px', cx.toFixed(3)); sc.style.setProperty('--py', cy.toFixed(3));
+    requestAnimationFrame(loop);
+  })(performance.now());
+})();
 setSanity(100);
 setMoney(); showStatic(E.spinBase());
 })();

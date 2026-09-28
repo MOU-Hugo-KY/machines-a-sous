@@ -54,7 +54,7 @@ const THREE_DIR = [__dirname, process.cwd()].map(b => path.join(b, 'node_modules
     };
     const out = {};
     for (const [key, b] of Object.entries(window.ART3D_BAKES)) out[key] = { n: b.frames, idle: await toWebp(b.idle), win: await toWebp(b.win) };
-    return { sig: window.ART3D_SIG, out };
+    return { sig: typeof ART3D_SIG !== 'undefined' ? ART3D_SIG : null, out }; // const du script : pas une propriété de window
   }, Q);
   await browser.close();
 

@@ -72,6 +72,12 @@ Pour les thèmes de bal masqué, de vampires, d'opéra, de cour royale décadent
 - **Décor vivant** : salle de bal (rideaux rouges, lustres, tableaux, statues, damier), invités masqués en silhouette. Une jauge qui descend change le décor par paliers (classes `s75`, `s50`, `s25`, `mad` sur `body`) : les invités bougent, les masques sourient, les tableaux regardent, les roses blanches rougissent, les bougies passent au rouge.
 - **Musique** : clavecin (corde pincée très brillante), basse continue, menuet à trois temps en mineur ; la valse du bonus avec cordes et timbales ; une boîte à musique désaccordée pour la folie, des rires lointains.
 - **3D** : toon à contour fin (0,03), ivoire, noir et carmin, argent en PBR, bougies émissives et lumières chaudes ponctuelles.
+- **Perspective (la touche « design de fou »)** : la machine vit dans l'espace, en CSS 3D.
+  - `main{perspective:1400px}` et un plateau `.rig{transform-style:preserve-3d; transform:rotateX(var(--rx)) rotateY(var(--ry))}` qui suit la souris ou le gyroscope (lissage à 5 % par image), avec un léger balancement quand personne ne touche. Coupé si `prefers-reduced-motion`.
+  - Chaque couche a sa profondeur (`translateZ`) : enseigne +46 px, pastilles et message +44, colonnes du cadre +30, ornements d'angle et drapé +22 à +26, grille +10. **Rien ne doit reculer (Z négatif) derrière un parent opaque** : en 3D partagée, le fond du parent le cacherait.
+  - **Écran incurvé** : `perspective` sur `.grid`, et chaque colonne tournée vers le centre (`rotateY` ±17° et ±8°, `translateZ` +26 et +7 px pour les bords). Une case gagnante avance de 18 px. Les animations des cases se font sur leur contenu (`.cell>*`), jamais sur la case elle-même.
+  - **Décor en plans** : le fond en trois SVG (mur, invités, rideaux) décalés de 14, 30 et 60 px selon la même inclinaison, plus des faisceaux de lumière (`conic-gradient` en `mix-blend-mode:screen`), une brume au sol et de la poussière qui monte.
+  - **Théâtre** : ornements d'angle en SVG, masque en clé de voûte, drapé de velours à pompons qui se balancent, plancher en damier en perspective sous la grille (`perspective(260px) rotateX(62deg)` + `mask-image`), cadre en moulures successives (`box-shadow` en anneaux argent/noir), logo en relief (une copie derrière avec des `text-shadow` étagés, la face dessus en dégradé métal).
 
 ---
 
