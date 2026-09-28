@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salle des machines</title>
+<meta name="theme-color" content="#0E0A14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="app/icones/icone-192.png">
+<link rel="apple-touch-icon" href="app/icones/icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* Salle des machines : un seul univers sombre, voulu (enseigne de casino la nuit) */
+:root{
+  color-scheme:dark;
+  --bg:#0E0A14; --bg2:#15101D; --card:#1C1626; --line:#2E2540; --ink:#F4EDE4; --mute:#A89DB6; --gold:#F5B83D; --gold2:#FFE08A; --coral:#FF5A4E; --mint:#7CE0B0;
+  --display:"Bungee","Impact",system-ui,sans-serif; --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%}
+body{margin:0; min-height:100%; background:var(--bg); color:var(--ink); font-family:var(--body); font-weight:500; -webkit-tap-highlight-color:transparent}
+body.playing{overflow:hidden}
+button,input{font:inherit; color:inherit}
+.wrap{max-width:1100px; margin:0 auto; padding-inline:16px; padding-block:0 40px}
+/* enseigne à ampoules */
+.marquee{position:relative; margin:14px 0 18px; padding:18px 18px 16px; border-radius:18px; background:radial-gradient(120% 140% at 50% 0%, #3A1E3A 0%, #1A1022 60%); border:2px solid #4A2A48; box-shadow:0 0 0 4px #1A1022, 0 18px 40px rgba(0,0,0,.5); text-align:center; overflow:hidden}
+.bulbs{position:absolute; inset:6px; pointer-events:none; border-radius:12px;
+  background:radial-gradient(circle, var(--gold2) 0 2.4px, transparent 3.2px) 0 0/22px 22px repeat-x, radial-gradient(circle, var(--gold2) 0 2.4px, transparent 3.2px) 11px 100%/22px 22px repeat-x;
+  animation:bulbs 1.2s steps(2) infinite}
+@keyframes bulbs{50%{filter:brightness(.35)}}
+.marquee h1{margin:0; font-family:var(--display); font-weight:400; font-size:clamp(1.6rem, 7vw, 2.9rem); line-height:1.02; letter-spacing:.01em; color:var(--gold2);
+  text-shadow:0 0 12px rgba(245,184,61,.7), 0 3px 0 #7A3E10; text-wrap:balance}
+.marquee p{margin:8px 0 0; color:var(--mute); font-size:.92rem}
+.wallet{display:inline-flex; align-items:center; gap:8px; margin-top:10px; padding:4px 12px; border-radius:999px; background:#0E0A14; border:1px solid var(--line); font-size:.82rem; color:var(--mute)}
+.wallet b{color:var(--mint); font-variant-numeric:tabular-nums}
+/* à la une */
+.hero{position:relative; display:grid; grid-template-columns:1.25fr 1fr; gap:0; border-radius:18px; overflow:hidden; background:var(--card); border:1px solid var(--line); margin-bottom:22px}
+.hero img{width:100%; height:100%; object-fit:cover; display:block; min-height:220px; max-width:100%}
+.hero .txt{padding:20px; display:flex; flex-direction:column; gap:10px; justify-content:center}
+.kicker{font-family:var(--display); font-size:.72rem; letter-spacing:.08em; color:var(--coral)}
+.hero h2{margin:0; font-family:var(--display); font-weight:400; font-size:clamp(1.4rem, 4.4vw, 2.1rem); line-height:1.05; text-wrap:balance}
+.hero p{margin:0; color:var(--mute); line-height:1.5; max-width:46ch}
+.play{align-self:flex-start; display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:12px; border:none; background:linear-gradient(#FFD36A,#F5A623); color:#2A1500; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #9A5A0A}
+.play:active{transform:translateY(3px); box-shadow:0 1px 0 #9A5A0A}
+/* barre de filtres */
+.tools{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px}
+.search{flex:1 1 220px; display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; background:var(--bg2); border:1px solid var(--line)}
+.search input{flex:1; min-width:0; background:none; border:none; outline:none; font-size:.95rem}
+.search svg{width:18px; height:18px; flex:none; opacity:.7}
+.chips{display:flex; gap:6px; flex-wrap:wrap}
+.chip{padding:8px 14px; border-radius:999px; background:var(--bg2); border:1px solid var(--line); cursor:pointer; font-weight:700; font-size:.85rem; color:var(--mute)}
+.chip[aria-pressed="true"]{background:var(--gold); color:#2A1500; border-color:var(--gold)}
+.count{color:var(--mute); font-size:.85rem; margin:0 0 12px}
+/* cartes des machines */
+.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px}
+.card{position:relative; border-radius:16px; overflow:hidden; background:var(--card); border:1px solid var(--line); display:flex; flex-direction:column; transition:transform .15s}
+.card:hover{transform:translateY(-3px)}
+.thumb{position:relative; aspect-ratio:9/8; overflow:hidden; cursor:pointer; border:none; padding:0; background:#000; display:block; width:100%}
+.thumb img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s}
+.card:hover .thumb img{transform:scale(1.04)}
+.badge{position:absolute; top:10px; left:10px; padding:3px 9px; border-radius:6px; font-family:var(--display); font-size:.66rem; letter-spacing:.05em; background:var(--coral); color:#fff}
+.fav{position:absolute; top:8px; right:8px; width:38px; height:38px; border-radius:50%; border:none; background:rgba(14,10,20,.72); display:grid; place-items:center; cursor:pointer}
+.fav svg{width:20px; height:20px}
+.fav[aria-pressed="true"] path{fill:var(--coral); stroke:var(--coral)}
+.body{padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; flex:1}
+.body h3{margin:0; font-family:var(--display); font-weight:400; font-size:1.12rem; letter-spacing:.01em}
+.body .desc{margin:0; color:var(--mute); font-size:.86rem; line-height:1.45}
+.tags{display:flex; flex-wrap:wrap; gap:5px}
+.tag{font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:6px; background:#2A2138; color:#D8CCE8}
+.stats{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:auto; padding-top:8px; border-top:1px dashed var(--line)}
+.stats div{display:flex; flex-direction:column}
+.stats small{font-size:.66rem; color:var(--mute); text-transform:uppercase; letter-spacing:.06em}
+.stats b{font-variant-numeric:tabular-nums; font-size:.9rem}
+.actions{display:flex; gap:8px; align-items:center}
+.actions .play{padding:9px 16px; font-size:.9rem}
+.lite{background:none; border:none; color:var(--mute); text-decoration:underline; cursor:pointer; font-size:.82rem; padding:4px}
+.empty{padding:30px; text-align:center; color:var(--mute); border:1px dashed var(--line); border-radius:16px}
+.foot{margin-top:28px; color:var(--mute); font-size:.8rem; text-align:center; line-height:1.6}
+/* la machine ouverte en plein écran */
+.viewer{position:fixed; inset:0; z-index:50; background:#000; display:none}
+.viewer.show{display:block}
+.viewer iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+.back{position:absolute; z-index:2; left:10px; top:calc(env(safe-area-inset-top, 0px) + 10px); display:flex; align-items:center; gap:6px; padding:8px 14px 8px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.2); background:rgba(14,10,20,.78); color:var(--ink); font-weight:800; cursor:pointer; backdrop-filter:blur(6px)}
+.back svg{width:18px; height:18px}
+:focus-visible{outline:3px solid var(--gold2); outline-offset:2px}
+@media (max-width:640px){ .hero{grid-template-columns:1fr} .hero img{min-height:0; aspect-ratio:16/10} }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="marquee">
+    <div class="bulbs" aria-hidden="true"></div>
+    <h1>Salle des machines</h1>
+    <p>Mes machines à sous faites maison. Crédits fictifs, aucun argent réel.</p>
+    <span class="wallet">Chaque machine démarre avec <b>5 000 crédits</b></span>
+  </header>
+
+  <section class="hero" id="hero" aria-label="Machine à la une"></section>
+
+  <div class="tools">
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Chercher une machine, un thème…" aria-label="Chercher une machine"></label>
+    <div class="chips" role="group" aria-label="Filtres">
+      <button class="chip" data-f="tout" aria-pressed="true">Toutes</button>
+      <button class="chip" data-f="fav" aria-pressed="false">Favoris</button>
+      <button class="chip" data-f="cascades" aria-pressed="false">Cascades</button>
+      <button class="chip" data-f="cartoon" aria-pressed="false">Cartoon</button>
+    </div>
+  </div>
+  <p class="count" id="count" aria-live="polite"></p>
+  <div class="grid" id="grid"></div>
+  <p class="foot">Toutes les machines rendent 98,5 % en moyenne (RTP), en jeu normal comme à l'achat des bonus.<br>Crédits fictifs, aucun argent réel. Sur Android, « Ajouter à l'écran d'accueil » installe la salle comme une appli.</p>
+</div>
+
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="Machine en cours">
+  <button class="back" id="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Salle</button>
+  <iframe id="frame" title="Machine à sous" allow="autoplay; fullscreen"></iframe>
+</div>
+
+<script>
+// Le catalogue : ajouter une machine = ajouter une ligne ici (et sa vignette dans app/vignettes/)
+const GAMES = [
+  { id: 'dead-city', nom: 'Dead City: Last Spin', page: 'jeux/dead-city-3d.html', lite: 'jeux/dead-city.html', img: 'app/vignettes/dead-city-3d.jpg', badge: 'Nouveau',
+    desc: "La ville est tombée. Cascades de zombies, jauge d'invasion, horde et patient zéro.", tags: ['3D', 'Zombies', 'Cascades', 'Grappes 5×5'], filtres: ['cascades'],
+    bonus: '1 / 280', grille: '5×5', max: '50 000×', une: "Trois bonus : l'épidémie, la dernière barricade et l'extraction en hélico." },
+  { id: 'champi-pop', nom: 'Champi Pop', page: 'jeux/champi-pop-3d.html', lite: 'jeux/champi-pop.html', img: 'app/vignettes/champi-pop-3d.jpg',
+    desc: "Forêt d'automne et champignons qui poussent. La grille grandit pendant le bonus.", tags: ['3D', 'Forêt', 'Chemins 6×6'], filtres: ['cartoon'],
+    bonus: '1 / 325', grille: '6×6', max: '50 000×' },
+  { id: 'constella', nom: 'Constella', page: 'jeux/constella-3d.html', lite: 'jeux/constella.html', img: 'app/vignettes/constella-3d.jpg',
+    desc: 'Observatoire sous les aurores. Les étoiles restent au ciel et dessinent des constellations.', tags: ['3D', 'Étoiles', 'Chemins 6×6'], filtres: ['cartoon'],
+    bonus: '1 / 325', grille: '6×6', max: '50 000×' },
+];
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+let favs = new Set(store.get('favoris', [])), filtre = 'tout';
+const heart = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" fill="none" stroke="#F4EDE4" stroke-width="2" stroke-linejoin="round"/></svg>';
+
+function open(g, lite = false) {
+  $('frame').src = lite ? g.lite : g.page;
+  $('viewer').classList.add('show'); document.body.classList.add('playing');
+  store.set('derniere', g.id); history.pushState({ jeu: g.id }, '');
+  setTimeout(() => $('frame').focus(), 50);
+}
+function close() { $('viewer').classList.remove('show'); document.body.classList.remove('playing'); $('frame').src = 'about:blank'; render(); }
+$('back').onclick = () => (history.state && history.state.jeu ? history.back() : close());
+addEventListener('popstate', () => { if ($('viewer').classList.contains('show')) close(); });
+
+function hero() {
+  const g = GAMES.find(x => x.id === store.get('derniere', '')) || GAMES[0], again = g.id === store.get('derniere', '');
+  $('hero').innerHTML = `<img src="${g.img.replace('.jpg', '-large.jpg')}" alt="Aperçu de ${g.nom}" onerror="this.src='${g.img}'"><div class="txt">
+    <span class="kicker">${again ? 'Reprendre' : 'À la une'}</span><h2>${g.nom}</h2><p>${g.une || g.desc}</p>
+    <button class="play" id="heroPlay">Jouer</button></div>`;
+  $('heroPlay').onclick = () => open(g);
+}
+function render() {
+  const q = $('q').value.trim().toLowerCase();
+  const list = GAMES.filter(g => (filtre === 'tout' || (filtre === 'fav' ? favs.has(g.id) : g.filtres.includes(filtre)))
+    && (!q || [g.nom, g.desc, ...g.tags].join(' ').toLowerCase().includes(q)));
+  $('count').textContent = `${list.length} machine${list.length > 1 ? 's' : ''}`;
+  $('grid').innerHTML = list.length ? list.map(g => `<article class="card">
+      <button class="thumb" data-open="${g.id}" aria-label="Jouer à ${g.nom}"><img src="${g.img}" alt="" loading="lazy">${g.badge ? `<span class="badge">${g.badge}</span>` : ''}</button>
+      <button class="fav" data-fav="${g.id}" aria-pressed="${favs.has(g.id)}" aria-label="${favs.has(g.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${heart}</button>
+      <div class="body"><h3>${g.nom}</h3><p class="desc">${g.desc}</p>
+        <div class="tags">${g.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <div class="stats"><div><small>Bonus</small><b>${g.bonus}</b></div><div><small>Grille</small><b>${g.grille}</b></div><div><small>Gain max</small><b>${g.max}</b></div></div>
+        <div class="actions"><button class="play" data-open="${g.id}">Jouer</button><button class="lite" data-lite="${g.id}">Version légère (2D)</button></div>
+      </div></article>`).join('')
+    : `<div class="empty">${filtre === 'fav' ? 'Aucun favori pour l\'instant : touche le cœur d\'une machine pour la retrouver ici.' : 'Aucune machine ne correspond.'}</div>`;
+}
+$('grid').addEventListener('click', e => {
+  const t = e.target.closest('[data-open],[data-lite],[data-fav]'); if (!t) return;
+  const id = t.dataset.open || t.dataset.lite || t.dataset.fav, g = GAMES.find(x => x.id === id);
+  if (t.dataset.fav) { favs.has(id) ? favs.delete(id) : favs.add(id); store.set('favoris', [...favs]); render(); return; }
+  open(g, !!t.dataset.lite);
+});
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => { filtre = c.dataset.f; document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c)); render(); });
+$('q').addEventListener('input', render);
+hero(); render();
+// appli installable : le service worker garde les machines pour jouer hors ligne (ignoré là où il n'est pas permis)
+if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) {} }
+</script>
+</body>
+</html>

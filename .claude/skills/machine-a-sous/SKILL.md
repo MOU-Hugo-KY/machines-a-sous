@@ -18,6 +18,7 @@ Avant d'écrire du code, lis `references/architecture.md` : il décrit les modul
 
 Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va jusqu'au bout. Ne pose une question que si deux lectures de l'idée mènent à des jeux vraiment différents. Le brief, que tu montres en quelques lignes avant de coder :
 
+- **Style visuel** : cartoon doux, premium sombre industriel, mine et western, ou néon arcade (fiches dans `references/styles.md`). Si on te montre des captures de machines du commerce, choisis le style le plus proche et reprends leur ambiance, jamais leur nom, logo ou personnages. Le style décide de la palette, des polices, du cadre, des tuiles, des symboles (personnages ronds, bustes sur tuiles colorées, figures de cartes gravées…) et de la barre de commande.
 - **Nom** : court et chantant, qui tient sur l'enseigne (comme « Champi Pop » ou « Constella »).
 - **Univers et palette** : lieu, moment de la journée, et 6 à 8 couleurs clés. Il y a un décor de jeu de base et une ambiance différente pendant le bonus (jour → nuit, calme → orage…).
 - **Symboles** : 4 petits (l1-l4) et 4 gros (h1-h4), du plus fréquent au plus rare, tous des personnages avec un visage. S'y ajoute **le scatter** (l'objet qui lance le bonus : télescope, champignon étoile…).
@@ -31,7 +32,7 @@ Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va ju
 
 1. Copie le modèle le plus proche : `cp jeux/constella.html jeux/<nom-en-kebab>.html` (en 3D : `jeux/constella-3d.html`).
 2. Réécris les couches **dans cet ordre**, en gardant la structure et les identifiants :
-   1. `<title>`, polices, **variables CSS** (`:root`, `body.bonus`) et styles propres au thème (topper, enseigne, décor).
+   1. `<title>`, polices, **variables CSS** (`:root`, `body.bonus`) et styles propres au thème (topper, enseigne, décor), en suivant la fiche du style choisi (`references/styles.md`) : cadre, tuiles, surbrillance des gains, barre de commande cartoon ou « barre de studio ».
    2. **Dégradés SVG partagés** (`<defs>` en haut du `<body>`) utilisés par les illustrations.
    3. **Paysage de fond** (`.scene`) avec sa version bonus (classes `.day`/`.night` ou variables).
    4. **Topper et enseigne** : le logo en lettres de couleurs qui ondulent, et les boutons musique/son/infos.
@@ -69,6 +70,8 @@ node .claude/skills/machine-a-sous/scripts/check.js jeux/<nom>.html
 Pour une machine en 3D, installe d'abord Three.js en local une fois pour toutes (`npm i --prefix .claude/skills/machine-a-sous/scripts`). Le script attend alors la cuisson des modèles et échoue si la 3D ne se charge pas. Il joue 8 spins puis achète le bonus et le super bonus en accéléré. Il échoue sur toute erreur JavaScript, ressource introuvable ou défilement horizontal sur téléphone. Il enregistre des captures dans `jeux/captures/<nom>/` : accueil sur téléphone et sur ordinateur, partie, entrée, déroulé et fin de chaque bonus, et règles. **Ouvre et regarde les captures** (outil Read sur les PNG). Corrige ce qui déborde, se chevauche, est illisible ou manque de contraste, puis relance jusqu'à obtenir « OK ». Les captures ne se commitent pas (elles sont dans `.gitignore`).
 
 ## 5. Livrer
+
+0. Ajoute la machine au catalogue de la **Salle des machines** (`index.html`, tableau `GAMES`) avec sa vignette (capture 900×800 du jeu en 3D, dans `app/vignettes/`), ajoute ses fichiers à la liste de `sw.js` et change `VERSION`, puis republie la salle (artifact `index.html` avec les jeux et les vignettes en `files`).
 
 1. Publie la page en artifact (`Artifact`, `file_path: jeux/<nom>.html`, `icon: "game"`, une phrase de description). Pour une nouvelle version, republie le même chemin.
 2. Ajoute la machine au tableau du `README.md` (nom, thème, mécanique du bonus).

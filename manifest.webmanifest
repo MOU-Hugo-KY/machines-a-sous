@@ -1,0 +1,17 @@
+{
+  "name": "Salle des machines",
+  "short_name": "Machines",
+  "description": "Mes machines à sous faites maison, avec des crédits fictifs.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E0A14",
+  "theme_color": "#0E0A14",
+  "icons": [
+    { "src": "app/icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "app/icones/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "app/icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

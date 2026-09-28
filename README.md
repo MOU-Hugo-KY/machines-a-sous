@@ -1,5 +1,11 @@
 # Machines à sous
 
+## La Salle des machines
+
+`index.html` est le lobby qui regroupe toutes les machines : recherche, filtres, favoris, puis la machine en plein écran avec un bouton pour revenir. C'est aussi une **appli installable** (PWA) qui marche hors ligne après la première visite.
+
+Pour l'installer sur un téléphone, il faut que la salle soit en ligne en https, par exemple avec GitHub Pages (Settings → Pages → Deploy from a branch → `main`, dossier `/`). GitHub Pages est gratuit pour un dépôt public ; pour un dépôt privé, il faut un compte payant. Ouvre ensuite l'adresse dans Chrome sur Android, menu ⋮ → « Ajouter à l'écran d'accueil ». Pour ajouter une machine au lobby, ajoute une ligne au tableau `GAMES` de `index.html`, sa vignette dans `app/vignettes/`, et ses fichiers dans `sw.js` (et change `VERSION`).
+
 Des machines à sous thématiques, chacune dans un seul fichier HTML à ouvrir dans un navigateur. On joue avec des crédits fictifs, sans aucun argent réel.
 
 | Machine | Thème | Bonus |
@@ -18,7 +24,7 @@ Le dépôt contient une skill Claude Code, dans `.claude/skills/machine-a-sous/`
 
 > Fais-moi une machine à sous sur le thème des pirates, avec un bonus où on déterre des trésors.
 
-Claude rédige un court cahier des charges (nom, symboles, bonus, décor, musique, rendu 2D ou 3D), construit la machine à partir des modèles, calibre le RTP, la teste dans un navigateur, puis la publie.
+Claude rédige un court cahier des charges (style visuel, nom, symboles, bonus, décor, musique, rendu 2D ou 3D), construit la machine à partir des modèles, calibre le RTP, la teste dans un navigateur, puis la publie.
 
 ### Outils
 

@@ -200,8 +200,10 @@ const KIT3D = THREE => {
     return pts;
   }
   const lerpColor = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+  // matériau réaliste (style premium) : métal, plastique brillant ; à utiliser avec ink: 0
+  const pbr = (color, o = {}) => { const m = new THREE.MeshStandardMaterial({ color, metalness: o.metal ?? 0.6, roughness: o.rough ?? 0.35 }); if (o.emissive) { m.emissive = new THREE.Color(o.emissive); m.emissiveIntensity = o.glow ?? 0.6; } return m; };
   const endBake = () => { if (bakeR) { bakeR.dispose(); bakeR.forceContextLoss(); bakeR = null; } };
-  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, endBake, html, live, INK, sky, dots, lerpColor };
+  return { THREE, TAU, mat, pbr, inkMat, part, G, face, studio, ANIM, ease, blink, bake, endBake, html, live, INK, sky, dots, lerpColor };
 };
 
 // ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
