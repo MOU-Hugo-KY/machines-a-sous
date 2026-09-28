@@ -1138,15 +1138,17 @@ const KIT3D = THREE => {
     return pts;
   }
   const lerpColor = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+  // matériau réaliste (style premium) : métal, plastique brillant ; à utiliser avec ink: 0
+  const pbr = (color, o = {}) => { const m = new THREE.MeshStandardMaterial({ color, metalness: o.metal ?? 0.6, roughness: o.rough ?? 0.35 }); if (o.emissive) { m.emissive = new THREE.Color(o.emissive); m.emissiveIntensity = o.glow ?? 0.6; } return m; };
   const endBake = () => { if (bakeR) { bakeR.dispose(); bakeR.forceContextLoss(); bakeR = null; } };
-  return { THREE, TAU, mat, inkMat, part, G, face, studio, ANIM, ease, blink, bake, endBake, html, live, INK, sky, dots, lerpColor };
+  return { THREE, TAU, mat, pbr, inkMat, part, G, face, studio, ANIM, ease, blink, bake, endBake, html, live, INK, sky, dots, lerpColor };
 };
 
 // ---------- chargement progressif : la machine démarre avec ses dessins 2D, puis passe en 3D dès que tout est cuit ----------
 // MODELS(K) renvoie { SYMS: [8 fonctions], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
 // Exemple : VARIANTES: { star: { star: () => …, gold: () => … } } remplace ART.star('gold') par sa version 3D.
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
-const STAGE3D = { intro() {}, big() {}, stop() {} }; // sans 3D, ces appels ne font rien ; big() reste vide exprès (gros gains sans ronde, plus lisible)
+const STAGE3D = { intro() {}, big() {}, stop() {} }; // restent vides exprès : pas de personnages 3D qui tournent autour des grands écrans
 window.ART3D_STATE = 'chargement';
 // DECOR (facultatif) : décor 3D en fond d'écran, voir setupDecor
 async function CHARGE3D(ART, MODELS, DECOR) {
@@ -1165,7 +1167,7 @@ async function CHARGE3D(ART, MODELS, DECOR) {
     K.endBake();
     ART.SYMS = syms; ART.SCAT = scat;
     for (const [name, v] of Object.entries(variants)) { const old = ART[name]; ART[name] = (arg, ...rest) => v[arg] ?? old(arg, ...rest); }
-    setupStage(K, M);
+    // plus de ronde 3D autour de l'entrée du bonus ni des gros gains : trop chargé, l'écran reste lisible
     window.ART3D_STATE = 'ok';
     dispatchEvent(new Event('art3d'));
   } catch (e) {
@@ -1587,7 +1589,7 @@ function bigWin(amount, mult) {
     const finish = () => {
       if (done) return; done = true; clearInterval(fwTimer); $('bwv').textContent = fmt(amount);
       FX.burst('spark', W / 2, H / 2, 20, 8);
-      setTimeout(() => { el.classList.remove('show'); lay.className = 'layer click'; FX.stopRain(); STAGE3D.stop(); res(); }, 1600);
+      setTimeout(() => { el.classList.remove('show'); lay.className = 'layer click'; FX.stopRain(); res(); }, 1600);
     };
     lay.onclick = finish;
     const step = now => {
@@ -1785,12 +1787,12 @@ function introBonus(tier, count, bought) {
       <div class="isub" style="animation-delay:${tDelay + 350}ms">${bought ? 'Bonus acheté. ' : ''}${INTRO_TXT[tier]}</div>
       <button class="btn" id="introBtn" style="animation-delay:${tDelay + 600}ms">${tier === 4 ? 'Se barricader' : tier === 5 ? 'Foncer vers le toit' : 'Survivre'}</button>`;
     box.classList.toggle('many', count > 4);
-    el.classList.add('show'); $('introLayer').classList.add('show'); Snd.fx('whoosh'); STAGE3D.intro(count);
+    el.classList.add('show'); $('introLayer').classList.add('show'); Snd.fx('whoosh');
     for (let i = 0; i < count; i++) setTimeout(() => { Snd.fx('thunk'); const W = FX.W(), H = FX.H(); FX.burst('ember', W / 2 + (i - (count - 1) / 2) * 70, H * 0.36, 10, 5); }, i * 260 + 450);
     setTimeout(() => { Snd.fx('fanfare'); const W = FX.W(), H = FX.H(); FX.burst('goo', W / 2, H * 0.45, 30, 10); if (tier >= 4) FX.firework(W / 2, H * 0.3); }, tDelay + 200);
     const b = $('introBtn');
     setTimeout(() => b.focus(), tDelay + 700);
-    b.onclick = () => { el.classList.remove('show'); $('introLayer').classList.remove('show'); STAGE3D.stop(); res(); };
+    b.onclick = () => { el.classList.remove('show'); $('introLayer').classList.remove('show'); res(); };
   });
 }
 

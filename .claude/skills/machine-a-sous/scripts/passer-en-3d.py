@@ -4,7 +4,7 @@
     python3 passer-en-3d.py jeux/constella.html kit/exemple-constella.js kit/decor-constella.js jeux/constella-3d.html "Constella 3D"
 
 Colle KIT3D, les modèles et le décor avant l'interface, ajoute le CSS des symboles 3D et du décor, branche la
-ronde 3D (entrée du bonus) et lance CHARGE3D. La machine 2D doit suivre le gabarit de la skill.
+et lance CHARGE3D. La machine 2D doit suivre le gabarit de la skill.
 """
 import sys, pathlib
 src_p, models_p, decor_p, out_p, title = sys.argv[1:6]
@@ -51,9 +51,6 @@ body.decor3d .floor .credit{text-shadow:0 1px 3px rgba(0,0,0,.6)}
 </style>'''
 rep('</style>', CSS)
 rep("(() => {\nconst E = ENGINE;", kit + "\n" + models + "\n" + decor + "\n(() => {\nconst E = ENGINE;")
-rep("el.classList.add('show'); $('introLayer').classList.add('show'); Snd.fx('whoosh');", "el.classList.add('show'); $('introLayer').classList.add('show'); Snd.fx('whoosh'); STAGE3D.intro(count);")
-rep("b.onclick = () => { el.classList.remove('show'); $('introLayer').classList.remove('show'); res(); };", "b.onclick = () => { el.classList.remove('show'); $('introLayer').classList.remove('show'); STAGE3D.stop(); res(); };")
-rep("FX.stopRain(); res(); }, 1600);", "FX.stopRain(); STAGE3D.stop(); res(); }, 1600);")
 rep("setMoney(); showStatic(E.spinBase());\n})();\n</script>",
     "setMoney(); showStatic(E.spinBase());\n// passage en 3D dès que les planches sont prêtes (la grille affichée est redessinée si la machine est au repos)\naddEventListener('art3d', () => { if (!S.busy && !document.body.classList.contains('bonus')) showStatic(E.spinBase()); });\nCHARGE3D(ART, ART3D_MODELS, DECOR3D);\n})();\n</script>")
 open(out_p, 'w').write(src)

@@ -210,7 +210,7 @@ const KIT3D = THREE => {
 // MODELS(K) renvoie { SYMS: [8 fonctions], SCAT: fonction, VARIANTES: { nomDansART: { argument: fonction } } }.
 // Exemple : VARIANTES: { star: { star: () => …, gold: () => … } } remplace ART.star('gold') par sa version 3D.
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
-const STAGE3D = { intro() {}, big() {}, stop() {} }; // sans 3D, ces appels ne font rien ; big() reste vide exprès (gros gains sans ronde, plus lisible)
+const STAGE3D = { intro() {}, big() {}, stop() {} }; // restent vides exprès : pas de personnages 3D qui tournent autour des grands écrans
 window.ART3D_STATE = 'chargement';
 // DECOR (facultatif) : décor 3D en fond d'écran, voir setupDecor
 async function CHARGE3D(ART, MODELS, DECOR) {
@@ -229,7 +229,7 @@ async function CHARGE3D(ART, MODELS, DECOR) {
     K.endBake();
     ART.SYMS = syms; ART.SCAT = scat;
     for (const [name, v] of Object.entries(variants)) { const old = ART[name]; ART[name] = (arg, ...rest) => v[arg] ?? old(arg, ...rest); }
-    setupStage(K, M);
+    // plus de ronde 3D autour de l'entrée du bonus ni des gros gains : trop chargé, l'écran reste lisible
     window.ART3D_STATE = 'ok';
     dispatchEvent(new Event('art3d'));
   } catch (e) {

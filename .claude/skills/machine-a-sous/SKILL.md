@@ -9,7 +9,7 @@ Toutes les machines du dépôt partagent le même squelette : une grille 6×6 qu
 
 - `jeux/constella.html` : observatoire de nuit. Bonus à **étoiles collantes** : les étoiles restent au ciel, et une forme de constellation qui se dessine paie et déclenche son pouvoir. Le fichier le plus court (~1 300 lignes), le meilleur point de départ par défaut.
 - `jeux/champi-pop.html` : forêt d'automne. Bonus en **grille qui grandit** : des champignons paient en chemins, avec des pouvoirs (nouvelle ligne, évolution du symbole, +1 spin, rond de sorcière…).
-- `jeux/constella-3d.html` et `jeux/champi-pop-3d.html` : les deux mêmes, **en 3D**. Les symboles sont des personnages Three.js cuits en animations fluides, un **décor 3D vivant entoure la machine** (colline étoilée avec aurores, forêt d'automne qui passe à la nuit), et une ronde 3D en direct accompagne l'entrée du bonus et les gros gains. C'est le point de départ d'une machine en 3D.
+- `jeux/constella-3d.html` et `jeux/champi-pop-3d.html` : les deux mêmes, **en 3D**. Les symboles sont des personnages Three.js cuits en animations fluides, un **décor 3D vivant entoure la machine** (colline étoilée avec aurores, forêt d'automne qui passe à la nuit). C'est le point de départ d'une machine en 3D.
 - `jeux/dead-city.html` et `jeux/dead-city-3d.html` : invasion zombie, **hors gabarit**. Grille 5×5 en **grappes avec cascades**, zombie joker, fonctions aléatoires en jeu normal (horde, patient zéro), **jauge d'invasion persistante**, et trois bonus différents selon le nombre de sirènes, dont un **bonus à choix** (portes, fuite avec le gain). C'est le point de départ quand l'idée demande un moteur neuf (voir « Sortir du gabarit » dans `references/architecture.md`).
 
 Avant d'écrire du code, lis `references/architecture.md` : il décrit les modules, les identifiants du DOM à garder, le contrat du moteur et les maths du RTP. Pour une machine en 3D, lis aussi `references/3d.md` (kit 3D, écriture des modèles, branchement).
@@ -26,7 +26,7 @@ Transforme l'idée en un brief. Si l'idée est vague, décide toi-même et va ju
 - **Le monde autour** : ce qui trône au-dessus de la machine (toit, dôme, figure de proue…), le paysage au fond, et 3 à 6 habitants animés au sol (animaux, personnages) qui font chacun leur petite vie.
 - **Musique** : une ambiance pour le jeu de base et une autre pour le bonus (tonalité, instruments synthétisés, tempo), plus les bruits d'ambiance (vent, vagues, grillons…).
 - **Les 4 paliers de gros gain** : le dernier porte un nom au thème (« Supernova ! », « Champi-tastique ! »).
-- **Rendu** : **2D** (SVG dessinés à la main) ou **3D** (personnages modélisés, ombrage dessin animé, animations de repos et de victoire, décor 3D vivant autour de la machine, ronde 3D sur les grands moments). En 3D, décris aussi le décor : ses 4 plans, ce qui bouge et ce que change le bonus. Choisis la 3D si on la demande ou si on parle de modèles, de rendu « clean » ou « pro ». Sinon, garde la 2D et propose la 3D en une ligne.
+- **Rendu** : **2D** (SVG dessinés à la main) ou **3D** (personnages modélisés, ombrage dessin animé, animations de repos et de victoire, décor 3D vivant autour de la machine). En 3D, décris aussi le décor : ses 4 plans, ce qui bouge et ce que change le bonus. Choisis la 3D si on la demande ou si on parle de modèles, de rendu « clean » ou « pro ». Sinon, garde la 2D et propose la 3D en une ligne.
 
 ## 2. Construire
 
