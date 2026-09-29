@@ -805,9 +805,75 @@ const MUSIQUE = (() => {
     };
   };
 })();
-const PARTITION = {"key": 62, "scale": "harmonic", "bpm": 84, "beats": 3, "swing": 0, "seed": 5, "bright": 5000, "reverb": 3.2, "prog": [[1, ""], [4, ""], [5, "7"], [1, ""], [6, ""], [4, ""], [5, "7"], [1, ""]], "sound": {"keys": "harp", "comp": "waltz", "lead": "musicbox", "bass": "soft", "drums": "waltz", "arp": true, "arpInst": "harp", "padBright": 900}, "bonus": {"bpm": 104, "sound": {"lead": "flute", "arpInst": "musicbox"}}};
+const PARTITION = null; // musique coupée pour l'instant : ni musique ni ambiance, le bouton musique est caché
+addEventListener('DOMContentLoaded', () => { const b = document.getElementById('musicBtn'); if (b) b.style.display = 'none'; });
 // @@MUSIQUE-FIN
+// @@SONS-DEBUT
+// ---------- SONS : bruitages doux et satisfaisants, partagés par les machines ----------
+// SONS(ctx, bus) -> { spinStart, spinStop, land(col), click, chime, win, tick, fanfare, gong, shimmer, swish, whoosh, thunk, heartbeat, drone }
+// Tout passe par une petite réverbération courte : les sons restent nets mais jamais secs. Voir references/musique.md.
+const SONS = (ctx, bus) => {
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const now = () => ctx.currentTime;
+  const out = ctx.createGain(); out.gain.value = 0.9; out.connect(bus);
+  const wet = ctx.createGain(); wet.gain.value = 0.2; wet.connect(bus);
+  const verb = ctx.createConvolver();
+  { const len = Math.floor(ctx.sampleRate * 0.9), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); let lp = 0; for (let i = 0; i < len; i++) { lp += ((Math.random() * 2 - 1) - lp) * 0.3; d[i] = lp * Math.pow(1 - i / len, 3); } }
+    verb.buffer = ir; }
+  const vin = ctx.createGain(); vin.connect(verb).connect(wet);
+  const noise = (() => { const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+  const dest = (g, rv = 1, pan = 0) => { let n = g; if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); n = p; } n.connect(out); if (rv) { const s = ctx.createGain(); s.gain.value = rv; n.connect(s).connect(vin); } };
+  function sine(f, t, v, d, o = {}) {
+    const osc = ctx.createOscillator(), g = ctx.createGain(); osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(f, t);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + d * 0.8);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + (o.a || 0.003)); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    osc.connect(g); dest(g, o.rv ?? 1, o.pan || 0); osc.start(t); osc.stop(t + d + 0.05);
+  }
+  function hiss(t, d, v, type, f, q, o = {}) {
+    const s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noise; s.loop = true; fl.type = type; fl.frequency.setValueAtTime(f, t); fl.Q.value = q;
+    if (o.to) fl.frequency.exponentialRampToValueAtTime(o.to, t + d * 0.9);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + (o.a || 0.004)); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(fl).connect(g); dest(g, o.rv ?? 0.6, o.pan || 0); s.start(t, Math.random() * 0.5); s.stop(t + d + 0.05);
+  }
+  const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+  // toc boisé et accordé : une lame de marimba, un petit clic, un coup sourd en dessous
+  function thock(m, t, v = 0.5) {
+    const f = mtof(m);
+    sine(f, t, v * 0.42, 0.42); sine(f * 2.01, t, v * 0.1, 0.14); sine(f * 3.98, t, v * 0.05, 0.05, { rv: 0.3 });
+    sine(120, t, v * 0.45, 0.12, { to: 55, rv: 0 }); hiss(t, 0.014, v * 0.18, 'bandpass', 2600, 1.2, { rv: 0.2 });
+  }
+  function chime(m, t, v = 0.14, pan = 0) { const f = mtof(m); sine(f, t, v, 1.1, { pan }); sine(f * 2.76, t, v * 0.12, 0.35, { pan }); sine(f * 5.4, t, v * 0.04, 0.15, { pan }); }
+  let roll = null;
+  const A = {
+    // lancement : un souffle qui monte, puis un roulement feutré (petits tocs doux et réguliers)
+    spinStart() {
+      if (roll) return; const t = now();
+      hiss(t, 0.32, 0.12, 'bandpass', 300, 0.9, { to: 1700, a: 0.12 });
+      let k = 0; roll = setInterval(() => { const tt = now(); sine(k % 2 ? 1180 : 1320, tt, 0.035, 0.03, { rv: 0.2 }); hiss(tt, 0.012, 0.03, 'highpass', 4000, 0.7, { rv: 0 }); k++; }, 52);
+    },
+    spinStop() { clearInterval(roll); roll = null; },
+    // un rouleau qui s'arrête : un toc accordé, une note plus haut à chaque colonne (gamme pentatonique)
+    land(c) { thock(72 + PENTA[Math.min(c, PENTA.length - 1)], now(), 0.55); },
+    click() { const t = now(); sine(1900, t, 0.08, 0.025, { rv: 0.2 }); sine(2500, t + 0.012, 0.04, 0.02, { rv: 0.2 }); },
+    chime(m, v, pan, dt = 0) { chime(m, now() + dt, v, pan); },
+    // gain : un arpège de clochettes qui monte, plus long pour un gros gain
+    win(level = 1) { const t = now(), n = level > 1 ? 7 : 4; for (let i = 0; i < n; i++) chime(84 + PENTA[i], t + i * 0.06, 0.12, (i % 2 ? 0.3 : -0.3)); },
+    tick(p = 0) { const t = now(); sine(1900 + p * 1200, t, 0.04, 0.03, { rv: 0.3 }); },
+    fanfare() { const t = now(); for (let i = 0; i < 10; i++) chime(79 + PENTA[i], t + i * 0.05, 0.11, Math.sin(i) * 0.5); A.gong(43, 0.16); },
+    gong(m = 43, v = 0.2) { const t = now(), f = mtof(m); [[1, 1, 3.2], [2.41, 0.4, 2.2], [3.93, 0.2, 1.4], [5.3, 0.1, 0.9]].forEach(([k, a, d]) => sine(f * k, t, v * a, d, { a: 0.01 })); },
+    shimmer(v = 1) { const t = now(); for (let i = 0; i < 6; i++) chime(91 + PENTA[Math.floor(Math.random() * 5)], t + i * 0.045 + Math.random() * 0.02, 0.06 * v, Math.random() - 0.5); },
+    swish(d = 0.6, v = 0.14) { hiss(now(), d, v, 'bandpass', 1800, 0.7, { to: 400, a: d * 0.35 }); },
+    whoosh() { hiss(now(), 0.55, 0.16, 'bandpass', 350, 0.9, { to: 2200, a: 0.2 }); },
+    thunk() { const t = now(); sine(95, t, 0.5, 0.28, { to: 48, rv: 0.2 }); hiss(t, 0.06, 0.12, 'lowpass', 400, 0.7, { rv: 0 }); },
+    heartbeat() { const t = now(); sine(62, t, 0.45, 0.16, { to: 45, rv: 0 }); sine(58, t + 0.22, 0.32, 0.14, { to: 42, rv: 0 }); },
+    drone(d = 2.5) { const t = now(); [[38, 0], [38.08, 0], [45, 0.4]].forEach(([m, dl]) => sine(mtof(m), t + dl, 0.12, d, { a: 0.6, type: 'triangle' })); },
+  };
+  return A;
+};
+// @@SONS-FIN
 const Snd = (() => {
+  let sons = null; const son = () => sons || (sons = SONS(ctx, sfxBus)); // bruitages partagés (kit/sons.js)
   let orch = null; // le compositeur (MUSIQUE), créé au premier geste
   let ctx = null, master, musicBus, sfxBus, ambBus, noise, timer = null, ambTimer = null, murmur = null;
   let musicOn = true, sfxOn = true, bonus = false, mad = false, hush = false, ratchet = null;
@@ -846,34 +912,11 @@ const Snd = (() => {
     return f;
   }
   // clavecin : corde pincée (Karplus-Strong) très brillante, avec le petit « clic » du sautereau
-  function pluckBuf(m) {
-    if (pluckCache.has(m)) return pluckCache.get(m);
-    const sr = ctx.sampleRate, N = Math.round(sr / mtof(m)), len = Math.floor(sr * 1.6);
-    const buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
-    for (let i = 0; i < N; i++) d[i] = (Math.random() * 2 - 1) * 0.8;
-    const decay = m < 50 ? 0.998 : 0.9965;
-    for (let i = N; i < len; i++) d[i] = decay * (0.62 * d[i - N] + 0.38 * d[i - N - 1 < 0 ? 0 : i - N - 1]);
-    pluckCache.set(m, buf); return buf;
-  }
-  function harp(m, t, vol, bus = musicBus, detune = 0) {
-    const s = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
-    s.buffer = pluckBuf(m); if (detune) s.detune.value = detune; f.type = 'highpass'; f.frequency.value = 180; g.gain.value = vol;
-    s.connect(f).connect(g).connect(bus); s.start(t);
-    noiseHit(bus, t, 0.012, 'highpass', 5000, .7, vol * .25, 0.001);
-  }
   function bell(m, t, vol, dur = 1.4, bus = sfxBus, pan = 0, detune = 1) {
     const f = mtof(m) * detune;
     [[1, 1], [2.0, .35], [2.76, .25], [5.4, .12], [8.93, .06]].forEach(([k, a]) => tone(bus, f * k, t, dur / (1 + k * 0.3), 'sine', vol * a, null, 0.003, pan));
   }
   // cordes : scies filtrées, attaque lente (l'orchestre du bal)
-  function strings(m, t, dur, vol, bus = musicBus) {
-    [-7, 7].forEach(dt => {
-      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-      o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = dt; f.type = 'lowpass'; f.frequency.value = 1500; f.Q.value = .7;
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(.4, dur * .4)); g.gain.setValueAtTime(vol, t + dur * .7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o.connect(f).connect(g).connect(bus); o.start(t); o.stop(t + dur + .05);
-    });
-  }
 
   // 12 pas par mesure (3 temps × 4) ; accords, arpège au clavecin, mélodie
   // ---------- ambiance : murmure des invités, rires lointains, horloge ----------
@@ -903,7 +946,7 @@ const Snd = (() => {
     if (Math.random() < .12) tone(ambBus, 2400 + Math.random() * 800, t, .06, 'sine', .02, null, .002); // un verre qui tinte
   }
   function startMusic() {
-    if (!musicOn || !init()) return; ctx.resume();
+    if (!PARTITION || !musicOn || !init()) return; ctx.resume();
     if (!orch) orch = MUSIQUE(ctx, musicBus, PARTITION); orch.start(bonus);
     startMurmur(); if (!ambTimer) ambTimer = setInterval(ambience, 1100);
   }
@@ -913,31 +956,31 @@ const Snd = (() => {
   function chime(t, vol = .18, pan = 0) { const m = [86, 89, 91, 93, 98][Math.floor(Math.random() * 5)]; bell(m, t, vol, .8, sfxBus, pan); }
   function swish(t, dur = .5, v = .3, from = 400, to = 2600) { const f = noiseHit(sfxBus, t, dur, 'bandpass', from, 1.4, v, dur * .4); f.frequency.exponentialRampToValueAtTime(to, t + dur * .9); }
   const S = {
-    click() { const t = now(); tone(sfxBus, 1500, t, .04, 'square', .04, 900, .002); },
-    reelStart() { if (ratchet) return; ratchet = setInterval(() => { const t = now(); noiseHit(sfxBus, t, .02, 'bandpass', 3200, 6, .12, .001); }, 70); },
-    reelStop() { clearInterval(ratchet); ratchet = null; },
-    stop(c) { const t = now(); harp(50 - c * 2, t, .5, sfxBus); noiseHit(sfxBus, t, .05, 'lowpass', 700, 1, .25, .001); },
-    scatter(n) { const t = now(); for (let k = 0; k < 3 + n; k++) bell(96 + (k % 3) * 2 + n, t + k * .07, .1, .9, sfxBus, (k % 2 ? .4 : -.4)); }, // cling, cling…
-    antic() { const t = now(); for (let k = 0; k < 4; k++) { tone(sfxBus, 55, t + k * .8, .16, 'sine', .7, 40, .004); tone(sfxBus, 50, t + k * .8 + .2, .14, 'sine', .5, 38, .004); } },
-    win(level) { const t = now(), ch = [62, 65, 69, 74, 77, 81]; ch.slice(0, level > 1 ? 6 : 4).forEach((m, i) => harp(m + 12, t + i * .045, .22, sfxBus)); for (let k = 0; k < (level > 1 ? 6 : 2); k++) chime(t + .2 + k * .07, .1, Math.random() - .5); },
-    tick(p) { const t = now(); noiseHit(sfxBus, t, .02, 'bandpass', 3000 + p * 1500, 8, .12, .001); if (Math.random() < .3) chime(t, .05, Math.random() - .5); },
-    fanfare() { const t = now(); [62, 69, 74, 77, 81, 86].forEach((m, i) => { strings(m, t + i * .06, .9, .05, sfxBus); harp(m, t + i * .06, .2, sfxBus); }); for (let k = 0; k < 10; k++) chime(t + .4 + k * .08, .1, Math.random() * 1.6 - .8); },
-    bonus() { const t = now(); tone(sfxBus, 55, t, 3, 'sine', .5, 50, .01); [50, 57, 62, 65].forEach((m, i) => strings(m, t + i * .15, 2.6, .05, sfxBus)); laugh(t + .6, .14, sfxBus, 1, 8); },
-    thunk() { const t = now(); tone(sfxBus, 110, t, .35, 'sine', .7, 45, .002); noiseHit(sfxBus, t, .12, 'lowpass', 400, 1, .4, .001); },
-    whoosh() { swish(now(), .6, .3, 300, 2400); },
-    laugh(p = 1) { laugh(now(), .14, sfxBus, p, 7); },
-    red() { const t = now(); [81, 77, 74, 69].forEach((m, i) => harp(m, t + i * .08, .25, sfxBus)); },
-    point() { const t = now(); bell(93, t, .12, .5); tone(sfxBus, 900, t, .08, 'triangle', .06, 1300, .002); },
-    curtain() { const t = now(); swish(t, .9, .35, 1800, 250); noiseHit(sfxBus, t + .2, .7, 'lowpass', 500, .8, .2, .2); },
-    sticky() { const t = now(); bell(79, t, .16, 1.4); bell(86, t + .08, .1, 1.2); },
-    myst() { const t = now(); for (let k = 0; k < 6; k++) bell(88 + k * 2, t + k * .05, .07, .7, sfxBus, Math.random() - .5); },
-    reveal() { const t = now(); swish(t, .35, .2, 800, 3000); bell(84, t + .2, .14, 1); },
-    mult(k = 0) { const t = now(); [74, 78, 81, 86].forEach((m, i) => bell(m + Math.min(k, 8), t + i * .06, .12, .8)); },
-    mask() { const t = now(); swish(t, .45, .25, 600, 2800); harp(69, t + .25, .3, sfxBus); harp(76, t + .32, .25, sfxBus); },
-    deeper() { const t = now(); [57, 53, 50].forEach((m, i) => bell(m, t + i * .2, .16, 1.8)); laugh(t + .5, .08, sfxBus, .7, 5); },
-    dance() { const t = now(); [50, 62, 65, 69].forEach((m, i) => { harp(m, t + i * .06, .3, sfxBus); strings(m + 12, t, 1.6, .03, sfxBus); }); },
-    madness() { const t = now(); tone(sfxBus, 40, t, 3.5, 'sawtooth', .12, 32, .5); [38, 41, 44, 47].forEach((m, i) => strings(m + 24, t + .8 + i * .1, 3, .04, sfxBus)); laugh(t + 1.2, .16, sfxBus, .9, 10); laugh(t + 1.5, .1, sfxBus, 1.3, 8); },
-    bell() { bell(84, now(), .18, 1.2); },
+    click() { son().click(); },
+    reelStart() { son().spinStart(); },
+    reelStop() { son().spinStop(); },
+    stop(c) { son().land(c); },
+    scatter(n) { const o = son(); o.chime(86 + n * 2, 0.16); o.chime(93 + n * 2, 0.1, 0.2, 0.07); }, // cling
+    antic() { son().heartbeat(); setTimeout(() => son().heartbeat(), 800); },
+    win(level) { son().win(level); },
+    tick(p) { son().tick(p); },
+    fanfare() { son().fanfare(); },
+    bonus() { const o = son(); o.gong(38, 0.24); o.shimmer(1); o.swish(1.2, 0.1); },
+    thunk() { son().thunk(); },
+    whoosh() { son().whoosh(); },
+    laugh() { const o = son(); o.shimmer(0.7); o.swish(0.5, 0.08); },
+    red() { const o = son(); [88, 84, 81, 76].forEach((m, i) => o.chime(m, 0.12, 0, i * 0.08)); },
+    point() { son().chime(91, 0.1); },
+    curtain() { son().swish(0.8, 0.12); },
+    sticky() { const o = son(); o.chime(79, 0.14); o.chime(86, 0.09, 0, 0.08); },
+    myst() { son().shimmer(0.9); },
+    reveal() { const o = son(); o.swish(0.3, 0.08); o.chime(84, 0.13, 0, 0.18); },
+    mult(k = 0) { const o = son(), b = 81 + Math.min(k, 7); [0, 4, 7].forEach((d, i) => o.chime(b + d, 0.11, 0, i * 0.06)); },
+    mask() { const o = son(); o.swish(0.4, 0.1); o.chime(81, 0.12, 0, 0.2); o.chime(88, 0.09, 0, 0.28); },
+    deeper() { son().gong(45, 0.16); },
+    dance() { const o = son(); [74, 78, 81, 86].forEach((m, i) => o.chime(m, 0.1, 0, i * 0.05)); },
+    madness() { const o = son(); o.drone(3); o.gong(33, 0.2); setTimeout(() => o.shimmer(0.8), 900); },
+    bell() { son().chime(84, 0.15); },
   };
   return {
     start() { if (!init()) return; ctx.resume(); startMusic(); },

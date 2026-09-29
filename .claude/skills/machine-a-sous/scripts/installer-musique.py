@@ -3,6 +3,7 @@
 de l'ancien séquenceur. Les bruitages (Snd.fx) et l'ambiance ne changent pas.
 
     python3 .claude/skills/machine-a-sous/scripts/installer-musique.py jeux/champi-pop.html champi-pop
+    python3 .claude/skills/machine-a-sous/scripts/installer-musique.py jeux/champi-pop.html champi-pop --coupee   # sans musique (bouton caché)
 
 La partition vient de kit/partitions.js (PARTITIONS[id]). Relancer le script met à jour le compositeur et la
 partition (bloc entre // @@MUSIQUE-DEBUT et // @@MUSIQUE-FIN). À faire sur la page 2D, avant passer-en-3d.py.
@@ -10,12 +11,14 @@ partition (bloc entre // @@MUSIQUE-DEBUT et // @@MUSIQUE-FIN). À faire sur la p
 import sys, re, json, pathlib, subprocess
 
 page, pid = sys.argv[1], sys.argv[2]
+coupee = '--coupee' in sys.argv
 kit = pathlib.Path(__file__).resolve().parents[1] / 'kit'
 p = pathlib.Path(page); s = p.read_text()
 musique = (kit / 'musique.js').read_text().rstrip('\n')
 part = json.loads(subprocess.check_output(['node', '-e', f"const P = require({json.dumps(str(kit / 'partitions.js'))}); process.stdout.write(JSON.stringify(P[{json.dumps(pid)}] || null))"]))
 if not part: sys.exit(f'partition « {pid} » introuvable dans kit/partitions.js')
-block = musique.replace('// @@MUSIQUE-FIN', f'const PARTITION = {json.dumps(part, ensure_ascii=False)};\n// @@MUSIQUE-FIN')
+if coupee: block = musique.replace('// @@MUSIQUE-FIN', "const PARTITION = null; // musique coupée pour l'instant : ni musique ni ambiance, le bouton musique est caché\naddEventListener('DOMContentLoaded', () => { const b = document.getElementById('musicBtn'); if (b) b.style.display = 'none'; });\n// @@MUSIQUE-FIN")
+else: block = musique.replace('// @@MUSIQUE-FIN', f'const PARTITION = {json.dumps(part, ensure_ascii=False)};\n// @@MUSIQUE-FIN')
 
 def need(cond, what):
     if not cond: sys.exit(f'motif introuvable : {what}')
@@ -35,6 +38,7 @@ need('function stopMusic() { if (orch) orch.stop();' in s, 'stopMusic')
 s = re.sub(r'setBonus\(v\) \{ bonus = v; step = 0;( hush = false;)? if \(ctx\) next = Math\.max\(next, ctx\.currentTime \+ 0\.1\); \}',
            lambda m: 'setBonus(v) { bonus = v;' + (' hush = false;' if m.group(1) else '') + ' if (orch) orch.setBonus(v); }', s)
 need('if (orch) orch.setBonus(v);' in s, 'setBonus')
+s = s.replace('if (!musicOn || !init()) return; ctx.resume();\n    if (!orch)', 'if (!PARTITION || !musicOn || !init()) return; ctx.resume();\n    if (!orch)')
 s = s.replace('hush(v) { hush = v; },', 'hush(v) { hush = v; if (orch) orch.hush(v); },')
 s = s.replace('setMad(v) { mad = v; },', "setMad(v) { mad = v; if (orch) orch.setMood(v ? 'mad' : ''); },")
 
@@ -72,4 +76,4 @@ snd = re.sub(r'let step = 0, next = 0, ', 'let ', snd)
 snd = re.sub(r'\n  // ---------- musique[^\n]*\n(?=\s*// ----------|\s*function start)', '\n', snd)
 s = s[:snd0] + snd + s[snd1:]
 p.write_text(s)
-print(f'{page} : compositeur installé, partition « {pid} » ({part["bpm"]} bpm, {part["beats"]} temps)')
+print(f'{page} : musique coupée' if coupee else f'{page} : compositeur installé, partition « {pid} » ({part["bpm"]} bpm, {part["beats"]} temps)')

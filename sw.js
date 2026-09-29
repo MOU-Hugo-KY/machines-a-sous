@@ -1,6 +1,6 @@
 // Service worker de la Salle des machines : garde les pages et les ressources pour jouer hors ligne.
 // Pense à changer VERSION à chaque ajout de machine pour que les téléphones récupèrent la nouvelle liste.
-const VERSION = 'promenade-1790640428';
+const VERSION = 'promenade-1790641810';
 const FICHIERS = [
   "./",
   "index.html",

@@ -1,6 +1,21 @@
-# La musique : le compositeur MUSIQUE
+# Le son : bruitages partagés (SONS) et compositeur (MUSIQUE)
 
-Les bruitages (`Snd.fx`) restent écrits à la main dans chaque machine : ce sont eux qui rendent le jeu satisfaisant. La **musique**, elle, n'est plus un séquenceur écrit note à note : chaque machine embarque le compositeur `kit/musique.js` et sa **partition** (`kit/partitions.js`).
+## Les bruitages partagés : `kit/sons.js`
+
+Ce sont eux qui rendent le jeu satisfaisant. Chaque machine prend chez `SONS` le lancement du spin (un souffle qui monte, puis un roulement feutré de petits tocs doux), l'arrêt de chaque rouleau (un **toc boisé accordé**, une note plus haut par colonne sur une gamme pentatonique : l'arrêt des rouleaux joue une petite mélodie) et le clic des boutons. Tout passe par une réverbération courte, pour des sons nets mais jamais secs.
+
+```bash
+python3 .claude/skills/machine-a-sous/scripts/installer-sons.py jeux/<nom>.html            # spin, arrêt des rouleaux, clic
+python3 .claude/skills/machine-a-sous/scripts/installer-sons.py jeux/masquerade.html --masquerade   # tous les bruitages
+```
+
+Les autres bruitages d'une machine peuvent piocher dans `son()` : `chime(note, volume, pan, délai)`, `win(niveau)`, `tick`, `fanfare`, `gong`, `shimmer`, `swish`, `whoosh`, `thunk`, `heartbeat`, `drone`. Évite les voix synthétiques (rires en formants) et les oscillateurs carrés ou en scie non filtrés : ils fatiguent vite.
+
+## La musique
+
+**Pour l'instant, la musique est coupée sur toutes les machines** (`installer-musique.py … --coupee` : `PARTITION = null`, ni musique ni ambiance, bouton musique caché). Le compositeur reste prêt : relance le script sans `--coupee` pour la remettre.
+
+La musique n'est plus un séquenceur écrit note à note : Chaque machine embarque le compositeur `kit/musique.js` et sa **partition** (`kit/partitions.js`).
 
 ## Pourquoi
 
