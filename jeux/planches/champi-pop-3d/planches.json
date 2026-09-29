@@ -1,6 +1,7 @@
 {
  "dir": "planches/champi-pop-3d/",
  "v": "ea903f42",
+ "sig": "f07714fd9ca2",
  "items": {
   "s0": {
    "f": "s0",
@@ -58,6 +59,5 @@
    "f": "v-power-ring",
    "n": 24
   }
- },
- "sig": "82af2f540e8b"
+ }
 }

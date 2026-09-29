@@ -1,6 +1,7 @@
 {
  "dir": "planches/dead-city-3d/",
  "v": "959c3259",
+ "sig": "e3f775af07e4",
  "items": {
   "s0": {
    "f": "s0",
@@ -46,6 +47,5 @@
    "f": "v-wild-zero",
    "n": 24
   }
- },
- "sig": "4d989bce590b"
+ }
 }

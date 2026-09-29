@@ -48,6 +48,11 @@ for mark in ('@@CATALOGUE@@', '@@KIT3D@@', '@@MODELES@@', '@@DECORS@@'):
         raise SystemExit(f'marqueur {mark} resté dans la page')
 (root / 'index.html').write_text(out)
 
+# la salle de musique (app/musique.html) : écouter les thèmes des machines, composés par kit/musique.js
+mm = root / 'app/musique-modele.html'
+if mm.exists():
+    (root / 'app/musique.html').write_text(mm.read_text().replace('/*@@MUSIQUE@@*/', (kit_dir / 'musique.js').read_text()).replace('/*@@PARTITIONS@@*/', (kit_dir / 'partitions.js').read_text()))
+
 # service worker : tout ce qu'il faut pour jouer hors ligne
 files = ['./', 'index.html', 'manifest.webmanifest', 'app/icones/icone-192.png', 'app/icones/icone-512.png']
 for g in games:

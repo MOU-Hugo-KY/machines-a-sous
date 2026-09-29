@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salle de musique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E0B14; --card:#191422; --line:#2E2640; --txt:#F2ECFA; --mute:#A89CBC; --acc:#FFB84A}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#F7F3EE; --card:#FFFFFF; --line:#E6DDD2; --txt:#1E1726; --mute:#6E6478; --acc:#C8641A}}
+:root[data-theme="dark"]{--bg:#0E0B14; --card:#191422; --line:#2E2640; --txt:#F2ECFA; --mute:#A89CBC; --acc:#FFB84A}
+*{box-sizing:border-box} body{margin:0; background:var(--bg); color:var(--txt); font:16px/1.5 Inter, system-ui, sans-serif}
+main{max-width:760px; margin:0 auto; padding:28px 16px 60px}
+h1{font-family:Fraunces, Georgia, serif; font-weight:800; font-size:clamp(1.8rem, 6vw, 2.6rem); margin:0 0 6px}
+.sub{color:var(--mute); margin:0 0 22px}
+.grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px}
+.card h2{font-family:Fraunces, Georgia, serif; font-size:1.25rem; margin:0 0 2px}
+.card p{margin:0 0 12px; color:var(--mute); font-size:.9rem}
+.row{display:flex; gap:8px}
+button{flex:1; font:600 .9rem Inter, sans-serif; color:var(--txt); background:transparent; border:1px solid var(--line); border-radius:10px; padding:10px 8px; cursor:pointer}
+button:hover{border-color:var(--acc)} button.on{background:var(--acc); border-color:var(--acc); color:#1A1206}
+button:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
+.note{margin-top:22px; color:var(--mute); font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Salle de musique</h1>
+  <p class="sub">Les thèmes des machines, composés en direct par le nouveau compositeur. Clique pour écouter ; un second clic arrête.</p>
+  <div class="grid" id="grid"></div>
+  <p class="note">Chaque thème suit une forme de 32 mesures (accords, mélodie, respiration) et recompose ses mélodies à chaque tour : il ne tourne jamais en boucle à l'identique. Le mode bonus est plus rapide et plus riche.</p>
+</main>
+<script>
+/*@@MUSIQUE@@*/
+/*@@PARTITIONS@@*/
+const NAMES = { 'champi-pop': ['Champi Pop', 'Balade d\'automne : piano électrique, marimba, groove doux'], 'constella': ['Constella', 'Nuit étoilée : nappes, boîte à musique, flûte'], 'dead-city': ['Dead City', 'Nuit tendue : basse qui pulse, piano sombre, harpe'], 'masquerade': ['Masquerade', 'Valse baroque à trois temps : harpe, cordes, boîte à musique'] };
+let ctx = null, bus = null, cur = null, curBtn = null;
+function play(id, bonus, btn) {
+  if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); const comp = ctx.createDynamicsCompressor(); bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(comp).connect(ctx.destination); }
+  ctx.resume();
+  if (cur) { cur.stop(); curBtn.classList.remove('on'); curBtn.setAttribute('aria-pressed', 'false'); }
+  if (curBtn === btn) { cur = null; curBtn = null; return; }
+  cur = MUSIQUE(ctx, bus, PARTITIONS[id]); cur.start(bonus); curBtn = btn; btn.classList.add('on'); btn.setAttribute('aria-pressed', 'true');
+}
+document.getElementById('grid').innerHTML = Object.keys(PARTITIONS).map(id => `<div class="card"><h2>${NAMES[id]?.[0] || id}</h2><p>${NAMES[id]?.[1] || ''}</p><div class="row"><button data-id="${id}" aria-pressed="false">Jeu normal</button><button data-id="${id}" data-bonus aria-pressed="false">Bonus</button></div></div>`).join('');
+document.querySelectorAll('button[data-id]').forEach(b => b.onclick = () => play(b.dataset.id, b.hasAttribute('data-bonus'), b));
+</script>
+</body>
+</html>
