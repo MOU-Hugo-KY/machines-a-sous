@@ -16,7 +16,7 @@ kit = pathlib.Path(__file__).resolve().parents[1] / 'kit'
 p = pathlib.Path(page); s = p.read_text()
 musique = (kit / 'musique.js').read_text().rstrip('\n')
 part = json.loads(subprocess.check_output(['node', '-e', f"const P = require({json.dumps(str(kit / 'partitions.js'))}); process.stdout.write(JSON.stringify(P[{json.dumps(pid)}] || null))"]))
-if not part: sys.exit(f'partition « {pid} » introuvable dans kit/partitions.js')
+if not part and not coupee: sys.exit(f'partition « {pid} » introuvable dans kit/partitions.js')
 if coupee: block = musique.replace('// @@MUSIQUE-FIN', "const PARTITION = null; // musique coupée pour l'instant : ni musique ni ambiance, le bouton musique est caché\naddEventListener('DOMContentLoaded', () => { const b = document.getElementById('musicBtn'); if (b) b.style.display = 'none'; });\n// @@MUSIQUE-FIN")
 else: block = musique.replace('// @@MUSIQUE-FIN', f'const PARTITION = {json.dumps(part, ensure_ascii=False)};\n// @@MUSIQUE-FIN')
 
