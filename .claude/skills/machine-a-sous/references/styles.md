@@ -122,3 +122,17 @@ Pour les thèmes de bal masqué, de vampires, d'opéra, de cour royale décadent
 ```
 
 Dans `baseCell` / `setCell`, ajoute la classe de tuile selon le symbole (`TILE = ['t-bas','t-bas','t-bas','t-bas','t-vert','t-rouge','t-bleu','t-orange']`).
+
+## 6. Encre de manhwa (Murim : Heavenly Demon)
+
+Pour les thèmes d'arts martiaux, de wuxia, de cultivation, de sectes et de démons célestes : l'esthétique des manhwas Murim premium.
+
+- **Effet** : encre noire, papier, **rouge sang** et quelques touches d'or. Traits nets, contrastes forts, énormes manifestations de Qi (auras, lignes de vitesse, éclats), calligraphie. Jamais de couleurs de casino.
+- **Palette** : encre `#070608`, nuit `#0C0B0E` / `#16141A`, papier `#F2ECDF` / `#D9CFBC`, sang `#B3141F` / `#E8202F` / `#5A060C`, or `#D8A845` / `#F7D98A` / `#8A6420`.
+- **Polices** : Zhi Mang Xing (pinceau) pour les caractères chinois et les grandes annonces, Teko pour les chiffres et les étiquettes, Spectral (italique) pour le texte.
+- **Cadre** : pagode laquée noire aux avant-toits relevés, plaque dorée, **sceau rouge** (天魔) légèrement de biais, montants rouges laqués, pompons qui se balancent.
+- **Tuiles** : les petits symboles sont des objets du Jianghu (pièce trouée, parchemin, talisman, gourde, lotus) ; les gros, des **bustes de maîtres** au visage de manhwa (yeux en amande très fins, sourcils en trait de pinceau, menton pointu), chacun sur un fond de couleur (papier, or, nuit, sang, ciel). Le joker est un caractère 氣 doré, le scatter un **manuel interdit** enchaîné.
+- **Mise en scène** : chaque temps fort a son caractère au pinceau qui jaillit (`.pow.brush` : 天魔一指, 八門開, 天龍, 禁) ; la frappe du héros = sa figure qui descend au-dessus de la grille, **une ligne noire** qui traverse l'écran, des gouttes de sang, puis la grille qui se fend (`.grid.shatter`). Tout ce qui passe devant les cases courbées reçoit `translate:0 0 90px` (sinon, en 3D partagée, il passe derrière).
+- **Décor vivant** : la montagne sacrée (pics de granit, mer de nuages, pavillon, cerisiers, pétales qui tombent en continu, pluie la nuit). Il **évolue avec la progression** : six mondes superposés (`.world.w0`…`w5`) dont un seul est visible selon la classe `scN` de `body`, avec un fondu de 1,8 s.
+- **3D** : toon à contour d'encre (0,035), bustes avec cheveux en mèches effilées, yeux en amande (sphères très aplaties), auras en disques émissifs transparents, or et acier en PBR. Les objets et le joker gardent leur dessin 2D.
+

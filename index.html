@@ -170,6 +170,45 @@ body.flat #listPanel .close{display:none}
 <script>
 const GAMES = [
  {
+  "id": "murim",
+  "nom": "Murim",
+  "sousTitre": "Heavenly Demon",
+  "page": "jeux/murim-3d.html",
+  "lite": "jeux/murim.html",
+  "vignette": "app/vignettes/murim-3d.jpg",
+  "couleur": "#E8202F",
+  "badge": "Nouveau",
+  "desc": "Encre de manhwa sur la montagne sacrée. Grille 6×5 en cascades, 8 méridiens, frappe du Heavenly Demon, techniques interdites, duel ou guerre des sectes, et cultivation jusqu'au rang suprême.",
+  "tags": [
+   "3D",
+   "Murim",
+   "Cascades"
+  ],
+  "bonus": "1 / 250",
+  "grille": "6×5 grappes",
+  "max": "50 000×",
+  "trophees": [
+   {
+    "id": "huit-portes",
+    "flag": "huit-portes",
+    "nom": "Les Huit Portes",
+    "desc": "Ouvrir les huit méridiens : EIGHT GATES OPEN."
+   },
+   {
+    "id": "parchemin",
+    "flag": "parchemin",
+    "nom": "Technique Scroll",
+    "desc": "Vaincre le maître de la secte rivale en duel."
+   },
+   {
+    "id": "heavenly-demon",
+    "flag": "heavenly-demon",
+    "nom": "Heavenly Demon",
+    "desc": "Atteindre le rang suprême dans Qi Breakthrough."
+   }
+  ]
+ },
+ {
   "id": "masquerade",
   "nom": "Masquerade",
   "sousTitre": "of Madness",
@@ -177,7 +216,7 @@ const GAMES = [
   "lite": "jeux/masquerade.html",
   "vignette": "app/vignettes/masquerade-3d.jpg",
   "couleur": "#FF2340",
-  "badge": "Nouveau",
+  "badge": "",
   "desc": "Le Bal des Fous. Gravure baroque, cascades, jauge de raison qui s'effondre, Fou Rouge et Fou Noir, dernière danse et masques à retirer.",
   "tags": [
    "3D",
@@ -632,6 +671,178 @@ function setupDecor(K, DECOR, M) {
   }
   requestAnimationFrame(frame);
 }
+
+// ---------- ART3D : les maîtres de Murim : Heavenly Demon (construits avec KIT3D) ----------
+// Encre de manhwa en 3D : noir, papier, rouge sang et touches d'or, contour d'encre net.
+// Les cinq objets du Jianghu (pièce, parchemin, talisman, gourde, lotus) et le joker 氣 gardent leur dessin 2D (null) :
+// la calligraphie et les caractères rendent mieux à plat.
+MODELES["murim"] = K => {
+  const { THREE, part, G, mat, TAU } = K;
+  K.INK.color = 0x070608;
+  const grp = (...c) => { const g = new THREE.Group(); g.add(...c.flat()); return g; };
+  const PAPER = 0xF2ECDF, SKIN = 0xEFE2CF, PALE = 0xE8DCCC, BLACK = 0x0E0C10, INKC = 0x070608, RED = 0xB3141F, BLOOD = 0xE8202F, BLUE = 0x1E3A6A, GREY = 0x8C8A92, BROWN = 0x6A4A2A;
+  const ink = 0.035;
+  const gold = K.pbr ? K.pbr(0xE8B850, { metal: 0.85, rough: 0.3 }) : 0xD8A845;
+  const steel = K.pbr ? K.pbr(0xDDE6F0, { metal: 0.9, rough: 0.22 }) : 0xB9B3A8;
+  const jade = K.pbr ? K.pbr(0x4AA878, { metal: 0.2, rough: 0.25 }) : 0x4AA878;
+  const glow = (c, op = 0.4, r = 1.3, z = -0.6) => part(G.cyl(r, r, 0.02, 48), mat(c, { emissive: c, glow: 1, opacity: op }), { ink: 0, pos: [0, 0.1, z], rot: [Math.PI / 2, 0, 0] });
+  const tube = (pts, r = 0.1) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 24, r, 12, false);
+  // yeux de manhwa : deux amandes fines et pointues (iris sombre ou rouge), sourcils en trait de pinceau
+  function eyes(R, iris = INKC, o = {}) {
+    const g = new THREE.Group(); g.name = 'eyes';
+    const y = o.y ?? 0.02, sp = o.sp ?? 0.21, slant = o.slant ?? 0.18;
+    for (const s of [-1, 1]) {
+      const z = Math.sqrt(Math.max(0, R * R - sp * sp - y * y)) - 0.01;
+      g.add(part(G.sphere(0.075), iris, { ink: 0, pos: [s * sp, y, z], scale: [1.7, 0.42, 0.35], rot: [0, 0, s * slant] }));
+      if (iris !== INKC) g.add(part(G.sphere(0.03), mat(iris, { emissive: iris, glow: 1 }), { ink: 0, pos: [s * sp, y, z + 0.02] }));
+      g.add(part(G.box(0.2, 0.035, 0.03, 0.012), INKC, { ink: 0, pos: [s * (sp + 0.01), y + (o.brow ?? 0.13), z - 0.01], rot: [0, s * 0.3, s * (o.angry ?? 0.25)] }));
+    }
+    return g;
+  }
+  const mouth = (R, y = -0.3, w = 0.12, c = INKC) => part(G.box(w, 0.022, 0.02, 0.01), c, { ink: 0, pos: [0, y, Math.sqrt(R * R - y * y) - 0.005] });
+  // un buste : robe croisée, cou, tête ; renvoie aussi la tête pour y poser cheveux et visage
+  function bust(robe, o = {}) {
+    const g = new THREE.Group();
+    g.add(part(G.sphere(0.9), robe, { ink, scale: [1.1, 0.62, 0.74], pos: [0, -1.02, 0] }));
+    // col croisé du hanfu (deux bandes qui se croisent en V)
+    for (const s of [-1, 1]) g.add(part(G.box(0.14, 0.72, 0.06, 0.03), o.collar ?? PAPER, { ink: 0.015, pos: [s * 0.14, -0.78, 0.6], rot: [-0.35, 0, s * 0.55] }));
+    if (o.sash) g.add(part(G.box(1.5, 0.16, 0.9, 0.06), o.sash, { ink: 0.015, pos: [0, -1.28, 0.08] }));
+    g.add(part(G.cyl(0.19, 0.23, 0.32, 16), o.skin ?? SKIN, { ink, pos: [0, -0.5, 0] }));
+    const head = new THREE.Group(); head.position.y = 0.06;
+    head.add(part(G.sphere(0.54), o.skin ?? SKIN, { ink, scale: [0.9, 1.06, 0.94] }));
+    head.add(part(G.cone(0.2, 0.3, 16), o.skin ?? SKIN, { ink: 0.02, pos: [0, -0.48, 0.12], rot: [Math.PI + 0.3, 0, 0], scale: [1.4, 1, 0.8] })); // menton fin
+    g.add(head); g.userData.head = head;
+    return g;
+  }
+  // cheveux : calotte noire, frange effilée, et mèches longues optionnelles
+  function hair(head, col, o = {}) {
+    head.add(part(G.sphere(0.58), col, { ink, pos: [0, 0.14, -0.06], scale: [0.95, 0.9, 0.95] }));
+    for (let i = -2; i <= 2; i++) head.add(part(G.cone(0.12, 0.42, 8), col, { ink: 0.02, pos: [i * 0.14, 0.3, 0.38], rot: [0.5 + Math.abs(i) * 0.1, 0, i * 0.25] }));
+    const locks = [];
+    if (o.long) for (const s of [-1, 1]) { const l = part(tube([[s * 0.42, 0.1, -0.05], [s * 0.55, -0.5, -0.05], [s * 0.6, -1.3, -0.2]], 0.13), col, { ink: 0.02 }); head.add(l); locks.push(l); }
+    if (o.long) head.add(part(G.box(1.0, 1.6, 0.25, 0.12), col, { ink: 0.02, pos: [0, -0.6, -0.42] }));
+    if (o.bun) { head.add(part(G.sphere(0.22), col, { ink: 0.02, pos: [0, 0.66, -0.12] })); head.add(part(G.cyl(0.02, 0.02, 0.8, 8), o.pin ?? gold, { ink: 0.01, pos: [0, 0.66, -0.1], rot: [0, 0, Math.PI / 2 - 0.2] })); }
+    return locks;
+  }
+
+  // ---------- l'Épéiste : robe blanche, ceinture bleue, chignon, sabre sur l'épaule ----------
+  function epeiste() {
+    const g = bust(PAPER, { collar: BLUE, sash: BLUE }), h = g.userData.head;
+    hair(h, INKC, { bun: true });
+    h.add(eyes(0.54, 0x1E2A40, { angry: 0.2 }), mouth(0.54, -0.32, 0.1));
+    const sword = grp(part(G.box(0.07, 1.9, 0.03, 0.015), steel, { ink: 0.015, pos: [0, 0.95, 0] }), part(G.box(0.34, 0.06, 0.12, 0.02), gold, { ink: 0.015, pos: [0, 0, 0] }), part(G.cyl(0.05, 0.05, 0.42, 10), BLUE, { ink: 0.015, pos: [0, -0.24, 0] }));
+    sword.position.set(0.72, -0.2, -0.3); sword.rotation.z = -0.5; g.add(sword);
+    g.scale.setScalar(1.1); g.position.y = 0.02;
+    g.userData.anim = { idle(t) { sword.rotation.z = -0.5 + Math.sin(t * TAU) * 0.04; }, win(t) { sword.rotation.z = -0.5 - Math.sin(t * TAU) * 0.35; } };
+    return g;
+  }
+  // ---------- le Maître de la Paume : robe brune, cheveux gris, barbe, paume dorée qui s'illumine ----------
+  function paume() {
+    const g = bust(BROWN, { collar: 0x3A2A1A, sash: 0x3A2A1A }), h = g.userData.head;
+    hair(h, 0xB8B0A8, { bun: true, pin: 0x5A3A20 });
+    h.add(eyes(0.54, INKC, { angry: 0.05, slant: 0.1 }), mouth(0.54, -0.28, 0.14));
+    h.add(part(G.cone(0.22, 0.62, 20), 0xE8E2DA, { ink: 0.02, pos: [0, -0.62, 0.3], rot: [Math.PI - 0.25, 0, 0] })); // barbe
+    for (const s of [-1, 1]) h.add(part(tube([[s * 0.08, -0.28, 0.5], [s * 0.26, -0.36, 0.44], [s * 0.34, -0.6, 0.36]], 0.03), 0xE8E2DA, { ink: 0.01 })); // moustache
+    const palm = new THREE.Group(); palm.position.set(0.82, -0.2, 0.4);
+    palm.add(part(G.capsule(0.12, 0.5), BROWN, { ink: 0.02, pos: [-0.12, -0.34, -0.1], rot: [0, 0, 0.4] }));
+    palm.add(part(G.box(0.34, 0.4, 0.12, 0.05), gold, { ink: 0.02 }));
+    for (let i = 0; i < 4; i++) palm.add(part(G.capsule(0.04, 0.16), gold, { ink: 0.012, pos: [-0.12 + i * 0.08, 0.3, 0] }));
+    const aura = part(G.sphere(0.5), mat(0xF7D98A, { emissive: 0xF7B040, glow: 1, opacity: 0.35 }), { ink: 0 }); palm.add(aura);
+    g.add(palm);
+    g.scale.setScalar(1.1); g.position.y = 0.02;
+    g.userData.anim = { idle(t) { aura.scale.setScalar(0.9 + Math.sin(t * TAU * 2) * 0.12); }, win(t) { palm.position.z = 0.4 + Math.max(0, Math.sin(t * TAU)) * 0.35; aura.scale.setScalar(1.1 + Math.sin(t * TAU * 2) * 0.3); } };
+    return g;
+  }
+  // ---------- l'Assassin : capuche noire, masque sur le bas du visage, yeux rouges, dague ----------
+  function assassin() {
+    const g = bust(BLACK, { collar: 0x2A2530 }), h = g.userData.head;
+    h.add(part(G.sphere(0.66), 0x16141A, { ink, pos: [0, 0.1, -0.1], scale: [0.98, 1.05, 0.98] })); // capuche
+    h.add(part(G.cone(0.4, 0.6, 16), 0x16141A, { ink: 0.02, pos: [0, 0.62, -0.28], rot: [-0.9, 0, 0] }));
+    h.add(part(new THREE.SphereGeometry(0.56, 40, 20, Math.PI * 0.15, Math.PI * 0.7, Math.PI * 0.52, Math.PI * 0.4), 0x1E1A22, { ink: 0.015, scale: [0.92, 1.06, 0.96] })); // masque du bas
+    h.add(eyes(0.54, BLOOD, { angry: 0.4, slant: 0.25, y: 0.04 }));
+    const dagger = grp(part(G.cone(0.07, 0.7, 4), steel, { ink: 0.015, pos: [0, 0.35, 0] }), part(G.box(0.24, 0.05, 0.08, 0.02), 0x3A3440, { ink: 0.01 }), part(G.cyl(0.04, 0.04, 0.26, 8), RED, { ink: 0.01, pos: [0, -0.16, 0] }));
+    dagger.position.set(-0.8, -0.5, 0.45); dagger.rotation.z = 0.6; g.add(dagger);
+    g.scale.setScalar(1.1); g.position.y = 0.02;
+    const ey = h.children.find(c => c.name === 'eyes');
+    g.userData.anim = { idle(t) { ey.children.forEach(e => e.scale.y = 1 + Math.sin(t * TAU * 2) * 0.05); dagger.rotation.z = 0.6 + Math.sin(t * TAU) * 0.08; }, win(t) { dagger.rotation.z = 0.6 + Math.sin(t * TAU * 2) * 0.6; } };
+    return g;
+  }
+  // ---------- le Maître Démoniaque : longs cheveux, couronne de cornes rouges, yeux de sang, aura rouge ----------
+  function demon() {
+    const g = bust(BLACK, { collar: RED, sash: RED }), h = g.userData.head;
+    const halo = glow(BLOOD, 0.38, 1.35); g.add(halo);
+    hair(h, INKC, { long: true });
+    h.children[0].userData.mesh.material = mat(PALE); // teint pâle
+    h.add(eyes(0.54, BLOOD, { angry: 0.45, slant: 0.28 }), mouth(0.54, -0.33, 0.1, 0x5A060C));
+    const horns = [[-0.3, 0.55, -0.2, 0.5], [0.3, 0.55, -0.2, -0.5], [0, 0.66, -0.1, 0]].map(([x, y, z, r]) => part(G.cone(0.07, 0.42, 12), RED, { ink: 0.015, pos: [x, y, z], rot: [-0.2, 0, r] }));
+    horns.forEach(c => h.add(c));
+    g.add(part(G.torus(0.62, 0.035, Math.PI), gold, { ink: 0.01, pos: [0, -0.86, 0.3], rot: [0.6, 0, Math.PI] }));
+    g.scale.setScalar(1.1); g.position.y = 0.02;
+    g.userData.anim = { idle(t) { halo.scale.setScalar(1 + Math.sin(t * TAU * 2) * 0.08); halo.children[0].material.opacity = 0.3 + Math.sin(t * TAU) * 0.1; }, win(t) { halo.scale.setScalar(1.1 + Math.sin(t * TAU * 2) * 0.2); } };
+    return g;
+  }
+  // ---------- le Maître Céleste : robe blanc et or, cheveux blancs, épingle de jade, auréole d'or ----------
+  function celeste() {
+    const g = bust(0xFFFBF2, { collar: 0xD8A845, sash: 0xD8A845 }), h = g.userData.head;
+    const ring = part(G.torus(0.95, 0.045), gold, { ink: 0.01, pos: [0, 0.2, -0.5] }); g.add(ring);
+    const halo = glow(0xF7D98A, 0.35, 1.25); g.add(halo);
+    hair(h, 0xF2ECDF, { long: true, bun: true, pin: jade });
+    h.add(eyes(0.54, INKC, { angry: -0.05, slant: 0.05, brow: 0.15 }), mouth(0.54, -0.3, 0.1));
+    h.add(part(G.sphere(0.03), RED, { ink: 0, pos: [0, 0.2, 0.52] })); // marque rouge sur le front
+    g.scale.setScalar(1.1); g.position.y = 0.02;
+    g.userData.anim = { idle(t) { ring.rotation.z = t * TAU; halo.scale.setScalar(1 + Math.sin(t * TAU) * 0.06); }, win(t) { ring.rotation.z = t * TAU * 2; ring.scale.setScalar(1 + Math.sin(t * TAU * 2) * 0.1); } };
+    return g;
+  }
+  // ---------- le manuel interdit (scatter) : couverture noire et rouge, étiquette jaune, chaînes, lueur de sang ----------
+  function manual() {
+    const g = new THREE.Group();
+    const halo = glow(BLOOD, 0.4, 1.45, -0.5); g.add(halo);
+    const book = new THREE.Group(); book.rotation.set(0.25, -0.35, 0.08); g.add(book);
+    book.add(part(G.box(1.35, 1.75, 0.34, 0.05), PAPER, { ink: 0.02, pos: [0.04, 0, 0] })); // pages
+    const back = part(G.box(1.45, 1.85, 0.08, 0.04), 0x3A0408, { ink: 0.025, pos: [0, 0, -0.2] }); book.add(back);
+    const cover = new THREE.Group(); cover.position.set(-0.72, 0, 0.2); book.add(cover); // la couverture pivote sur la reliure
+    cover.add(part(G.box(1.45, 1.85, 0.08, 0.04), 0x16141A, { ink: 0.025, pos: [0.72, 0, 0] }));
+    cover.add(part(G.box(0.42, 1.0, 0.03, 0.02), 0xF2D060, { ink: 0.012, pos: [0.42, 0.1, 0.05] })); // étiquette 禁
+    for (let i = 0; i < 3; i++) cover.add(part(G.box(0.26, 0.05, 0.02, 0.01), RED, { ink: 0, pos: [0.42, 0.35 - i * 0.24, 0.07] }));
+    for (let i = 0; i < 3; i++) cover.add(part(G.box(0.36, 0.04, 0.02, 0.01), BLOOD, { ink: 0, pos: [1.0, 0.4 - i * 0.3, 0.06] }));
+    book.add(part(G.box(0.16, 1.85, 0.46, 0.05), RED, { ink: 0.02, pos: [-0.72, 0, 0] })); // reliure rouge
+    // chaînes croisées
+    const links = [];
+    for (const [a, y] of [[0.35, 0.25], [-0.35, -0.3]]) for (let i = -4; i <= 4; i++) { const l = part(G.torus(0.09, 0.025), steel, { ink: 0.008, pos: [i * 0.17, y + i * 0.17 * Math.tan(a), 0.3], rot: [0, i % 2 ? Math.PI / 2 : 0, a] }); book.add(l); links.push(l); }
+    book.add(part(G.cyl(0.16, 0.16, 0.12, 20), gold, { ink: 0.015, pos: [0, 0, 0.34], rot: [Math.PI / 2, 0, 0] })); // cadenas
+    g.scale.setScalar(1.05);
+    g.userData.anim = {
+      idle(t) { halo.scale.setScalar(1 + Math.sin(t * TAU * 2) * 0.07); cover.rotation.y = -Math.max(0, Math.sin(t * TAU)) * 0.12; },
+      win(t) { cover.rotation.y = -Math.max(0, Math.sin(t * TAU)) * 0.9; halo.scale.setScalar(1.15 + Math.sin(t * TAU * 2) * 0.15); },
+    };
+    return g;
+  }
+  // ---------- le Heavenly Demon (vedette de la Promenade) : cheveux noirs, robe noire liserée de rouge et d'or, deux doigts levés ----------
+  function heavenlyDemon() {
+    const g = bust(BLACK, { collar: RED, sash: 0x16141A }), h = g.userData.head;
+    hair(h, INKC, { long: true });
+    h.children[0].userData.mesh.material = mat(PALE);
+    h.add(eyes(0.54, BLOOD, { angry: 0.15, slant: 0.22 }), mouth(0.54, -0.33, 0.09));
+    h.add(part(G.sphere(0.028), RED, { ink: 0, pos: [0, 0.22, 0.52] }));
+    g.add(part(G.torus(0.6, 0.03, Math.PI), gold, { ink: 0.01, pos: [0, -0.9, 0.32], rot: [0.6, 0, Math.PI] }));
+    // la main : deux doigts dressés
+    const hand = new THREE.Group(); hand.position.set(0.72, -0.25, 0.45);
+    hand.add(part(G.capsule(0.13, 0.5), BLACK, { ink: 0.02, pos: [-0.05, -0.36, -0.1], rot: [0, 0, 0.2] }));
+    hand.add(part(G.box(0.24, 0.26, 0.14, 0.05), PALE, { ink: 0.015 }));
+    for (const x of [-0.05, 0.05]) hand.add(part(G.capsule(0.035, 0.28), PALE, { ink: 0.01, pos: [x, 0.3, 0] }));
+    hand.add(part(G.capsule(0.035, 0.12), PALE, { ink: 0.01, pos: [0.12, 0.08, 0.05], rot: [0, 0, -0.9] }));
+    g.add(hand);
+    const qi = glow(BLOOD, 0.25, 1.4); g.add(qi);
+    g.scale.setScalar(1.1); g.position.y = 0.02;
+    g.userData.anim = { idle(t) { qi.scale.setScalar(1 + Math.sin(t * TAU) * 0.08); }, win(t) { hand.position.y = -0.25 + Math.max(0, Math.sin(t * TAU)) * 0.2; qi.scale.setScalar(1.2 + Math.sin(t * TAU * 2) * 0.2); } };
+    return g;
+  }
+  return {
+    SYMS: [null, null, null, null, null, epeiste, paume, assassin, demon, celeste],
+    SCAT: manual,
+    shroom: heavenlyDemon, // le personnage vedette (utilisé par la Promenade et le décor)
+  };
+};
 
 // ---------- ART3D : les invités de Masquerade of Madness (construits avec KIT3D) ----------
 // Gravure baroque en 3D : ivoire, argent, noir velours et un seul rouge carmin, contour d'encre fin.
@@ -1209,6 +1420,174 @@ MODELES["constella"] = K => {
 };
 
 const DECORS = {};
+// ---------- DECOR3D : la cour d'une secte au pied des pics de granit de la montagne sacrée ----------
+// Le décor suit la cultivation comme la version 2D (classes sc0…sc5 sur <body>) : cour sous la pluie la nuit, sommet à l'aube,
+// palais doré, champ de bataille au crépuscule, domaine démoniaque, royaume céleste blanc et or. Pétales de cerisier partout.
+DECORS["murim"] = (K, M) => ({
+  build(scene, cam) {
+    const { THREE, part, G, TAU, sky, dots } = K;
+    const C = c => new THREE.Color(c), lerp = (a, b, t) => C(a).lerp(C(b), t);
+    const grad = K.mat(0xffffff).gradientMap;
+    const toon = (c, o = {}) => { const m = new THREE.MeshToonMaterial({ color: c, gradientMap: grad }); if (o.emissive) { m.emissive = C(o.emissive); m.emissiveIntensity = o.glow ?? 1; } if (o.map) m.map = o.map; return m; };
+    const P = (geo, m, o = {}) => part(geo, m instanceof THREE.Material ? m : toon(m, o), { ink: 0.03, ...o });
+    const grp = (...c) => { const g = new THREE.Group(); g.add(...c.flat()); return g; };
+    const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+    const rnd = (() => { let s = 97; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+    const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+    const halo = (col, size, op = 1) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.scale.setScalar(size); return s; };
+    const canvasTex = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...rep); } return t; };
+    // six mondes : ciel (haut, horizon, bas), brouillard, lumière, astre, pics, nuages, pétales, pluie
+    const W = [
+      { top: 0x0A0E18, mid: 0x28303F, bot: 0x0A0B10, fog: 0x1A202C, hemi: 0x8A9ABA, key: 0x9AB0D0, sun: 0xDDE6F0, peak: 0x2A303C, cloud: 0x5A6478, petal: 0xF7C0D0, rain: 1 },
+      { top: 0xE0B4A4, mid: 0xF6E2D0, bot: 0xB9A6A8, fog: 0xEAD6CC, hemi: 0xFFE8DC, key: 0xFFD8C0, sun: 0xFFB8A0, peak: 0x6A6070, cloud: 0xFFF6F0, petal: 0xFFC8D8, rain: 0 },
+      { top: 0xD8A060, mid: 0xF6D9A0, bot: 0x8A5A34, fog: 0xE8C088, hemi: 0xFFE0A8, key: 0xFFD890, sun: 0xFFF0B0, peak: 0x8A6A50, cloud: 0xFFEAC0, petal: 0xFFD0DC, rain: 0 },
+      { top: 0x2A0806, mid: 0xB0401A, bot: 0x2A0A06, fog: 0x6A200C, hemi: 0xFF9A6A, key: 0xFF8A4A, sun: 0xFF7A2A, peak: 0x3A1410, cloud: 0x8A3A1A, petal: 0xFF8A5A, rain: 0 },
+      { top: 0x000000, mid: 0x3A040A, bot: 0x050001, fog: 0x2A0208, hemi: 0xFF4A5A, key: 0xFF2A3A, sun: 0xE8202F, peak: 0x14040A, cloud: 0x3A0610, petal: 0xE8202F, rain: 0 },
+      { top: 0xFFF6E0, mid: 0xFBEBC0, bot: 0xD8B870, fog: 0xF8ECCC, hemi: 0xFFFFFF, key: 0xFFF3D0, sun: 0xFFFBEA, peak: 0xC8B8A0, cloud: 0xFFFFFF, petal: 0xFFE8A0, rain: 0 },
+    ];
+    const cur = Object.fromEntries(Object.entries(W[0]).map(([k, v]) => [k, k === 'rain' ? v : C(v)]));
+
+    cam.position.set(0, 3.4, 15); cam.userData.target.set(0, 4.2, 0);
+    scene.fog = new THREE.Fog(W[0].fog, 26, 110);
+    const skyM = sky(W[0].top, W[0].mid, W[0].bot, 150); scene.add(skyM);
+    const hemi = new THREE.HemisphereLight(W[0].hemi, 0x14101A, 1.1); scene.add(hemi);
+    const key = new THREE.DirectionalLight(W[0].key, 1.0); key.position.set(-8, 14, 10); scene.add(key);
+
+    // l'astre : lune dans la pluie, soleil rose de l'aube, soleil d'or, soleil couchant, lune de sang, soleil blanc
+    const sunM = new THREE.MeshBasicMaterial({ color: W[0].sun, fog: false });
+    const sun = at(new THREE.Mesh(new THREE.CircleGeometry(6, 48), sunM), 18, 30, -120); scene.add(sun);
+    const sunHalo = at(halo(W[0].sun, 46, 0.5), 18, 30, -119); scene.add(sunHalo);
+
+    // les pics de granit : de hautes colonnes bosselées, des pins accrochés au sommet
+    const peakM = toon(W[0].peak), pineM = toon(0x14201A);
+    const peaks = [[-46, -90, 7, 40], [-30, -78, 5, 30], [-18, -100, 8, 52], [0, -110, 9, 58], [20, -96, 7, 46], [34, -80, 5, 32], [50, -92, 8, 42], [-60, -70, 6, 26], [64, -72, 6, 28]];
+    for (const [x, z, r, h] of peaks) {
+      const m = new THREE.Mesh(G.lumpy(r, 0.18, Math.round(x + z), 3), peakM); m.scale.set(1, h / r / 2, 0.8); at(m, x, h / 2 - 6, z); scene.add(m);
+      for (let i = 0; i < 3; i++) { const p = new THREE.Mesh(new THREE.ConeGeometry(1.2 + rnd(), 2.4, 7), pineM); at(p, x + (rnd() - 0.5) * r, h - 7 + rnd() * 2, z + r * 0.5); p.scale.y = 0.6; scene.add(p); }
+    }
+    // la mer de nuages entre les pics
+    const cloudM = new THREE.MeshToonMaterial({ color: W[0].cloud, gradientMap: grad, transparent: true, opacity: 0.85 });
+    const clouds = [];
+    for (let i = 0; i < 16; i++) { const c = new THREE.Mesh(G.lumpy(5 + rnd() * 5, 0.2, i + 3, 2), cloudM); c.scale.set(2.2, 0.35, 1); const x = (rnd() - 0.5) * 150, z = -50 - rnd() * 50; at(c, x, 2 + rnd() * 10, z); c.userData = { x, sp: 0.3 + rnd() * 0.5 }; scene.add(c); clouds.push(c); }
+
+    // la cour : dalles de pierre
+    const slabs = canvasTex(256, 256, (x, w, h) => {
+      x.fillStyle = '#2A2830'; x.fillRect(0, 0, w, h);
+      for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { const o = j % 2 ? 32 : 0, g = 58 + Math.floor(rnd() * 20); x.fillStyle = `rgb(${g},${g - 2},${g + 6})`; x.fillRect(i * 64 + o + 2, j * 64 + 2, 60, 60); }
+      x.fillStyle = 'rgba(255,255,255,.05)'; for (let k = 0; k < 40; k++) x.fillRect(rnd() * w, rnd() * h, 2, 2);
+    }, [30, 30]);
+    const floorM = new THREE.MeshStandardMaterial({ map: slabs, roughness: 0.35, metalness: 0.1 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), floorM); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+
+    // le pavillon de la secte : terrasse, colonnes rouges, toit aux avant-toits relevés, plaque dorée
+    const eave = (w, d) => { // profil du toit (courbe qui remonte aux extrémités), extrudé en profondeur
+      const s = new THREE.Shape(); s.moveTo(-w / 2 - 1.2, 0.9); s.quadraticCurveTo(-w / 2 + 0.6, 0, -w / 4, 0.6); s.lineTo(0, 2.4); s.lineTo(w / 4, 0.6); s.quadraticCurveTo(w / 2 - 0.6, 0, w / 2 + 1.2, 0.9); s.lineTo(w / 2 + 1.1, 1.3); s.quadraticCurveTo(w / 2 - 0.6, 0.6, w / 4, 1.1); s.lineTo(0, 3.0); s.lineTo(-w / 4, 1.1); s.quadraticCurveTo(-w / 2 + 0.6, 0.6, -w / 2 - 1.1, 1.3); s.closePath();
+      return new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false });
+    };
+    const gold = K.pbr ? K.pbr(0xE8B850, { metal: 0.8, rough: 0.3 }) : 0xD8A845;
+    const hall = new THREE.Group(); at(hall, 0, 0, -30); scene.add(hall);
+    hall.add(P(G.box(34, 1.6, 12, 0.2), 0x3A3640, { pos: [0, 0.8, 0], ink: 0.02 }));
+    for (let i = 0; i < 4; i++) hall.add(P(G.box(12 - i * 2, 0.3, 1.2, 0.05), 0x4A4650, { pos: [0, 0.15 + i * 0.4, 6.4 + (3 - i) * 0.7], ink: 0.01 }));
+    hall.add(P(G.box(28, 8, 8, 0.1), 0x1A1418, { pos: [0, 5.6, -1], ink: 0.02 }));
+    for (const x of [-12, -6, 0, 6, 12]) if (x) hall.add(P(G.cyl(0.45, 0.5, 8, 16), 0x8A1A12, { pos: [x, 5.6, 3.4], ink: 0.02 }));
+    hall.add(P(G.box(6, 6.6, 0.3, 0.05), 0x2A0E0A, { pos: [0, 4.9, 3.1], ink: 0.02 }));
+    const roofM = toon(0x0E0C10);
+    const roof1 = new THREE.Mesh(eave(30, 11), roofM); at(roof1, 0, 9.4, -6.5); hall.add(roof1);
+    const roof2 = new THREE.Mesh(eave(18, 8), roofM); at(roof2, 0, 12.6, -5); roof2.scale.set(1, 0.9, 1); hall.add(roof2);
+    hall.add(P(G.box(30, 0.3, 11.4, 0.05), gold, { pos: [0, 9.5, -1], ink: 0 }));
+    hall.add(P(G.box(4.4, 1.8, 0.3, 0.1), 0x0A0606, { pos: [0, 10.8, 4.4], ink: 0.02 }), P(G.box(4.8, 2.2, 0.2, 0.1), gold, { pos: [0, 10.8, 4.3], ink: 0 }));
+    // lanternes rouges suspendues devant le pavillon
+    const lanterns = [], lights = [];
+    [-9, -3, 3, 9].forEach((x, i) => {
+      const l = grp(at(P(G.cyl(0.03, 0.03, 1.6, 6), 0x2A1A10, { ink: 0 }), 0, 0.8, 0), P(G.sphere(0.7), toon(0xE8202F, { emissive: 0xB3141F, glow: 0.8 }), { scale: [1, 1.25, 1], ink: 0.02 }), at(P(G.cyl(0.3, 0.3, 0.2, 12), gold, { ink: 0 }), 0, -0.95, 0), at(halo(0xFF5A3A, 5, 0.55), 0, 0, 0.4));
+      at(l, x, 8.2, 4.2); l.userData.ph = i; hall.add(l); lanterns.push(l);
+    });
+    const hallLight = new THREE.PointLight(0xFF5A3A, 30, 30, 1.6); hallLight.position.set(0, 7, 6); hall.add(hallLight); lights.push(hallLight);
+
+    // cerisiers de part et d'autre de la cour
+    const bark = toon(0x2A1410), blossomM = toon(0xF7C0D0), blossom2 = toon(0xFFE4EC);
+    const tube = (pts, r) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 20, r, 10, false);
+    const tree = (s, sc) => {
+      const g = new THREE.Group();
+      g.add(P(tube([[0, 0, 0], [s * 0.6, 3, 0], [s * 0.2, 6, 0.4], [s * 1.6, 8.5, 0]], 0.55), bark, { ink: 0.03 }));
+      g.add(P(tube([[s * 0.3, 5, 0], [s * -1.8, 7, 0.4], [s * -3, 8, 0]], 0.3), bark, { ink: 0.02 }), P(tube([[s * 0.8, 6.5, 0], [s * 2.8, 7.2, 0.5], [s * 4.2, 7, 0]], 0.28), bark, { ink: 0.02 }));
+      [[s * 1.6, 9, 0, 2.4], [s * -2.8, 8.6, 0.3, 2], [s * 4, 7.8, 0, 1.9], [s * 0.4, 9.6, -0.6, 2.2], [s * 2.8, 9.4, 0.8, 1.8], [s * -1, 9.8, 0.6, 1.7]].forEach(([x, y, z, r], i) => g.add(at(P(G.lumpy(r, 0.22, i + 7, 3), i % 3 ? blossomM : blossom2, { ink: 0.025 }), x, y, z)));
+      g.scale.setScalar(sc); return g;
+    };
+    const trees = [at(tree(-1, 1.1), -13, 0, -10), at(tree(1, 1.0), 14, 0, -14), at(tree(1, 0.8), -24, 0, -22)];
+    trees.forEach(t => scene.add(t));
+    // deux disciples qui répètent leur kata dans la cour
+    const disciple = (robe) => {
+      const g = new THREE.Group();
+      g.add(P(G.cone(0.7, 2.0, 16), robe, { pos: [0, 1.0, 0] }), P(G.capsule(0.28, 0.5), robe, { pos: [0, 2.2, 0] }), P(G.sphere(0.3), 0xEFE2CF, { pos: [0, 2.85, 0] }), P(G.sphere(0.32), 0x070608, { pos: [0, 3.0, -0.08], scale: [1, 0.8, 1] }), P(G.sphere(0.14), 0x070608, { pos: [0, 3.3, -0.1] }));
+      const arm = new THREE.Group(); arm.position.set(0.3, 2.4, 0); g.add(arm);
+      arm.add(P(G.capsule(0.1, 0.6), robe, { pos: [0.4, 0, 0], rot: [0, 0, Math.PI / 2], ink: 0.02 }), P(G.box(0.06, 1.8, 0.04, 0.02), K.pbr ? K.pbr(0xDDE6F0, { metal: 0.9, rough: 0.2 }) : 0xDDE6F0, { pos: [0.85, 0.85, 0], ink: 0.01 }));
+      g.userData.arm = arm; return g;
+    };
+    const disciples = [[-6, -8, 0xF2ECDF, 0.5], [6.5, -9, 0xB3141F, -0.5]].map(([x, z, c, r], i) => { const d = disciple(c); at(d, x, 0, z); d.rotation.y = r; d.userData.ph = i * Math.PI; scene.add(d); return d; });
+    // portique et bannières rouges sur les côtés
+    [-1, 1].forEach(s => {
+      const g = grp(P(G.cyl(0.14, 0.16, 9, 10), 0x2A1A10, { pos: [0, 4.5, 0], ink: 0.02 }), P(G.box(1.8, 5, 0.08, 0.04), 0xB3141F, { pos: [s * 1, 6, 0], ink: 0.02 }), P(G.box(1.2, 1.2, 0.1, 0.05), gold, { pos: [s * 1, 7, 0.08], ink: 0 }));
+      g.scale.setScalar(0.8); at(g, s * 17, 0, -16); scene.add(g);
+    });
+    // manuels interdits qui flottent pendant le bonus
+    const floaters = [];
+    if (M) [[-7, 8, -9], [7.5, 9, -10], [0, 11.5, -14]].forEach(([x, y, z], i) => { const w = grp(M.SCAT()); w.scale.setScalar(0); at(w, x, y, z); w.userData = { y, ph: i * 1.7 }; scene.add(w); floaters.push(w); });
+    // premier plan pour le téléphone : deux lanternes et le Heavenly Demon juste sous la machine
+    const front = new THREE.Group(); scene.add(front);
+    [-1, 1].forEach(s => front.add(at(grp(P(G.cyl(0.08, 0.1, 2.6, 8), 0x2A1A10, { pos: [0, 1.3, 0], ink: 0.02 }), P(G.sphere(0.45), toon(0xE8202F, { emissive: 0xB3141F, glow: 0.8 }), { pos: [0, 2.9, 0], scale: [1, 1.25, 1], ink: 0.02 }), at(halo(0xFF5A3A, 3, 0.6), 0, 2.9, 0.3)), s * 1.9, 0, 9.2)));
+    if (M && M.shroom) { const f = M.shroom(); const w = grp(f); f.position.y = 1.4; w.scale.setScalar(0.55); at(w, 1.2, 0, 10); w.rotation.y = -0.35; front.add(w); }
+
+    // pétales de cerisier, pluie, braises
+    const NP = 140, petals = dots(NP, () => [(rnd() - 0.5) * 44, rnd() * 20, 6 - rnd() * 34], () => (rnd() < 0.6 ? 0xFFFFFF : 0xFFE4EC), { size: 9, twinkle: 1, additive: false });
+    scene.add(petals); const pB = Array.from(petals.geometry.attributes.position.array);
+    const NR = 700, rainG = new THREE.BufferGeometry(), rainP = new Float32Array(NR * 6), rB = [];
+    for (let i = 0; i < NR; i++) { const x = (rnd() - 0.5) * 50, y = rnd() * 24, z = 8 - rnd() * 40; rB.push([x, y, z]); }
+    rainG.setAttribute('position', new THREE.BufferAttribute(rainP, 3));
+    const rainM = new THREE.LineBasicMaterial({ color: 0xC8D2E6, transparent: true, opacity: 0.35, depthWrite: false });
+    const rain = new THREE.LineSegments(rainG, rainM); rain.frustumCulled = false; scene.add(rain);
+    const embers = dots(120, () => [(rnd() - 0.5) * 40, rnd() * 16, 4 - rnd() * 30], () => (rnd() < 0.6 ? 0xFFB050 : 0xFF5A3A), { size: 5, twinkle: 3, opacity: 0 });
+    scene.add(embers);
+
+    let level = 0;
+    return {
+      camFor(aspect) {
+        const narrow = aspect < 0.8; front.visible = narrow;
+        return narrow ? { pos: new THREE.Vector3(0, 3.0, 20), target: new THREE.Vector3(0, 3.6, 0) } : { pos: new THREE.Vector3(0, 3.4, 15), target: new THREE.Vector3(0, 4.4, 0) };
+      },
+      update(t, dt, s) {
+        // le monde visé : la classe scN posée par la machine
+        const cl = document.body.className.match(/\bsc(\d)\b/); level = cl ? +cl[1] : 0;
+        const w = W[level], k = dt ? Math.min(1, dt * 2.5) : 1;
+        for (const n of ['top', 'mid', 'bot', 'fog', 'hemi', 'key', 'sun', 'peak', 'cloud', 'petal']) cur[n].lerp(C(w[n]), k);
+        cur.rain += (w.rain - cur.rain) * k;
+        const u = skyM.userData.u; u.top.value.copy(cur.top); u.mid.value.copy(cur.mid); u.bottom.value.copy(cur.bot);
+        scene.fog.color.copy(cur.fog); hemi.color.copy(cur.hemi); key.color.copy(cur.key);
+        sunM.color.copy(cur.sun); sunHalo.material.color.copy(cur.sun); peakM.color.copy(cur.peak); cloudM.color.copy(cur.cloud);
+        const bright = level === 1 || level === 2 || level === 5;
+        hemi.intensity += ((bright ? 1.6 : 1.0) - hemi.intensity) * k; floorM.color.lerp(C(bright ? 0xFFFFFF : level === 4 ? 0x8A5A60 : 0xB0B0C0), k);
+        clouds.forEach((c, i) => { c.position.x = ((c.userData.x + t * c.userData.sp + 90) % 180) - 90; });
+        lanterns.forEach(l => { l.rotation.z = Math.sin(t * 0.9 + l.userData.ph) * 0.06; });
+        lights.forEach(l => { l.intensity = 26 + Math.sin(t * 7) * 2 + (level === 0 ? 8 : 0); });
+        disciples.forEach(d => { const a = t * 2.2 + d.userData.ph; d.userData.arm.rotation.z = Math.sin(a) * 0.9; d.rotation.y += Math.sin(a * 0.5) * 0.004; d.position.y = Math.abs(Math.sin(a)) * 0.05; });
+        trees.forEach((tr, i) => { tr.rotation.z = Math.sin(t * 0.5 + i) * 0.01; });
+        floaters.forEach(f => { const d = f.userData; f.scale.setScalar(0.9 * s.bonus); f.position.y = d.y + Math.sin(t * 0.7 + d.ph) * 0.5; f.rotation.y = Math.sin(t * 0.4 + d.ph) * 0.5; });
+        // pétales : plus nombreux et plus rapides pendant le bonus ; leur couleur suit le monde
+        const pp = petals.geometry.attributes.position, fall = 0.05 * (1 + s.bonus);
+        for (let i = 0; i < NP; i++) { const kk = ((pB[i * 3 + 1] / 20) - t * fall + 10) % 1; pp.setXYZ(i, pB[i * 3] + Math.sin(t * 0.8 + i) * 1.4 - kk * 6, kk * 20, pB[i * 3 + 2]); }
+        pp.needsUpdate = true; petals.userData.u.uTime.value = t; petals.userData.u.uOpacity.value = 0.7 + s.bonus * 0.3;
+        const pc = petals.geometry.attributes.color; if (!pc.userData) pc.userData = {};
+        if (pc.userData.lv !== level) { pc.userData.lv = level; const c1 = C(W[level].petal); for (let i = 0; i < NP; i++) { const c = i % 3 ? c1 : C(0xFFFFFF).lerp(c1, 0.5); pc.setXYZ(i, c.r, c.g, c.b); } pc.needsUpdate = true; }
+        // pluie : seulement dans la cour de nuit
+        rainM.opacity = 0.35 * cur.rain; rain.visible = cur.rain > 0.02;
+        if (rain.visible) { const rp = rainG.attributes.position; for (let i = 0; i < NR; i++) { const [x, y0, z] = rB[i], y = ((y0 - t * 22) % 24 + 24) % 24; rp.setXYZ(i * 2, x, y, z); rp.setXYZ(i * 2 + 1, x - 0.25, y - 0.9, z); } rp.needsUpdate = true; }
+        embers.userData.u.uTime.value = t; embers.userData.u.uOpacity.value = level === 3 || level === 4 ? 0.8 : 0;
+        const ep = embers.geometry.attributes.position; for (let i = 0; i < 120; i++) { ep.setY(i, (ep.getY(i) + dt * 1.2) % 16); } ep.needsUpdate = true;
+      },
+    };
+  },
+});
+
 // ---------- DECOR3D : la salle de bal de Masquerade of Madness ; pendant le bonus, les bougies rougissent et la valse s'emballe ----------
 DECORS["masquerade"] = (K, M) => ({
   build(scene, cam) {

@@ -2,6 +2,47 @@
   "_lisezmoi": "Catalogue de la Promenade. Une entrée par machine, dans l'ordre du boulevard. Après modification : python3 .claude/skills/machine-a-sous/scripts/construire-salle.py",
   "machines": [
     {
+      "id": "murim",
+      "nom": "Murim",
+      "sousTitre": "Heavenly Demon",
+      "page": "jeux/murim-3d.html",
+      "lite": "jeux/murim.html",
+      "vignette": "app/vignettes/murim-3d.jpg",
+      "modeles": ".claude/skills/machine-a-sous/kit/exemple-murim.js",
+      "couleur": "#E8202F",
+      "badge": "Nouveau",
+      "desc": "Encre de manhwa sur la montagne sacrée. Grille 6×5 en cascades, 8 méridiens, frappe du Heavenly Demon, techniques interdites, duel ou guerre des sectes, et cultivation jusqu'au rang suprême.",
+      "tags": [
+        "3D",
+        "Murim",
+        "Cascades"
+      ],
+      "bonus": "1 / 250",
+      "grille": "6×5 grappes",
+      "max": "50 000×",
+      "trophees": [
+        {
+          "id": "huit-portes",
+          "flag": "huit-portes",
+          "nom": "Les Huit Portes",
+          "desc": "Ouvrir les huit méridiens : EIGHT GATES OPEN."
+        },
+        {
+          "id": "parchemin",
+          "flag": "parchemin",
+          "nom": "Technique Scroll",
+          "desc": "Vaincre le maître de la secte rivale en duel."
+        },
+        {
+          "id": "heavenly-demon",
+          "flag": "heavenly-demon",
+          "nom": "Heavenly Demon",
+          "desc": "Atteindre le rang suprême dans Qi Breakthrough."
+        }
+      ],
+      "decor": ".claude/skills/machine-a-sous/kit/decor-murim.js"
+    },
+    {
       "id": "masquerade",
       "nom": "Masquerade",
       "sousTitre": "of Madness",
@@ -10,7 +51,7 @@
       "vignette": "app/vignettes/masquerade-3d.jpg",
       "modeles": ".claude/skills/machine-a-sous/kit/exemple-masquerade.js",
       "couleur": "#FF2340",
-      "badge": "Nouveau",
+      "badge": "",
       "desc": "Le Bal des Fous. Gravure baroque, cascades, jauge de raison qui s'effondre, Fou Rouge et Fou Noir, dernière danse et masques à retirer.",
       "tags": [
         "3D",
