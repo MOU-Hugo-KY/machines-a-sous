@@ -1,6 +1,6 @@
 // Service worker de la Salle des machines : garde les pages et les ressources pour jouer hors ligne.
 // Pense à changer VERSION à chaque ajout de machine pour que les téléphones récupèrent la nouvelle liste.
-const VERSION = 'promenade-1790648290';
+const VERSION = 'promenade-1790669584';
 const FICHIERS = [
   "./",
   "index.html",
@@ -10,18 +10,18 @@ const FICHIERS = [
   "jeux/murim-3d.html",
   "jeux/murim.html",
   "app/vignettes/murim-3d.jpg",
-  "jeux/planches/murim-3d/s5-idle.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s5-win.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s6-idle.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s6-win.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s7-idle.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s7-win.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s8-idle.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s8-win.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s9-idle.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/s9-win.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/scat-idle.webp?v=f6bd3aff",
-  "jeux/planches/murim-3d/scat-win.webp?v=f6bd3aff",
+  "jeux/planches/murim-3d/s5-idle.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s5-win.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s6-idle.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s6-win.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s7-idle.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s7-win.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s8-idle.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s8-win.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s9-idle.webp?v=26047a4e",
+  "jeux/planches/murim-3d/s9-win.webp?v=26047a4e",
+  "jeux/planches/murim-3d/scat-idle.webp?v=26047a4e",
+  "jeux/planches/murim-3d/scat-win.webp?v=26047a4e",
   "jeux/masquerade-3d.html",
   "jeux/masquerade.html",
   "app/vignettes/masquerade-3d.jpg",

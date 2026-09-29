@@ -1,6 +1,6 @@
 {
  "dir": "planches/murim-3d/",
- "v": "f6bd3aff",
+ "v": "26047a4e",
  "sig": "25c6063d01fa",
  "items": {
   "s5": {
@@ -27,5 +27,8 @@
    "f": "scat",
    "n": 24
   }
- }
+ },
+ "blender": [
+  "s8"
+ ]
 }
