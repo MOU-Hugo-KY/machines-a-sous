@@ -1,9 +1,12 @@
 # Le Heavenly Demon de Murim dans Blender (bpy 5, Cycles sur processeur) : buste, cheveux en mèches, robe croisée brodée d'or, main aux deux doigts, aura de Qi.
 # Usage : python3 murim-heavenly-demon.py preview [image] [win]   |   python3 murim-heavenly-demon.py sheet    (voir references/blender.md)
+# Avec Blender installé (carte graphique utilisée si possible) : blender -b -P murim-heavenly-demon.py -- sheet
 import bpy, bmesh, math, sys, os, random
 from mathutils import Vector, noise
 
 OUT = os.path.dirname(os.path.abspath(__file__))
+ARGS = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]  # « blender -b -P script.py -- sheet » ou « python3 script.py sheet »
+sys.argv = [sys.argv[0]] + ARGS
 MODE = sys.argv[1] if len(sys.argv) > 1 else 'preview'
 TAU = math.tau
 random.seed(7)
@@ -218,6 +221,17 @@ camd = bpy.data.cameras.new('cam'); camd.type = 'ORTHO'; camd.ortho_scale = 2.95
 cam = link(bpy.data.objects.new('cam', camd)); cam.location = (0.05, -8, -0.3); cam.rotation_euler = (math.radians(90), 0, 0); S.camera = cam
 
 S.render.engine = 'CYCLES'; S.cycles.device = 'CPU'
+# carte graphique si elle est là (OptiX/CUDA pour NVIDIA, HIP pour AMD, Metal pour Mac, oneAPI pour Intel), sinon le processeur
+try:
+    cp = bpy.context.preferences.addons['cycles'].preferences
+    for kind in ('OPTIX', 'CUDA', 'HIP', 'METAL', 'ONEAPI'):
+        try: cp.compute_device_type = kind
+        except TypeError: continue
+        cp.get_devices(); gpus = [d for d in cp.devices if d.type == kind]
+        if gpus:
+            for d in cp.devices: d.use = d.type == kind
+            S.cycles.device = 'GPU'; print('rendu sur carte graphique :', kind, ', '.join(d.name for d in gpus)); break
+except Exception as e: print('carte graphique indisponible, rendu sur processeur :', e)
 S.cycles.samples = 48 if MODE == 'sheet' else 64; S.cycles.use_denoising = True
 S.cycles.max_bounces = 6; S.cycles.transparent_max_bounces = 12
 S.render.film_transparent = True

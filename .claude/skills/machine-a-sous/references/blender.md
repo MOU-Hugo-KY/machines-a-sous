@@ -8,7 +8,7 @@ Pour un rendu vraiment premium, un symbole peut être modélisé et rendu dans *
 pip install bpy pillow        # Blender 5 en module Python (~400 Mo)
 ```
 
-Le moteur **Cycles** tourne sur le processeur ; **EEVEE** ne marche pas sans carte graphique (pas d'EGL). Compte 20 à 40 s par image selon la taille : une paire de planches (48 images) prend un quart d'heure environ. Sur un ordinateur avec carte graphique, Blender va beaucoup plus vite.
+Avec **Blender installé** (https://www.blender.org/download/) sur un ordinateur qui a une carte graphique, lance plutôt `blender -b -P blender/murim-heavenly-demon.py -- sheet` : le script choisit tout seul la carte graphique (OptiX/CUDA, HIP, Metal ou oneAPI) et va beaucoup plus vite. Sans carte graphique, le moteur **Cycles** tourne sur le processeur ; **EEVEE** ne marche pas sans carte graphique (pas d'EGL). Compte 20 à 40 s par image selon la taille : une paire de planches (48 images) prend un quart d'heure environ. Sur un ordinateur avec carte graphique, Blender va beaucoup plus vite.
 
 ## Le script d'un personnage
 
