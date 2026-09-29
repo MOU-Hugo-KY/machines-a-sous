@@ -65,7 +65,14 @@ const THREE_DIR = [__dirname, process.cwd()].map(b => path.join(b, 'node_modules
     for (const k of ['idle', 'win']) { const buf = Buffer.from(it[k], 'base64'); fs.writeFileSync(path.join(outDir, `${f}-${k}.webp`), buf); hash.update(buf); total += buf.length; }
     items[key] = { f, n: it.n };
   }
-  const pl = { dir: `planches/${stem}/`, v: hash.digest('hex').slice(0, 8), sig: res.sig, items };
+  // planches rendues avec Blender (jeux/planches-blender/<page>/<clé>-idle.webp et -win.webp) : elles remplacent celles du kit
+  const bl = path.join(path.dirname(file), 'planches-blender', stem), blender = [];
+  if (fs.existsSync(bl)) for (const f of fs.readdirSync(bl).filter(f => f.endsWith('-idle.webp'))) {
+    const key = f.slice(0, -'-idle.webp'.length), win = path.join(bl, key + '-win.webp'); if (!fs.existsSync(win)) continue;
+    for (const k of ['idle', 'win']) { const buf = fs.readFileSync(path.join(bl, `${key}-${k}.webp`)); fs.writeFileSync(path.join(outDir, `${key}-${k}.webp`), buf); hash.update(buf); }
+    items[key] = { f: key, n: 24 }; blender.push(key);
+  }
+  const pl = { dir: `planches/${stem}/`, v: hash.digest('hex').slice(0, 8), sig: res.sig, items, ...(blender.length ? { blender } : {}) };
   fs.writeFileSync(path.join(outDir, 'planches.json'), JSON.stringify(pl, null, 1) + '\n');
 
   // la page utilise tout de suite ses planches (passer-en-3d.py les reprendra aussi tant que les modèles ne changent pas)
